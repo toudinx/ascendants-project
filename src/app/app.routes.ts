@@ -1,0 +1,33 @@
+import { Routes } from '@angular/router';
+import { HubPageComponent } from './features/hub/hub.page';
+import { RunStartPageComponent } from './features/run/start/run-start.page';
+import { RunBattlePageComponent } from './features/run/battle/run-battle.page';
+import { RunRewardPageComponent } from './features/run/reward/run-reward.page';
+import { RunPrepPageComponent } from './features/run/prep/run-prep.page';
+import { RunEvolutionPageComponent } from './features/run/evolution/run-evolution.page';
+import { RunSummaryPageComponent } from './features/run/summary/run-summary.page';
+import { RunDeathPageComponent } from './features/run/death/run-death.page';
+import { RunVictoryPageComponent } from './features/run/victory/run-victory.page';
+import { InventoryPageComponent } from './features/inventory/inventory.page';
+import { StorePageComponent } from './features/store/store.page';
+import { DailyPageComponent } from './features/daily/daily.page';
+import { VelvetCollectionPageComponent } from './features/collection/velvet-collection.page';
+import { GachaPageComponent } from './features/gacha/gacha.page';
+
+export const appRoutes: Routes = [
+  { path: '', component: HubPageComponent },
+  { path: 'run/start', component: RunStartPageComponent },
+  { path: 'run/battle', component: RunBattlePageComponent },
+  { path: 'run/reward', component: RunRewardPageComponent },
+  { path: 'run/prep', component: RunPrepPageComponent },
+  { path: 'run/evolution', component: RunEvolutionPageComponent },
+  { path: 'run/death', component: RunDeathPageComponent },
+  { path: 'run/victory', component: RunVictoryPageComponent },
+  { path: 'run/summary', component: RunSummaryPageComponent },
+  { path: 'inventory', component: InventoryPageComponent },
+  { path: 'store', component: StorePageComponent },
+  { path: 'daily', component: DailyPageComponent },
+  { path: 'collection', component: VelvetCollectionPageComponent },
+  { path: 'gacha', component: GachaPageComponent },
+  { path: '**', redirectTo: '' }
+];
