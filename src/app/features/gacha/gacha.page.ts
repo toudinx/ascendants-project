@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+﻿import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AppHeaderComponent, AppButtonComponent, AppCardComponent, PremiumTeaseComponent, WowBurstComponent, RarityTagComponent, SkinCardComponent, AppTagComponent } from '../../shared/components';
@@ -11,47 +11,47 @@ import { UiStateService } from '../../core/services/ui-state.service';
   imports: [CommonModule, AppHeaderComponent, AppButtonComponent, AppCardComponent, PremiumTeaseComponent, WowBurstComponent, RarityTagComponent, SkinCardComponent, AppTagComponent],
   template: `
     <wow-burst [trigger]="hasSSR()"></wow-burst>
-    <app-header title="Banner Ascensão Carmesim" subtitle="Foco: Velvet SSR Ascendente Eterna" kicker="Gacha"></app-header>
+    <app-header title="Crimson Ascension Banner" subtitle="Focus: Velvet SSR Ascendant Eternal" kicker="Gacha"></app-header>
 
     <div class="space-y-4">
-      <app-card title="Banner Atual" subtitle="Probabilidades: SSR 2% | SR 8% | R 90%" [interactive]="false">
+      <app-card title="Current Banner" subtitle="Odds: SSR 2% | SR 8% | R 90%" [interactive]="false">
         <div class="grid items-center gap-3 md:grid-cols-[1.2fr,0.8fr]">
           <div class="h-48 rounded-[16px] bg-gradient-to-br from-[var(--primary)]/30 via-[var(--secondary)]/20 to-[#050511]"></div>
           <div class="space-y-2 text-sm text-[#A4A4B5]">
-            <p>Summon premium visual. Nenhum pagamento real.</p>
+            <p>Summon premium visuals. No real-money payment required.</p>
             <div class="flex flex-wrap gap-2">
               <rarity-tag rarity="SSR"></rarity-tag>
               <rarity-tag rarity="SR"></rarity-tag>
               <rarity-tag rarity="R"></rarity-tag>
             </div>
             <div class="flex gap-2">
-              <app-button label="Invocar 1x" variant="secondary" (click)="pull(1)" [disabled]="pulling()"></app-button>
-              <app-button label="Invocar 10x" variant="primary" (click)="pull(10)" [disabled]="pulling()"></app-button>
+              <app-button label="Summon 1x" variant="secondary" (click)="pull(1)" [disabled]="pulling()"></app-button>
+              <app-button label="Summon 10x" variant="primary" (click)="pull(10)" [disabled]="pulling()"></app-button>
             </div>
-            <premium-tease size="compact" title="Sem pagamentos" subtitle="Apenas demonstração visual."></premium-tease>
+            <premium-tease size="compact" title="No payments" subtitle="Visual demo only."></premium-tease>
           </div>
         </div>
       </app-card>
 
       <div class="rounded-[16px] border border-white/10 bg-white/5 p-4">
         <div class="mb-2 flex items-center justify-between">
-          <p class="text-sm text-[#A4A4B5] uppercase tracking-[0.2em]">Animação de Pull</p>
+          <p class="text-sm text-[#A4A4B5] uppercase tracking-[0.2em]">Pull animation</p>
           <app-tag tone="muted" label="Mock"></app-tag>
         </div>
         <div class="relative h-32 overflow-hidden rounded-[12px] bg-gradient-to-r from-[var(--primary)]/20 via-[var(--secondary)]/10 to-[#050511]">
           <div *ngIf="pulling()" class="absolute inset-0 flex items-center justify-center text-white/70 animate-pulse">
-            Invocando...
+            Summoning...
           </div>
           <div *ngIf="!pulling() && hasResults()" class="absolute inset-0 flex items-center justify-center text-white/60">
-            Pull concluído.
+            Pull complete.
           </div>
         </div>
       </div>
 
       <div *ngIf="hasResults()" class="space-y-3">
         <div class="flex items-center justify-between">
-          <p class="text-sm text-[#A4A4B5] uppercase tracking-[0.2em]">Resultados</p>
-          <app-button label="Ver na Coleção" variant="ghost" (click)="router.navigate(['/collection'])"></app-button>
+          <p class="text-sm text-[#A4A4B5] uppercase tracking-[0.2em]">Results</p>
+          <app-button label="View Collection" variant="ghost" (click)="router.navigate(['/collection'])"></app-button>
         </div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <skin-card
@@ -90,7 +90,7 @@ export class GachaPageComponent implements OnInit {
     if (this.pulling()) return;
     this.pulling.set(true);
     this.hasSSR.set(false);
-    this.ui.startTransition('Invocando...');
+    this.ui.startTransition('Summoning...');
     setTimeout(() => {
       const pulled: VelvetSkin[] = [];
       for (let i = 0; i < count; i++) {

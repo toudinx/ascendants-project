@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppPanelComponent, AppStatBarComponent, AppButtonComponent, AppTagComponent, AppCardComponent, AppModalComponent } from '../../../shared/components';
 import { PlayerStateService } from '../../../core/services/player-state.service';
@@ -10,11 +10,11 @@ import { RunStateService } from '../../../core/services/run-state.service';
   imports: [CommonModule, AppPanelComponent, AppStatBarComponent, AppButtonComponent, AppTagComponent, AppCardComponent, AppModalComponent],
   template: `
     <div class="space-y-4">
-      <app-panel title="Status Atual" subtitle="Pausa tática antes da próxima sala" [tag]="nextSalaLabel">
+      <app-panel title="Current Status" subtitle="Tactical pause before the next room" [tag]="nextRoomLabel">
         <div class="grid gap-3 md:grid-cols-2">
           <app-stat-bar label="HP" [current]="player.state().attributes.hp" [max]="player.state().attributes.maxHp" tone="hp" [warnAt]="0.2"></app-stat-bar>
-          <app-stat-bar label="Postura" [current]="player.state().attributes.posture" [max]="player.state().attributes.maxPosture" tone="posture"></app-stat-bar>
-          <app-stat-bar label="Energia" [current]="player.state().attributes.energy" [max]="player.state().attributes.maxEnergy" tone="energy"></app-stat-bar>
+          <app-stat-bar label="Posture" [current]="player.state().attributes.posture" [max]="player.state().attributes.maxPosture" tone="posture"></app-stat-bar>
+          <app-stat-bar label="Energy" [current]="player.state().attributes.energy" [max]="player.state().attributes.maxEnergy" tone="energy"></app-stat-bar>
           <div class="flex flex-wrap gap-2">
             <app-tag *ngFor="let buff of player.state().buffs" [label]="buff.name" [tone]="buff.type === 'buff' ? 'success' : 'danger'"></app-tag>
           </div>
@@ -22,50 +22,50 @@ import { RunStateService } from '../../../core/services/run-state.service';
       </app-panel>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <app-panel title="Poções" subtitle="Recupere-se antes da próxima sala">
+        <app-panel title="Potions" subtitle="Recover before the next room">
           <div class="grid grid-cols-2 gap-3">
-            <app-card title="Poção Restauradora" subtitle="+30% HP" [interactive]="false">
+            <app-card title="Restorative Potion" subtitle="+30% HP" [interactive]="false">
               <div class="space-y-2 text-sm text-[#A4A4B5]">
-                <p>Recupera parte da vida imediatamente.</p>
-                <app-button label="Usar Poção" variant="secondary" (click)="usePotion()" [disabled]="!hasPotion"></app-button>
-                <p class="text-xs text-[#A4A4B5]">Poções restantes: {{ run.pocoes() }}</p>
+                <p>Recovers a chunk of HP instantly.</p>
+                <app-button label="Use Potion" variant="secondary" (click)="usePotion()" [disabled]="!hasPotion"></app-button>
+                <p class="text-xs text-[#A4A4B5]">Potions remaining: {{ run.potions() }}</p>
               </div>
             </app-card>
-            <app-card title="Slot vazio" subtitle="Espaço para futuros itens" [interactive]="false">
-              <app-button label="Em breve" variant="ghost" [disabled]="true"></app-button>
+            <app-card title="Empty slot" subtitle="Space for future items" [interactive]="false">
+              <app-button label="Coming soon" variant="ghost" [disabled]="true"></app-button>
             </app-card>
           </div>
         </app-panel>
 
-        <app-panel title="Próxima Sala" subtitle="Planeje rapidamente">
+        <app-panel title="Next Room" subtitle="Plan quickly">
           <div class="flex flex-col gap-2 text-sm text-[#A4A4B5]">
-            <p>Próxima: Sala {{ nextSalaNumber }} / {{ run.totalRooms() }}</p>
-            <p>Tipo: {{ nextSalaLabel }}</p>
-            <p>Rota dominante: {{ rotaDominante }}</p>
-            <p>Reroll disponível: {{ run.rerollDisponivel() }}</p>
+            <p>Next: Room {{ nextRoomNumber }} / {{ run.totalRooms() }}</p>
+            <p>Type: {{ nextRoomLabel }}</p>
+            <p>Dominant route: {{ dominantRouteLabel }}</p>
+            <p>Rerolls available: {{ run.rerollsAvailable() }}</p>
           </div>
         </app-panel>
       </div>
 
       <div class="flex flex-col gap-2 md:flex-row md:justify-end">
-        <app-button label="Abandonar Run" variant="ghost" (click)="openAbandonModal()"></app-button>
-        <app-button label="Continuar" variant="primary" (click)="continueBattle()"></app-button>
+        <app-button label="Abandon Run" variant="ghost" (click)="openAbandonModal()"></app-button>
+        <app-button label="Continue" variant="primary" (click)="continueBattle()"></app-button>
       </div>
     </div>
 
     <app-modal
       [open]="abandonModal"
-      title="Abandonar run?"
-      subtitle="Você manterá as recompensas obtidas até agora."
-      kicker="Confirmação"
+      title="Abandon run?"
+      subtitle="You will keep the rewards collected so far."
+      kicker="Confirmation"
       (closed)="abandonModal = false"
     >
       <div class="text-sm text-[#A4A4B5]">
-        Tem certeza que deseja abandonar a run?
+        Are you sure you want to abandon the run?
       </div>
       <div modal-actions class="flex gap-2">
-        <app-button label="Cancelar" variant="ghost" (click)="abandonModal = false"></app-button>
-        <app-button label="Sim, abandonar" variant="danger" (click)="abandon()"></app-button>
+        <app-button label="Cancel" variant="ghost" (click)="abandonModal = false"></app-button>
+        <app-button label="Yes, abandon" variant="danger" (click)="abandon()"></app-button>
       </div>
     </app-modal>
   `
@@ -77,25 +77,26 @@ export class RunPrepPageComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  get nextSalaNumber(): number {
+  get nextRoomNumber(): number {
     return Math.min(this.run.totalRooms(), this.run.currentRoom() + 1);
   }
 
-  get nextSalaLabel(): string {
-    const tipo = this.run.getRoomTypeFor(this.nextSalaNumber);
-    if (tipo === 'mini-boss') return 'Mini-boss';
-    if (tipo === 'boss') return 'Boss final';
+  get nextRoomLabel(): string {
+    const roomType = this.run.getRoomTypeFor(this.nextRoomNumber);
+    if (roomType === 'mini-boss') return 'Mini-boss';
+    if (roomType === 'boss') return 'Final Boss';
     return 'Normal';
   }
 
-  get rotaDominante(): string {
-    const rotas = this.run.rotas();
-    const top = rotas.reduce((best, r) => (r.level > best.level ? r : best), rotas[0]);
+  get dominantRouteLabel(): string {
+    const routeList = this.run.routes();
+    if (!routeList.length) return 'Unknown';
+    const top = routeList.reduce((best, route) => (route.level > best.level ? route : best));
     return `${top.title} - Lv ${top.level}`;
   }
 
   get hasPotion(): boolean {
-    return this.run.pocoes() > 0;
+    return this.run.potions() > 0;
   }
 
   usePotion(): void {

@@ -6,6 +6,8 @@ import { UpgradeOption } from '../models/upgrades.model';
 import { PlayerStateService } from './player-state.service';
 import { EnemyStateService } from './enemy-state.service';
 import { UiStateService } from './ui-state.service';
+import { BattleEngineService } from './battle-engine.service';
+import { EvolutionVisualKey } from '../models/evolution-visual.model';
 
 @Injectable({ providedIn: 'root' })
 export class RunStateService {
@@ -27,6 +29,8 @@ export class RunStateService {
   readonly potions = signal<number>(2);
   readonly result = signal<RunResult>('none');
   readonly isFinalEvolution = signal<boolean>(false);
+  readonly battleSeed = signal<number | null>(null);
+  readonly activeEvolutionVisual = signal<EvolutionVisualKey | null>(null);
 
   readonly routes = computed<RouteProgress[]>(() =>
     this.baseRoutes.map(r => ({ ...r, level: this.routeLevels()[r.route] || 0 }))
@@ -48,12 +52,19 @@ export class RunStateService {
   }));
 
   private readonly router = inject(Router);
+  private readonly battle = inject(BattleEngineService);
 
   constructor(
     private readonly player: PlayerStateService,
     private readonly enemy: EnemyStateService,
     private readonly ui: UiStateService
   ) {
+    this.battle.setRunContext({
+      getPhase: () => this.phase(),
+      getRouteLevels: () => this.routeLevels(),
+      finishBattle: result => this.finishBattle(result)
+    });
+
     effect(() => {
       const currentPhase = this.phase();
       const target = this.mapPhaseToRoute(currentPhase);
@@ -63,8 +74,12 @@ export class RunStateService {
     });
   }
 
-  startRun(initialRoute: RouteKey): void {
+  readonly runSeed = signal<number | null>(null);
+
+  startRun(initialRoute: RouteKey, seed?: number): void {
     this.ui.startTransition('Starting run...');
+    const baseSeed = typeof seed === 'number' ? seed : this.randomSeed();
+    this.runSeed.set(baseSeed);
     this.routeLevels.set({ A: 0, B: 0, C: 0 });
     this.routeLevels.update(levels => ({ ...levels, [initialRoute]: levels[initialRoute] + 1 }));
     this.initialRouteChoice.set(initialRoute);
@@ -75,6 +90,7 @@ export class RunStateService {
     this.potions.set(2);
     this.result.set('none');
     this.isFinalEvolution.set(false);
+    this.activeEvolutionVisual.set(null);
     this.evolutions.set([]);
     this.refreshUpgrades();
     this.player.resetForNewRun();
@@ -84,12 +100,15 @@ export class RunStateService {
     setTimeout(() => this.ui.endTransition(), 200);
   }
 
-  startBattle(): void {
+  startBattle(seed?: number): void {
     const room = this.currentRoom();
     const type = this.calculateRoomType(room, this.totalRooms());
     this.roomType.set(type);
     this.transitionToPhase('battle', 'Entering battle');
     this.enemy.spawnForRoom(room, type);
+    const derivedSeed = this.deriveBattleSeed(seed);
+    const battleSeed = this.battle.startBattle({ seed: derivedSeed });
+    this.battleSeed.set(battleSeed);
   }
 
   finishBattle(result: 'victory' | 'defeat'): void {
@@ -106,12 +125,14 @@ export class RunStateService {
       this.addPotion(1);
       this.player.smallHeal(0.2);
       this.isFinalEvolution.set(true);
+      this.applyEvolutionVisual(true);
       this.result.set('victory');
       this.transitionToPhase('evolution', 'Final Evolution');
     } else if (type === 'mini-boss') {
       this.addPotion(1);
       this.player.smallHeal(0.2);
       this.isFinalEvolution.set(false);
+      this.applyEvolutionVisual(false);
       this.transitionToPhase('evolution', 'Opening Evolution');
     } else {
       this.transitionToPhase('reward', 'Reward');
@@ -166,6 +187,9 @@ export class RunStateService {
     this.rerollsAvailable.set(1);
     this.potions.set(2);
     this.initialRouteChoice.set(undefined);
+    this.runSeed.set(null);
+    this.battleSeed.set(null);
+    this.activeEvolutionVisual.set(null);
     this.ui.endTransition();
   }
 
@@ -254,6 +278,27 @@ export class RunStateService {
     ]);
   }
 
+  private deriveBattleSeed(seed?: number): number {
+    const base = typeof seed === 'number' ? seed : this.runSeed() ?? this.randomSeed();
+    return base + this.currentRoom();
+  }
+
+  private applyEvolutionVisual(isFinal: boolean): void {
+    const key = this.pickEvolutionKey();
+    if (!key) return;
+    if (isFinal || !this.activeEvolutionVisual()) {
+      this.activeEvolutionVisual.set(key);
+    }
+  }
+
+  private pickEvolutionKey(): EvolutionVisualKey | null {
+    const choice = this.initialRouteChoice();
+    if (choice === 'A') return 'critico';
+    if (choice === 'B') return 'ruina';
+    if (choice === 'C') return 'impacto';
+    return null;
+  }
+
   private transitionToPhase(phase: RunPhase, message?: string): void {
     this.ui.startTransition(message || 'Loading...');
     this.phase.set(phase);
@@ -288,5 +333,9 @@ export class RunStateService {
 
   private uid(): string {
     return Math.random().toString(36).slice(2, 10);
+  }
+
+  private randomSeed(): number {
+    return Math.floor(Math.random() * 1_000_000_000);
   }
 }

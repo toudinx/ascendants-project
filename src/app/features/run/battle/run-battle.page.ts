@@ -1,284 +1,884 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, effect, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule } from "@angular/common";
 import {
-  AppPanelComponent,
-  AppStatBarComponent,
-  AppTagComponent,
-  AppButtonComponent,
-  WowBurstComponent,
-  RarityTagComponent
-} from '../../../shared/components';
-import { EnemyStateService } from '../../../core/services/enemy-state.service';
-import { PlayerStateService } from '../../../core/services/player-state.service';
-import { RunStateService } from '../../../core/services/run-state.service';
-import { UiStateService } from '../../../core/services/ui-state.service';
-import { BattleEngineService } from '../../../core/services/battle-engine.service';
-import { SkinStateService } from '../../../core/services/skin-state.service';
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  effect,
+  inject,
+  signal,
+} from "@angular/core";
+import { RunStateService } from "../../../core/services/run-state.service";
+import { BattleEngineService } from "../../../core/services/battle-engine.service";
+import {
+  UiStateService,
+  FloatEvent,
+  LogKind,
+  UiLogEntry,
+} from "../../../core/services/ui-state.service";
+import { PlayerStateService } from "../../../core/services/player-state.service";
+import { EnemyStateService } from "../../../core/services/enemy-state.service";
+import { RunDebugPanelComponent } from "../../../shared/components";
+import {
+  EVOLUTION_VISUALS,
+  EvolutionVisual,
+  EvolutionVisualKey,
+} from "../../../core/models/evolution-visual.model";
 
-type SkillState = { disabled: boolean; hint: string };
+type ActorKey = "player" | "enemy";
+type FxTone = "dmg" | "crit" | "dot" | "posture";
+type TimelineActor = "player" | "enemy" | "system";
+type LogTone = TimelineActor | LogKind;
+type ImpactTone =
+  | "hit-sm"
+  | "hit-lg"
+  | "hit-dot"
+  | "hit-posture"
+  | "crit-flare"
+  | "break"
+  | "superbreak";
+
+interface AttackFx {
+  id: string;
+  from: ActorKey;
+  to: ActorKey;
+  tone: FxTone;
+}
+
+interface TurnLogEvent {
+  id: string;
+  text: string;
+  icon: string;
+  tone: LogTone;
+  kind?: LogKind;
+  target?: ActorKey;
+  value?: number;
+}
+
+interface TurnLogGroup {
+  id: string;
+  number: number;
+  actor: TimelineActor;
+  actorLabel: string;
+  events: TurnLogEvent[];
+  summary: string[];
+  isLatest?: boolean;
+}
 
 @Component({
-  selector: 'app-run-battle-page',
+  selector: "app-run-battle-page",
   standalone: true,
-  imports: [CommonModule, AppPanelComponent, AppStatBarComponent, AppTagComponent, AppButtonComponent, WowBurstComponent, RarityTagComponent],
-  template: `
-    <wow-burst [trigger]="wow"></wow-burst>
-    <div class="space-y-4">
-      <app-panel
-        title="{{ enemy.attributes.name }}"
-        subtitle="IA genérica para validação de combate"
-        [ngClass]="enemyPanelClass"
-      >
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex flex-wrap items-center gap-2">
-            <app-tag label="Inimigo" tone="muted"></app-tag>
-            <app-tag *ngIf="enemy.state === 'preparando'" label="Ataque forte" tone="warning"></app-tag>
-            <app-tag *ngIf="enemy.state === 'quebrado'" label="Quebrado" tone="warning"></app-tag>
-            <app-tag *ngIf="enemy.state === 'superquebrado'" label="Superquebrado" tone="danger"></app-tag>
-          </div>
-          <div class="flex items-center gap-2 text-xs text-[#A4A4B5]">
-            <span class="h-2 w-2 rounded-full bg-[#E28FE8]"></span>
-            Estado: {{ enemy.state }}
-          </div>
-        </div>
-        <div class="mt-3 space-y-2">
-          <app-stat-bar
-            label="HP"
-            [current]="enemy.attributes.hp"
-            [max]="enemy.attributes.maxHp"
-            tone="hp"
-            [warnAt]="0.2"
-          ></app-stat-bar>
-          <app-stat-bar
-            label="Postura"
-            [current]="enemy.attributes.posture"
-            [max]="enemy.attributes.maxPosture"
-            tone="posture"
-          ></app-stat-bar>
-          <div *ngIf="enemy.state === 'preparando'" class="flex items-center gap-2 rounded-[10px] border border-[#FFD344]/30 bg-[#FFD344]/10 px-3 py-2 text-sm text-[#FFD344]">
-            Alerta: Ataque poderoso chegando!
-          </div>
-        </div>
-      </app-panel>
-
-      <div class="rounded-[16px] border border-white/10 bg-[#0B0B16] p-4 md:p-6">
-        <div class="grid gap-4 md:grid-cols-[1fr,0.55fr]">
-          <div class="relative h-56 overflow-hidden rounded-[14px] bg-gradient-to-br from-[#8A7CFF]/20 via-[#E28FE8]/10 to-[#050511]" [class.enemy-hit-flash]="ui.state().flashEnemy">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(138,124,255,0.12),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(226,143,232,0.08),transparent_40%)]"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-xs uppercase tracking-[0.24em] text-white/30">
-              Arena + números flutuantes
-            </div>
-            <div class="absolute inset-0 pointer-events-none">
-              <div
-                *ngFor="let event of ui.state().floatEvents"
-                class="float-number text-lg"
-                [ngClass]="{
-                  'float-crit': event.type === 'crit',
-                  'float-dot': event.type === 'dot',
-                  'float-posture': event.type === 'posture'
-                }"
-                [style.left.%]="10 + (event.id.charCodeAt(0) % 70)"
-                [style.top.%]="20 + (event.id.charCodeAt(1) % 60)"
-              >
-                {{ event.value }}
-              </div>
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <p class="text-sm text-[#A4A4B5] uppercase tracking-[0.2em]">Log rápido</p>
-            <div #logList class="max-h-40 space-y-2 overflow-y-auto rounded-[12px] border border-white/10 bg-white/5 p-3">
-              <div
-                *ngFor="let log of ui.state().logs"
-                class="rounded-[10px] border border-white/5 bg-white/5 px-3 py-2 text-sm text-white/80"
-              >
-                {{ log }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <app-panel
-        title="Velvet"
-        [subtitle]="skinSubtitle"
-        [ngClass]="player.status === 'quebrado' ? 'panel-broken' : player.status === 'superquebrado' ? 'panel-superbroken' : ''"
-      >
-        <div class="flex flex-col gap-3">
-          <div class="flex flex-col gap-3 md:flex-row md:items-center">
-            <div
-              class="h-24 w-full rounded-[14px] border bg-gradient-to-br from-[#8A7CFF]/30 to-[#E28FE8]/20 md:h-24 md:w-24"
-              [class.player-hit-flash]="ui.state().flashPlayer"
-              [ngClass]="[skinAccentClass, skinGlowClass]"
-            ></div>
-            <div class="flex-1 space-y-2">
-              <div class="flex items-center gap-2 text-sm text-[#A4A4B5]">
-                <span class="text-white">Velvet — {{ currentSkin.name }}</span>
-                <rarity-tag [rarity]="currentSkin.rarity"></rarity-tag>
-              </div>
-              <app-stat-bar
-                label="HP"
-                [current]="player.attributes.hp"
-                [max]="player.attributes.maxHp"
-                tone="hp"
-                [warnAt]="0.2"
-              ></app-stat-bar>
-              <app-stat-bar
-                label="Postura"
-                [current]="player.attributes.posture"
-                [max]="player.attributes.maxPosture"
-                tone="posture"
-              ></app-stat-bar>
-              <app-stat-bar
-                label="Energia"
-                [current]="player.attributes.energy"
-                [max]="player.attributes.maxEnergy"
-                tone="energy"
-              ></app-stat-bar>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap gap-2">
-            <app-tag
-              *ngFor="let buff of player.buffs"
-              [label]="buff.name"
-              [tone]="buff.type === 'buff' ? 'success' : 'danger'"
-              [icon]="buff.icon"
-            ></app-tag>
-            <app-tag *ngIf="!player.buffs.length" label="Sem efeitos" tone="muted"></app-tag>
-          </div>
-
-          <div class="space-y-2 rounded-[14px] border border-white/10 bg-white/5 p-3">
-            <div class="flex items-center justify-between text-sm text-[#A4A4B5]">
-              <span class="uppercase tracking-[0.18em]">Habilidade Ativa</span>
-              <span class="text-xs text-white/70">{{ activeSkill.name }}</span>
-            </div>
-            <app-button
-              [label]="activeSkill.name"
-              variant="primary"
-              [disabled]="skillState.disabled"
-              class="w-full"
-              (click)="activateSkill()"
-            ></app-button>
-            <p class="text-xs text-[#A4A4B5]">{{ skillState.hint }}</p>
-          </div>
-        </div>
-      </app-panel>
-
-      <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-[#A4A4B5]">
-        <div class="flex items-center gap-2">
-          <span class="text-white">Sala {{ run.currentRoom() }} / {{ run.totalRooms() }}</span>
-          <app-tag
-            [label]="salaTipoLabel"
-            [tone]="salaTipoTone"
-          ></app-tag>
-        </div>
-        <div class="flex gap-2">
-          <app-tag label="Tick-based" tone="muted"></app-tag>
-          <app-tag label="Auto" tone="accent"></app-tag>
-        </div>
-      </div>
-    </div>
-  `
+  imports: [CommonModule, RunDebugPanelComponent],
+  templateUrl: "./run-battle.page.html",
+  styleUrls: ["./run-battle.page.scss"],
 })
 export class RunBattlePageComponent implements OnInit, OnDestroy {
-  @ViewChild('logList') logList?: ElementRef<HTMLDivElement>;
+  readonly run = inject(RunStateService);
+  private readonly battle = inject(BattleEngineService);
+  readonly ui = inject(UiStateService);
+  readonly player = inject(PlayerStateService);
+  readonly enemy = inject(EnemyStateService);
 
-  protected readonly enemyState = inject(EnemyStateService);
-  protected readonly playerState = inject(PlayerStateService);
-  protected readonly run = inject(RunStateService);
-  protected readonly ui = inject(UiStateService);
-  protected readonly battle = inject(BattleEngineService);
-  protected readonly skinState = inject(SkinStateService);
+  readonly attackFx = signal<AttackFx[]>([]);
+  readonly visibleFloats = signal<FloatEvent[]>([]);
+  readonly dotStacks = signal<Record<ActorKey, number>>({
+    player: 0,
+    enemy: 0,
+  });
+  readonly impactFlags = signal<
+    Record<ActorKey, Partial<Record<ImpactTone, boolean>>>
+  >({
+    player: {},
+    enemy: {},
+  });
+  readonly hitPauseActive = signal(false);
+  readonly evolutionOverlay = signal<EvolutionVisual | null>(null);
 
-  protected readonly activeSkill = { name: 'Impacto Arcano', cost: 40, cooldown: 0 };
-  protected wow = false;
+  autoplay = true;
+  paused = false;
+  logOpen = true;
+  awaitingPlayer = false;
 
-  constructor() {
-    effect(() => {
-      this.ui.state().logs;
-      queueMicrotask(() => this.scrollLogs());
-    });
-    effect(() => {
-      const evt = this.battle.lastEvent();
-      if (evt === 'superbreak' || evt === 'skill') {
-        this.wow = false;
-        queueMicrotask(() => (this.wow = true));
-      }
-    });
-  }
+  readonly skillCost = 40;
+  readonly cooldownMaxTurns = 3;
+
+  private readonly processedFloatIds = new Set<string>();
+  private lastTurnRef = "";
+  private manualActionTurn = 0;
+  private autoSkillQueuedForTurn: number | null = null;
+  private lastLogId: string | null = null;
+  prefersReducedMotion = false;
+  private prevPlayerStatus = this.player.state().status;
+  private prevEnemyState = this.enemy.enemy().state;
+  private lastEvolutionKey: EvolutionVisualKey | null = null;
+  @ViewChild("logBody") logBody?: ElementRef<HTMLDivElement>;
+  private collapsedTurns = new Set<string>();
+
+  private readonly actorPositions: Record<
+    ActorKey,
+    { x: number; y: number; floatY: number }
+  > = {
+    player: { x: 24, y: 62, floatY: 44 },
+    enemy: { x: 76, y: 62, floatY: 42 },
+  };
+
+  private readonly turnWatcher = effect(
+    () => {
+      const turn = this.battle.currentTurn();
+      this.onTurnChange(turn);
+      this.handleManualGate(turn);
+      this.queueAutoSkill(turn);
+    },
+    { allowSignalWrites: true }
+  );
+
+  private readonly floatWatcher = effect(
+    () => {
+      this.processFloatEvents(this.ui.state().floatEvents);
+    },
+    { allowSignalWrites: true }
+  );
+
+  private readonly logWatcher = effect(
+    () => {
+      this.trackDotFromLog(this.ui.state().logs);
+      this.scrollLogToLatest();
+      this.ensureLatestTurnExpanded();
+    },
+    { allowSignalWrites: true }
+  );
+
+  private readonly breakWatcher = effect(
+    () => {
+      this.detectBreakChanges();
+    },
+    { allowSignalWrites: true }
+  );
+
+  private readonly evolutionWatcher = effect(
+    () => {
+      this.handleEvolutionChange(this.run.activeEvolutionVisual());
+    },
+    { allowSignalWrites: true }
+  );
 
   ngOnInit(): void {
-    this.battle.startLoop();
+    this.awaitingPlayer = !this.autoplay;
+    this.prefersReducedMotion = this.getPrefersReducedMotion();
+    this.ensureLoop();
   }
 
   ngOnDestroy(): void {
     this.battle.stopLoop();
+    this.turnWatcher.destroy();
+    this.floatWatcher.destroy();
+    this.logWatcher.destroy();
+    this.breakWatcher.destroy();
+    this.evolutionWatcher.destroy();
   }
 
-  get enemy() {
-    return this.enemyState.enemy();
+  get currentRoom(): number {
+    return this.run.currentRoom() || 1;
   }
 
-  get player() {
-    return this.playerState.state();
+  get totalRooms(): number {
+    return this.run.totalRooms() || 7;
   }
 
-  get currentSkin() {
-    return this.skinState.currentSkin();
+  get playerState() {
+    return this.player.state();
   }
 
-  get skinSubtitle(): string {
-    return `Skin: ${this.currentSkin.name}`;
+  get enemyState() {
+    return this.enemy.enemy();
   }
 
-  get skinAccentClass(): string {
-    if (this.currentSkin.rarity === 'SSR') return 'skin-ssr';
-    if (this.currentSkin.rarity === 'SR') return 'skin-sr';
-    return 'border-blue-300/30 shadow-[0_0_12px_rgba(122,140,255,0.16)]';
+  get turnTimeline(): TurnLogGroup[] {
+    const map = new Map<number, TurnLogGroup>();
+    const logs = this.ui.state().logs;
+
+    for (const entry of logs) {
+      if (entry.turn <= 0) continue;
+      if (!map.has(entry.turn)) {
+        map.set(entry.turn, {
+          id: `turn-${entry.turn}`,
+          number: entry.turn,
+          actor: entry.actor,
+          actorLabel: this.actorLabel(entry.actor),
+          events: [],
+          summary: [],
+        });
+      }
+      const group = map.get(entry.turn)!;
+      group.events.push(this.formatLogEvent(entry));
+      group.actor = entry.actor;
+      group.actorLabel = this.actorLabel(entry.actor);
+    }
+
+    const groups = Array.from(map.values()).sort((a, b) => b.number - a.number);
+    groups.forEach((group, index) => {
+      group.summary = this.buildTurnSummary(group.events);
+      group.isLatest = index === 0;
+    });
+    return groups;
   }
 
-  get skinGlowClass(): string {
-    return this.currentSkin.rarity === 'SSR' ? 'shadow-[0_0_16px_rgba(255,211,68,0.35)]' : '';
+  get isPlayerBroken(): boolean {
+    return this.playerState.status === "broken";
   }
 
-  get enemyPanelClass(): string {
-    if (this.enemy.state === 'superquebrado') return 'panel-superbroken';
-    if (this.enemy.state === 'quebrado') return 'panel-broken';
-    return '';
+  get isPlayerSuperBroken(): boolean {
+    return this.playerState.status === "superbroken";
   }
 
-  get salaTipoLabel(): string {
-    const tipo = this.run.roomType();
-    if (tipo === 'mini-boss') return 'Mini-boss';
-    if (tipo === 'boss') return 'Boss';
-    return 'Normal';
+  get isEnemyBroken(): boolean {
+    return this.enemyState.state === "broken";
   }
 
-  get salaTipoTone(): 'accent' | 'warning' | 'danger' | 'muted' {
-    const tipo = this.run.roomType();
-    if (tipo === 'mini-boss') return 'warning';
-    if (tipo === 'boss') return 'danger';
-    return 'accent';
+  get isEnemySuperBroken(): boolean {
+    return this.enemyState.state === "superbroken";
   }
 
-  get skillState(): SkillState {
-    const energy = this.player.attributes.energy;
-    const cd = this.playerState.state().skillCooldown ?? 0;
-    if (this.player.status !== 'normal') return { disabled: true, hint: 'Velvet está quebrada' };
-    if (cd > 0) return { disabled: true, hint: `Recarregando (${cd} turnos)` };
-    if (energy < this.activeSkill.cost) return { disabled: true, hint: 'Sem energia suficiente' };
-    return { disabled: false, hint: 'Pronta - consome energia e aplica multi-hit' };
+  get enemyPreparing(): boolean {
+    return (
+      this.enemyState.state === "preparing" ||
+      !!this.enemyState.attributes.strongAttackReady
+    );
   }
 
-  private scrollLogs(): void {
-    const el = this.logList?.nativeElement;
-    if (el) {
-      el.scrollTop = el.scrollHeight;
+  get skillCooldown(): number {
+    return this.playerState.skillCooldown ?? 0;
+  }
+
+  get skillOnCooldown(): boolean {
+    return this.skillCooldown > 0;
+  }
+
+  get skillEnergyBlocked(): boolean {
+    return this.playerState.attributes.energy < this.skillCost;
+  }
+
+  get skillReady(): boolean {
+    return this.battle.canUseActiveSkill() && !this.paused;
+  }
+
+  get skillCooldownRatio(): number {
+    if (!this.skillOnCooldown) return 0;
+    return Math.min(1, this.skillCooldown / this.cooldownMaxTurns);
+  }
+
+  get skillButtonEnabled(): boolean {
+    if (this.paused || this.run.phase() !== "battle") return false;
+    if (!this.autoplay && !this.awaitingPlayer) return false;
+    return this.skillReady;
+  }
+
+  get activeEvolutionKey(): EvolutionVisualKey | null {
+    return this.run.activeEvolutionVisual();
+  }
+
+  get activeEvolution(): EvolutionVisual | null {
+    const key = this.activeEvolutionKey;
+    return key ? EVOLUTION_VISUALS[key] : null;
+  }
+
+  get hasBattleActors(): boolean {
+    return (
+      !!this.player.state()?.attributes && !!this.enemy.enemy()?.attributes
+    );
+  }
+
+  get manualActionReady(): boolean {
+    return (
+      !this.autoplay &&
+      !this.paused &&
+      this.awaitingPlayer &&
+      this.run.phase() === "battle"
+    );
+  }
+
+  togglePause(): void {
+    if (this.paused) {
+      this.paused = false;
+      this.ensureLoop();
+    } else {
+      this.paused = true;
+      this.battle.stopLoop();
     }
   }
 
-  activateSkill(): void {
+  toggleAutoplay(): void {
+    this.autoplay = !this.autoplay;
+    const turn = this.battle.currentTurn();
+    this.manualActionTurn = turn.number;
+    this.awaitingPlayer = !this.autoplay ? turn.actor === "player" : false;
+    if (this.paused) return;
+    if (this.autoplay) {
+      this.ensureLoop();
+    } else if (!this.awaitingPlayer) {
+      this.ensureLoop();
+    } else {
+      this.battle.stopLoop();
+    }
+  }
+
+  toggleLog(): void {
+    this.logOpen = !this.logOpen;
+  }
+
+  toggleTurnCollapse(id: string): void {
+    if (this.collapsedTurns.has(id)) {
+      this.collapsedTurns.delete(id);
+    } else {
+      this.collapsedTurns.add(id);
+    }
+  }
+
+  isTurnCollapsed(id: string): boolean {
+    return this.collapsedTurns.has(id);
+  }
+
+  handleAutoAttack(): void {
+    if (!this.manualActionReady) return;
+    this.awaitingPlayer = false;
+    this.manualActionTurn = this.battle.currentTurn().number;
+    this.ensureLoop();
+  }
+
+  handleActiveSkill(): void {
+    if (!this.skillButtonEnabled) return;
     this.battle.triggerActiveSkill();
+    if (!this.autoplay) {
+      this.awaitingPlayer = false;
+      this.manualActionTurn = this.battle.currentTurn().number;
+    }
+    this.ensureLoop();
+  }
+
+  abandonRun(): void {
+    this.battle.stopLoop();
+    this.paused = false;
+    this.run.fleeRun();
+  }
+
+  hasDot(target: ActorKey): boolean {
+    return (this.dotStacks()[target] ?? 0) > 0;
+  }
+
+  meterWidth(current: number, max: number): string {
+    if (max <= 0) return "0%";
+    return `${Math.max(0, Math.min(100, Math.round((current / max) * 100)))}%`;
+  }
+
+  isHpLow(current: number, max: number): boolean {
+    if (max <= 0) return false;
+    return current / max <= 0.25;
+  }
+
+  isPostureLow(current: number, max: number): boolean {
+    if (max <= 0) return false;
+    return current / max <= 0.2;
+  }
+
+  hasImpact(actor: ActorKey, tone: ImpactTone): boolean {
+    return !!this.impactFlags()[actor]?.[tone];
+  }
+
+  onImpactAnimationEnd(actor: ActorKey, event: AnimationEvent): void {
+    if (event.target !== event.currentTarget) return;
+    const tone = this.animationToneFor(event.animationName);
+    if (!tone) return;
+    this.clearImpactTone(actor, tone);
+  }
+
+  trackFloat(_: number, item: FloatEvent): string {
+    return item.id;
+  }
+
+  trackFx(_: number, item: AttackFx): string {
+    return item.id;
+  }
+
+  trackTurn(_: number, item: TurnLogGroup): string {
+    return item.id;
+  }
+
+  trackTurnEvent(_: number, item: TurnLogEvent): string {
+    return item.id;
+  }
+
+  positionFor(actor: ActorKey): { x: string; y: string } {
+    const pos = this.actorPositions[actor];
+    return { x: `${pos.x}%`, y: `${pos.y}%` };
+  }
+
+  floatTone(event: FloatEvent): string {
+    if (this.isHeal(event)) return "heal";
+    if (event.type === "crit") return "crit";
+    if (event.type === "dot") return "dot";
+    if (event.type === "posture") return "posture";
+    return "dmg";
+  }
+
+  floatPosition(event: FloatEvent): { x: string; y: string } {
+    const target: ActorKey = event.target === "player" ? "player" : "enemy";
+    const pos = this.actorPositions[target];
+    const offset = this.floatOffset(event, target);
+    const jitter = this.floatJitter(event.id);
+    return {
+      x: `calc(${pos.x}% + ${offset.x}px)`,
+      y: `calc(${pos.floatY + jitter}% + ${offset.y}px)`,
+    };
+  }
+
+  removeFloat(id: string): void {
+    this.visibleFloats.update((list) => list.filter((item) => item.id !== id));
+  }
+
+  removeFx(id: string): void {
+    this.attackFx.update((list) => list.filter((item) => item.id !== id));
+  }
+
+  private scrollLogToLatest(): void {
+    if (!this.logBody) return;
+    const latestId = this.latestTurnGroupId();
+    if (!latestId) return;
+    const raf =
+      typeof requestAnimationFrame === "function"
+        ? requestAnimationFrame
+        : (fn: FrameRequestCallback) => fn(0);
+    raf(() => {
+      const container = this.logBody?.nativeElement;
+      if (!container) return;
+      const target = container.querySelector<HTMLElement>(
+        `[data-turn-id="${latestId}"]`
+      );
+      if (!target) {
+        container.scrollTop = 0;
+        return;
+      }
+      container.scrollTop = target.offsetTop;
+    });
+  }
+
+  private onTurnChange(turn: { number: number; actor: TimelineActor }): void {
+    const key = `${turn.number}-${turn.actor}`;
+    if (this.lastTurnRef === key) {
+      return;
+    }
+    this.lastTurnRef = key;
+    if (turn.actor !== "player") {
+      this.autoSkillQueuedForTurn = null;
+    }
+  }
+
+  private handleManualGate(turn: {
+    number: number;
+    actor: TimelineActor;
+  }): void {
+    if (this.autoplay || this.paused) {
+      return;
+    }
+    if (this.awaitingPlayer) {
+      this.battle.stopLoop();
+      return;
+    }
+    if (turn.actor === "player" && turn.number > this.manualActionTurn) {
+      this.awaitingPlayer = true;
+      this.battle.stopLoop();
+    }
+  }
+
+  private queueAutoSkill(turn: { number: number; actor: TimelineActor }): void {
+    if (!this.autoplay || this.paused || this.run.phase() !== "battle") return;
+    if (turn.actor !== "player") return;
+    if (!this.battle.canUseActiveSkill()) return;
+    if (this.autoSkillQueuedForTurn === turn.number) return;
+    this.autoSkillQueuedForTurn = turn.number;
+    this.battle.triggerActiveSkill();
+  }
+
+  private ensureLoop(): void {
+    if (this.paused || this.run.phase() !== "battle") {
+      return;
+    }
+    if (this.autoplay || (!this.autoplay && !this.awaitingPlayer)) {
+      this.battle.startLoop();
+    }
+  }
+
+  private processFloatEvents(floats: FloatEvent[]): void {
+    if (!floats?.length) return;
+    for (const event of floats) {
+      if (!event?.id || !event.target) continue;
+      const target = event.target as ActorKey;
+      if (this.processedFloatIds.has(event.id)) continue;
+      this.processedFloatIds.add(event.id);
+      this.spawnAttackFx(event);
+      this.visibleFloats.update((list) => [...list, event].slice(-10));
+      this.enqueueImpactFromFloat(event);
+      if (event.type === "dot") {
+        this.dotStacks.update((state) => ({
+          ...state,
+          [target]: Math.max(0, (state[target] ?? 0) - 1),
+        }));
+      }
+    }
+  }
+
+  private spawnAttackFx(event: FloatEvent): void {
+    const to: ActorKey = event.target === "player" ? "player" : "enemy";
+    const from: ActorKey = to === "enemy" ? "player" : "enemy";
+    const tone = this.fxTone(event);
+    const entry: AttackFx = {
+      id: `${event.id}-fx`,
+      from,
+      to,
+      tone,
+    };
+    this.attackFx.update((list) => [...list, entry].slice(-12));
+  }
+
+  private fxTone(event: FloatEvent): FxTone {
+    if (event.type === "crit") return "crit";
+    if (event.type === "dot") return "dot";
+    if (event.type === "posture") return "posture";
+    return "dmg";
+  }
+
+  private trackDotFromLog(logs: UiLogEntry[]): void {
+    const last = logs.at(-1);
+    if (!last || last.id === this.lastLogId) return;
+    this.lastLogId = last.id;
+    const lower = last.text.toLowerCase();
+    if (lower.includes("dot applied")) {
+      this.dotStacks.update((state) => ({ ...state, enemy: 2 }));
+    }
+    if (lower.includes("suffered dot")) {
+      this.dotStacks.update((state) => ({ ...state, player: 2 }));
+    }
+  }
+
+  private enqueueImpactFromFloat(event: FloatEvent): void {
+    const actor: ActorKey = event.target === "player" ? "player" : "enemy";
+    if (event.type === "crit") {
+      this.triggerImpact(actor, "hit-lg");
+      this.triggerImpact(actor, "crit-flare");
+      this.triggerHitPause(2);
+    } else if (event.type === "dmg") {
+      this.triggerImpact(actor, "hit-sm");
+    } else if (event.type === "dot") {
+      this.triggerImpact(actor, "hit-dot");
+    } else if (event.type === "posture") {
+      this.triggerImpact(actor, "hit-posture");
+    }
+  }
+
+  private detectBreakChanges(): void {
+    const playerStatus = this.player.state().status;
+    const enemyState = this.enemy.enemy().state;
+
+    if (playerStatus !== this.prevPlayerStatus && playerStatus) {
+      this.handleBreakCue("player", playerStatus);
+      this.prevPlayerStatus = playerStatus;
+    }
+
+    if (enemyState !== this.prevEnemyState && enemyState) {
+      this.handleBreakCue("enemy", enemyState);
+      this.prevEnemyState = enemyState;
+    }
+  }
+
+  private handleBreakCue(actor: ActorKey, status: unknown): void {
+    if (status === "superbroken") {
+      this.triggerImpact(actor, "superbreak");
+      this.triggerHitPause(4);
+    } else if (status === "broken") {
+      this.triggerImpact(actor, "break");
+      this.triggerHitPause(3);
+    }
+  }
+
+  private triggerImpact(actor: ActorKey, tone: ImpactTone): void {
+    if (this.prefersReducedMotion) return;
+    const snapshot = this.impactFlags();
+    const actorFlags = { ...(snapshot[actor] ?? {}) };
+    actorFlags[tone] = false;
+    this.impactFlags.set({ ...snapshot, [actor]: actorFlags });
+    const raf =
+      typeof requestAnimationFrame === "function"
+        ? requestAnimationFrame
+        : (fn: FrameRequestCallback) => fn(0);
+    raf(() => {
+      const next = this.impactFlags();
+      const flags = { ...(next[actor] ?? {}) };
+      flags[tone] = true;
+      this.impactFlags.set({ ...next, [actor]: flags });
+    });
+  }
+
+  private clearImpactTone(actor: ActorKey, tone: ImpactTone): void {
+    const snapshot = this.impactFlags();
+    const flags = { ...(snapshot[actor] ?? {}) };
+    if (!flags[tone]) return;
+    delete flags[tone];
+    this.impactFlags.set({ ...snapshot, [actor]: flags });
+  }
+
+  private animationToneFor(name: string): ImpactTone | null {
+    switch (name) {
+      case "hit-shake-sm":
+        return "hit-sm";
+      case "hit-shake-lg":
+        return "hit-lg";
+      case "hit-tick":
+        return "hit-dot";
+      case "hit-posture":
+        return "hit-posture";
+      case "crit-flare":
+        return "crit-flare";
+      case "break-pulse":
+        return "break";
+      case "superbreak-pulse":
+        return "superbreak";
+      default:
+        return null;
+    }
+  }
+
+  private triggerHitPause(frames: number): void {
+    if (this.prefersReducedMotion || this.paused || frames <= 0) return;
+    this.hitPauseActive.set(true);
+    let remaining = frames;
+    const raf =
+      typeof requestAnimationFrame === "function"
+        ? requestAnimationFrame
+        : (fn: FrameRequestCallback) => fn(0);
+    const step = () => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        this.hitPauseActive.set(false);
+        return;
+      }
+      raf(step);
+    };
+    raf(step);
+  }
+
+  private getPrefersReducedMotion(): boolean {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    )
+      return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  private handleEvolutionChange(key: EvolutionVisualKey | null): void {
+    if (!key) {
+      this.lastEvolutionKey = null;
+      this.evolutionOverlay.set(null);
+      return;
+    }
+    if (this.lastEvolutionKey === key && this.evolutionOverlay()) {
+      return;
+    }
+    this.lastEvolutionKey = key;
+    const visual = EVOLUTION_VISUALS[key];
+    if (!visual) return;
+    this.evolutionOverlay.set(visual);
+    this.triggerHitPause(3);
+  }
+
+  private isHeal(event: FloatEvent): boolean {
+    return event.value?.trim().startsWith("+") ?? false;
+  }
+
+  private floatOffset(
+    event: FloatEvent,
+    target: ActorKey
+  ): { x: number; y: number } {
+    const heal = this.isHeal(event);
+    if (target === "player") {
+      return heal ? { x: 46, y: -10 } : { x: -48, y: -14 };
+    }
+    if (event.type === "dot" || event.type === "posture") {
+      return { x: 0, y: -64 };
+    }
+    return heal ? { x: 48, y: -10 } : { x: 44, y: -14 };
+  }
+
+  private floatJitter(id: string | undefined): number {
+    if (!id?.length) return 0;
+    return (id.charCodeAt(0) % 7) - 3;
+  }
+
+  private actorLabel(actor: TimelineActor): string {
+    if (actor === "player") return "Velvet";
+    if (actor === "enemy") return "Enemy";
+    return "System";
+  }
+
+  private formatLogEvent(entry: UiLogEntry): TurnLogEvent {
+    const spec = this.logDisplaySpec(entry);
+    return {
+      id: entry.id,
+      text: spec.text,
+      icon: spec.icon,
+      tone: spec.tone,
+      kind: entry.kind,
+      target: entry.target as ActorKey | undefined,
+      value: spec.value,
+    };
+  }
+
+  private logDisplaySpec(entry: UiLogEntry): {
+    icon: string;
+    text: string;
+    tone: LogTone;
+    value?: number;
+  } {
+    const lower = entry.text.toLowerCase();
+    const value = typeof entry.value === "number" ? entry.value : undefined;
+
+    switch (entry.kind) {
+      case "damage":
+        return {
+          icon: "\u{1F5E1}",
+          text: value !== undefined ? `${value} damage` : "Damage dealt",
+          tone: "damage",
+          value,
+        };
+      case "multihit":
+        return {
+          icon: "\u{1F4A5}",
+          text: value !== undefined ? `+${value} multi-hit` : "Multi-hit bonus",
+          tone: "multihit",
+          value,
+        };
+      case "dot": {
+        const applied = lower.includes("apply") || lower.includes("stack");
+        return {
+          icon: "\u{2620}",
+          text: applied ? "DoT applied" : "DoT tick",
+          tone: "dot",
+        };
+      }
+      case "posture":
+        return {
+          icon: "\u{1F6E1}",
+          text: value !== undefined ? `-${value} posture` : "Posture reduced",
+          tone: "posture",
+          value,
+        };
+      case "break":
+        return {
+          icon: "\u{1F480}",
+          text: "Break!",
+          tone: "break",
+        };
+      case "superbreak":
+        return {
+          icon: "\u{1F480}",
+          text: "Superbreak!",
+          tone: "superbreak",
+        };
+      default:
+        return {
+          icon:
+            entry.actor === "player"
+              ? "\u{1F5E1}"
+              : entry.actor === "enemy"
+                ? "\u{1F6E1}"
+                : "?",
+          text: this.compactText(entry.text),
+          tone: entry.actor,
+        };
+    }
+  }
+
+  private compactText(text: string): string {
+    if (!text) return "";
+    const trimmed = text
+      .replace(/\s+/g, " ")
+      .replace(/[.?!]+$/g, "")
+      .trim();
+    if (trimmed.length <= 48) return trimmed;
+    return `${trimmed.slice(0, 45)}?`;
+  }
+
+  private buildTurnSummary(events: TurnLogEvent[]): string[] {
+    let totalDamage = 0;
+    let bonusDamage = 0;
+    let dotActive = false;
+    let postureHit = false;
+    let broke = false;
+    let superBreak = false;
+
+    for (const event of events) {
+      if (event.kind === "damage" && typeof event.value === "number") {
+        totalDamage += event.value;
+      }
+      if (event.kind === "multihit" && typeof event.value === "number") {
+        bonusDamage += event.value;
+      }
+      if (event.kind === "dot") {
+        dotActive = true;
+      }
+      if (event.kind === "posture") {
+        postureHit = true;
+      }
+      if (event.kind === "break") {
+        broke = true;
+      }
+      if (event.kind === "superbreak") {
+        superBreak = true;
+      }
+    }
+
+    const summary: string[] = [];
+    const combinedDamage = totalDamage + bonusDamage;
+    if (combinedDamage > 0) {
+      summary.push(`${combinedDamage} total damage`);
+    }
+    if (dotActive) {
+      summary.push("DoT active");
+    }
+    if (postureHit) {
+      summary.push("Posture reduced");
+    }
+    if (superBreak) {
+      summary.push("Superbreak confirmed");
+    } else if (broke) {
+      summary.push("Break confirmed");
+    }
+    if (!summary.length) {
+      summary.push("No major changes");
+    }
+    return summary;
+  }
+
+  private latestTurnGroupId(): string | null {
+    const logs = this.ui.state().logs;
+    let latest = 0;
+    for (const entry of logs) {
+      if (entry.turn > latest) {
+        latest = entry.turn;
+      }
+    }
+    return latest > 0 ? `turn-${latest}` : null;
+  }
+
+  private ensureLatestTurnExpanded(): void {
+    const latestId = this.latestTurnGroupId();
+    if (!latestId) return;
+    if (this.collapsedTurns.has(latestId)) {
+      this.collapsedTurns.delete(latestId);
+    }
+  }
+
+  onEvolutionOverlayEnd(): void {
+    this.evolutionOverlay.set(null);
   }
 }

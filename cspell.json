@@ -1,0 +1,16 @@
+{
+  "language": "en",
+  "dictionaries": ["typescript", "node"],
+  "ignorePaths": ["node_modules", "dist", ".angular", "*.config.*"],
+  "words": [
+    "superbreak",
+    "superbroken",
+    "multihit",
+    "dot",
+    "cooldown",
+    "hitcount",
+    "lifesteal",
+    "posture",
+    "regen"
+  ]
+}

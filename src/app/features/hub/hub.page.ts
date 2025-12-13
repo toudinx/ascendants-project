@@ -87,7 +87,7 @@ import { SkinStateService } from '../../core/services/skin-state.service';
           <div class="flex items-center justify-between">
             <div class="space-y-1 text-sm text-[#A4A4B5]">
               <p>Rooms cleared: {{ Math.max(0, runState.currentRoom() - 1) }}</p>
-              <p>Evolutions claimed: {{ runState.evolucoes().length }}</p>
+              <p>Evolutions claimed: {{ runState.evolutions().length }}</p>
             </div>
             <premium-tease size="compact"></premium-tease>
           </div>

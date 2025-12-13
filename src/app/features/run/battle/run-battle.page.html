@@ -1,0 +1,491 @@
+﻿<div
+  class="battle-root"
+  [class.is-paused]="paused"
+  [class.hit-pause]="hitPauseActive()"
+  [class.reduce-motion]="prefersReducedMotion"
+  [class.ruina-evolved]="activeEvolutionKey === 'ruina'"
+  [class.impacto-evolved]="activeEvolutionKey === 'impacto'"
+  [class.critico-evolved]="activeEvolutionKey === 'critico'"
+>
+  <header class="battle-header">
+    <div class="header-left">
+      <div class="room-chip">
+        <span class="label">Sala</span>
+        <strong>{{ currentRoom }}</strong>
+        <span>/ {{ totalRooms }}</span>
+      </div>
+      <div class="room-type">{{ run.roomType() | uppercase }}</div>
+    </div>
+    <div class="header-actions">
+      <button
+        type="button"
+        class="chip ghost"
+        (click)="toggleAutoplay()"
+        [attr.aria-pressed]="autoplay"
+      >
+        <span class="dot" [class.on]="autoplay"></span>
+        <span>{{ autoplay ? 'Autoplay ON' : 'Manual' }}</span>
+      </button>
+      <button
+        type="button"
+        class="icon-button"
+        (click)="togglePause()"
+        [attr.aria-pressed]="paused"
+      >
+        <span class="icon">{{ paused ? '▶' : '⏸' }}</span>
+        <span>{{ paused ? 'Continuar' : 'Pausar' }}</span>
+      </button>
+      <button
+        type="button"
+        class="chip log-toggle"
+        (click)="toggleLog()"
+        [attr.aria-expanded]="logOpen"
+      >
+        <span class="icon">≡</span>
+        <span>{{ logOpen ? 'Fechar log' : 'Abrir log' }}</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="battle-body" *ngIf="hasBattleActors; else battleFallback">
+    <div class="battle-card">
+      <div class="battle-stage">
+        <div class="arena-wrapper">
+          <div class="arena-stage arena">
+            <img
+              class="arena-bg"
+              src="assets/battle/arena/arena_ruin_base.png"
+              alt="Arena"
+            />
+
+            <div
+              class="actor velvet"
+              [class.hit-shake-sm]="hasImpact('player', 'hit-sm')"
+              [class.hit-shake-lg]="hasImpact('player', 'hit-lg')"
+              [class.hit-tick]="hasImpact('player', 'hit-dot')"
+              [class.hit-posture]="hasImpact('player', 'hit-posture')"
+              [class.crit-flare]="hasImpact('player', 'crit-flare')"
+              [class.break-pulse]="hasImpact('player', 'break')"
+              [class.superbreak-pulse]="hasImpact('player', 'superbreak')"
+              [class.hit-flash]="ui.state().flashPlayer"
+              [class.hit-shake]="ui.state().flashPlayer"
+              [class.broken]="isPlayerBroken"
+              [class.superbroken]="isPlayerSuperBroken"
+              (animationend)="onImpactAnimationEnd('player', $event)"
+            >
+              <div class="status-sigil dot" *ngIf="hasDot('player')">DoT</div>
+              <img
+                class="shadow"
+                src="assets/battle/fx/shadow_ground.png"
+                alt=""
+              />
+              <img
+                class="sprite"
+                src="assets/battle/characters/velvet_battle_idle.png"
+                alt="Velvet"
+              />
+            </div>
+
+            <div
+              class="actor enemy"
+              [class.hit-shake-sm]="hasImpact('enemy', 'hit-sm')"
+              [class.hit-shake-lg]="hasImpact('enemy', 'hit-lg')"
+              [class.hit-tick]="hasImpact('enemy', 'hit-dot')"
+              [class.hit-posture]="hasImpact('enemy', 'hit-posture')"
+              [class.crit-flare]="hasImpact('enemy', 'crit-flare')"
+              [class.break-pulse]="hasImpact('enemy', 'break')"
+              [class.superbreak-pulse]="hasImpact('enemy', 'superbreak')"
+              [class.hit-flash]="ui.state().flashEnemy"
+              [class.hit-shake]="ui.state().flashEnemy"
+              [class.broken]="isEnemyBroken"
+              [class.superbroken]="isEnemySuperBroken"
+              (animationend)="onImpactAnimationEnd('enemy', $event)"
+            >
+              <div class="status-sigil alert" *ngIf="enemyPreparing">ALERT</div>
+              <div class="status-sigil dot" *ngIf="hasDot('enemy')">DoT</div>
+              <img
+                class="shadow"
+                src="assets/battle/fx/shadow_ground.png"
+                alt=""
+              />
+              <img
+                class="sprite"
+                src="assets/battle/creatures/enemy_generic_idle.png"
+                alt="Enemy"
+              />
+            </div>
+
+            <div class="fx-layer">
+              <div
+                *ngFor="let fx of attackFx(); trackBy: trackFx"
+                class="attack-fx"
+                [ngClass]="fx.tone"
+                [style.--from-x]="positionFor(fx.from).x"
+                [style.--from-y]="positionFor(fx.from).y"
+                [style.--to-x]="positionFor(fx.to).x"
+                [style.--to-y]="positionFor(fx.to).y"
+                (animationend)="removeFx(fx.id)"
+              ></div>
+
+              <div
+                *ngFor="let float of visibleFloats(); trackBy: trackFloat"
+                class="float-chip"
+                [ngClass]="floatTone(float)"
+                [style.left]="floatPosition(float).x"
+                [style.top]="floatPosition(float).y"
+                (animationend)="removeFloat(float.id)"
+              >
+                {{ float.value }}
+              </div>
+            </div>
+
+            <div class="pause-veil" *ngIf="paused">
+              <div class="pause-copy">
+                <span class="pause-icon">⏸</span>
+                <span>Combate pausado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="battle-hud">
+        <div class="evolution-banner" *ngIf="activeEvolution">
+          <div class="badge" [attr.title]="activeEvolution.description">
+            <span class="icon">{{ activeEvolution.icon || '✶' }}</span>
+            <span class="label">{{ activeEvolution.name }}</span>
+          </div>
+        </div>
+        <div class="hud-status-row">
+          <div
+            class="status-card player"
+            [ngClass]="{
+              broken: isPlayerBroken,
+              superbroken: isPlayerSuperBroken,
+              'hp-low': isHpLow(playerState.attributes.hp, playerState.attributes.maxHp),
+              'posture-low': isPostureLow(playerState.attributes.posture, playerState.attributes.maxPosture)
+            }"
+          >
+            <div class="status-header">
+              <div>
+                <strong>Velvet</strong>
+                <span class="subtitle">Ascendant</span>
+              </div>
+              <div class="state-pills">
+                <span
+                  class="status-pill dot"
+                  [class.dot-pulse]="hasImpact('player', 'hit-dot')"
+                  *ngIf="hasDot('player')"
+                  >DoT</span
+                >
+                <span class="status-pill break" *ngIf="isPlayerBroken"
+                  >Quebrada {{ playerState.breakTurns || 0 }}T</span
+                >
+                <span class="status-pill super" *ngIf="isPlayerSuperBroken"
+                  >Superquebrada {{ playerState.breakTurns || 0 }}T</span
+                >
+              </div>
+            </div>
+            <div class="status-meter">
+              <span class="label">HP</span>
+              <div class="meter">
+                <div
+                  class="meter-fill hp"
+                  [ngClass]="{ 'crit-active': hasImpact('player', 'hit-lg') }"
+                  [style.width]="meterWidth(playerState.attributes.hp, playerState.attributes.maxHp)"
+                ></div>
+              </div>
+              <span class="meter-value"
+                >{{ playerState.attributes.hp }} / {{
+                playerState.attributes.maxHp }}</span
+              >
+            </div>
+            <div class="status-meter">
+              <span class="label">EP</span>
+              <div class="meter">
+                <div
+                  class="meter-fill ep"
+                  [style.width]="meterWidth(playerState.attributes.energy, playerState.attributes.maxEnergy)"
+                ></div>
+              </div>
+              <span class="meter-value"
+                >{{ playerState.attributes.energy }} / {{
+                playerState.attributes.maxEnergy }}</span
+              >
+            </div>
+            <div class="status-meter">
+              <span class="label">Postura</span>
+              <div class="meter">
+                <div
+                  class="meter-fill shield"
+                  [ngClass]="{ 'posture-spark': hasImpact('player', 'hit-posture') }"
+                  [style.width]="meterWidth(playerState.attributes.posture, playerState.attributes.maxPosture)"
+                ></div>
+              </div>
+              <span class="meter-value"
+                >{{ playerState.attributes.posture }} / {{
+                playerState.attributes.maxPosture }}</span
+              >
+            </div>
+          </div>
+
+          <div
+            class="status-card enemy"
+            [ngClass]="{
+              broken: isEnemyBroken,
+              superbroken: isEnemySuperBroken,
+              'hp-low': isHpLow(enemyState.attributes.hp, enemyState.attributes.maxHp),
+              'posture-low': isPostureLow(enemyState.attributes.posture, enemyState.attributes.maxPosture)
+            }"
+          >
+            <div class="status-header">
+              <div>
+                <strong>{{ enemyState.attributes.name }}</strong>
+                <span class="subtitle" *ngIf="enemyPreparing"
+                  >Preparando ataque</span
+                >
+                <span class="subtitle" *ngIf="!enemyPreparing"
+                  >{{ enemyState.state | uppercase }}</span
+                >
+              </div>
+              <div class="state-pills">
+                <span class="status-pill alert" *ngIf="enemyPreparing"
+                  >ALERT</span
+                >
+                <span class="status-pill break" *ngIf="isEnemyBroken"
+                  >Quebrado {{ enemyState.breakTurns || 0 }}T</span
+                >
+                <span class="status-pill super" *ngIf="isEnemySuperBroken"
+                  >Superquebrado {{ enemyState.breakTurns || 0 }}T</span
+                >
+                <span
+                  class="status-pill dot"
+                  [class.dot-pulse]="hasImpact('enemy', 'hit-dot')"
+                  *ngIf="hasDot('enemy')"
+                  >DoT</span
+                >
+              </div>
+            </div>
+            <div class="status-meter">
+              <span class="label">HP</span>
+              <div class="meter">
+                <div
+                  class="meter-fill hp"
+                  [ngClass]="{ 'crit-active': hasImpact('enemy', 'hit-lg') }"
+                  [style.width]="meterWidth(enemyState.attributes.hp, enemyState.attributes.maxHp)"
+                ></div>
+              </div>
+              <span class="meter-value"
+                >{{ enemyState.attributes.hp }} / {{ enemyState.attributes.maxHp
+                }}</span
+              >
+            </div>
+            <div class="status-meter">
+              <span class="label">Postura</span>
+              <div class="meter">
+                <div
+                  class="meter-fill shield"
+                  [ngClass]="{ 'posture-spark': hasImpact('enemy', 'hit-posture') }"
+                  [style.width]="meterWidth(enemyState.attributes.posture, enemyState.attributes.maxPosture)"
+                ></div>
+              </div>
+              <span class="meter-value"
+                >{{ enemyState.attributes.posture }} / {{
+                enemyState.attributes.maxPosture }}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="hud-actions">
+          <div class="action-hint">
+            <span *ngIf="autoplay"
+              >Autoplay ativo: Velvet ataca e usa a habilidade quando
+              pronta.</span
+            >
+            <span *ngIf="!autoplay && awaitingPlayer"
+              >Modo manual: escolha a ação para o turno.</span
+            >
+            <span *ngIf="!autoplay && !awaitingPlayer"
+              >Aguardando próximo turno do jogador...</span
+            >
+          </div>
+          <div class="action-buttons">
+            <button
+              type="button"
+              class="action-btn primary"
+              [class.indicator]="autoplay"
+              [disabled]="!manualActionReady"
+              (click)="handleAutoAttack()"
+            >
+              <div class="action-label">
+                <span>Autoataque</span>
+                <small *ngIf="autoplay">Indicador</small>
+                <small *ngIf="!autoplay">Executar turno</small>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              class="action-btn skill"
+              [ngClass]="{
+                ready: skillButtonEnabled && !skillOnCooldown && !skillEnergyBlocked,
+                cooldown: skillOnCooldown,
+                blocked: skillEnergyBlocked
+              }"
+              [disabled]="!skillButtonEnabled"
+              (click)="handleActiveSkill()"
+            >
+              <div class="action-label">
+                <span>Habilidade ativa</span>
+                <small>Custo {{ skillCost }} EP</small>
+              </div>
+              <div class="skill-state" *ngIf="skillOnCooldown">Em cooldown</div>
+              <div
+                class="skill-state"
+                *ngIf="skillEnergyBlocked && !skillOnCooldown"
+              >
+                EP insuficiente
+              </div>
+              <div
+                class="skill-state highlight"
+                *ngIf="skillButtonEnabled && !skillOnCooldown && !skillEnergyBlocked"
+              >
+                Pronta
+              </div>
+              <div
+                class="cooldown-veil"
+                *ngIf="skillOnCooldown"
+                [style.--cooldown]="skillCooldownRatio"
+              ></div>
+            </button>
+          </div>
+
+          <div class="action-toggles">
+            <button
+              type="button"
+              class="chip ghost"
+              (click)="toggleAutoplay()"
+              [attr.aria-pressed]="autoplay"
+            >
+              <span class="dot" [class.on]="autoplay"></span>
+              <span>{{ autoplay ? 'Autoplay ON' : 'Manual' }}</span>
+            </button>
+            <button type="button" class="chip ghost" (click)="togglePause()">
+              <span class="icon">{{ paused ? '▶' : '⏸' }}</span>
+              <span>{{ paused ? 'Continuar' : 'Pausar' }}</span>
+            </button>
+            <button type="button" class="chip ghost" (click)="toggleLog()">
+              <span class="icon">≡</span>
+              <span>{{ logOpen ? 'Fechar log' : 'Abrir log' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="log-dock" [class.open]="logOpen" aria-label="Action log">
+      <div class="log-dock__header">
+        <div class="log-title">
+          <span class="icon">ƒ%­</span>
+          <span>Combat Log</span>
+        </div>
+        <button type="button" class="chip ghost" (click)="toggleLog()">
+          {{ logOpen ? 'Close' : 'Open' }}
+        </button>
+      </div>
+      <div #logBody class="log-dock__body" role="region" aria-live="polite">
+        <ng-container *ngIf="turnTimeline.length; else placeholderLog">
+          <div
+            *ngFor="let turn of turnTimeline; trackBy: trackTurn"
+            class="log-turn"
+            [class.collapsed]="isTurnCollapsed(turn.id)"
+            [attr.data-turn-id]="turn.id"
+          >
+            <button
+              type="button"
+              class="log-turn__header"
+              (click)="toggleTurnCollapse(turn.id)"
+              [attr.aria-expanded]="!isTurnCollapsed(turn.id)"
+            >
+              <div class="log-turn__meta">
+                <span class="log-turn__label">Turn {{ turn.number }}</span>
+                <span class="log-turn__actor"
+                  >{{ turn.actorLabel | uppercase }}</span
+                >
+              </div>
+              <div class="log-turn__status">
+                <span class="log-turn__badge" *ngIf="turn.isLatest">LIVE</span>
+                <span class="log-turn__caret" aria-hidden="true"></span>
+              </div>
+            </button>
+            <div class="log-turn__body" *ngIf="!isTurnCollapsed(turn.id)">
+              <div class="log-turn__events">
+                <div
+                  *ngFor="let event of turn.events; trackBy: trackTurnEvent"
+                  class="log-event"
+                  [ngClass]="event.tone"
+                >
+                  <span class="log-event__icon">{{ event.icon }}</span>
+                  <span class="log-event__text">{{ event.text }}</span>
+                </div>
+              </div>
+              <div class="turn-summary">
+                <span class="turn-summary__title">Turn Summary</span>
+                <ul>
+                  <li *ngFor="let item of turn.summary">{{ item }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #placeholderLog>
+          <div class="log-entry">No events yet. Combat syncs here.</div>
+        </ng-template>
+      </div>
+    </aside>
+  </div>
+
+  <ng-template #battleFallback>
+    <div class="pause-overlay">
+      <div class="pause-modal">
+        <div class="pause-title">
+          <span class="icon">?</span>
+          <div>
+            <strong>Combate pausado</strong>
+            <small>Aguardando dados do combate.</small>
+          </div>
+        </div>
+        <div class="pause-actions">
+          <button
+            type="button"
+            class="action-btn primary"
+            (click)="togglePause()"
+          >
+            Continuar
+          </button>
+          <button type="button" class="action-btn ghost" (click)="abandonRun()">
+            Abandonar run
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <div
+    class="evolution-overlay"
+    *ngIf="evolutionOverlay() as evo"
+    (animationend)="onEvolutionOverlayEnd()"
+    [class.reduce-motion]="prefersReducedMotion"
+  >
+    <div class="overlay-card">
+      <div class="icon">{{ evo.icon || '✶' }}</div>
+      <div class="copy">
+        <span class="kicker">Evolução Desbloqueada</span>
+        <strong>{{ evo.name }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <app-run-debug-panel></app-run-debug-panel>
+</div>

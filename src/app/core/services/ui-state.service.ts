@@ -1,7 +1,19 @@
 import { Injectable, signal } from '@angular/core';
 
+export type LogActor = 'player' | 'enemy' | 'system';
+
+export interface UiLogEntry {
+  id: string;
+  turn: number;
+  actor: LogActor;
+  text: string;
+  kind?: LogKind;
+  value?: number;
+  target?: 'player' | 'enemy';
+}
+
 export interface UiState {
-  logs: string[];
+  logs: UiLogEntry[];
   animations: string[];
   modaisAbertos: string[];
   floatEvents: FloatEvent[];
@@ -9,17 +21,33 @@ export interface UiState {
   flashEnemy: boolean;
   transitioning: boolean;
   transitionMessage: string;
+  battleSeed?: number;
 }
 
 export interface FloatEvent {
   id: string;
   value: string;
   type: 'dmg' | 'crit' | 'dot' | 'posture';
+  target?: 'player' | 'enemy';
   pos?: { x: number; y: number };
 }
 
+export type LogKind =
+  | 'damage'
+  | 'multihit'
+  | 'dot'
+  | 'posture'
+  | 'break'
+  | 'superbreak'
+  | 'energy'
+  | 'summary'
+  | 'system';
+
 @Injectable({ providedIn: 'root' })
 export class UiStateService {
+  private logCounter = 0;
+  private floatCounter = 0;
+
   readonly state = signal<UiState>({
     logs: [],
     animations: [],
@@ -28,13 +56,38 @@ export class UiStateService {
     flashPlayer: false,
     flashEnemy: false,
     transitioning: false,
-    transitionMessage: 'Loading...'
+    transitionMessage: 'Loading...',
+    battleSeed: undefined
   });
 
-  pushLog(entry: string): void {
+  pushLog(
+    text: string,
+    actor: LogActor = 'system',
+    turn = 0,
+    id?: string,
+    meta?: Partial<UiLogEntry>
+  ): UiLogEntry {
+    const entry: UiLogEntry = {
+      id: id ?? `log-${++this.logCounter}`,
+      text,
+      actor,
+      turn,
+      kind: meta?.kind ?? 'system',
+      value: meta?.value,
+      target: meta?.target
+    };
     this.state.update(current => ({
       ...current,
-      logs: [entry, ...current.logs].slice(0, 5)
+      logs: [...current.logs, entry].slice(-50)
+    }));
+    return entry;
+  }
+
+  setLogs(entries: UiLogEntry[]): void {
+    this.logCounter = entries.length;
+    this.state.update(current => ({
+      ...current,
+      logs: [...entries].slice(-50)
     }));
   }
 
@@ -62,7 +115,7 @@ export class UiStateService {
   }
 
   pushFloatEvent(event: Omit<FloatEvent, 'id'>): void {
-    const id = Math.random().toString(36).slice(2, 9);
+    const id = `float-${++this.floatCounter}`;
     this.state.update(current => ({
       ...current,
       floatEvents: [{ id, ...event }, ...current.floatEvents].slice(0, 8)
@@ -85,5 +138,20 @@ export class UiStateService {
 
   endTransition(): void {
     this.state.update(current => ({ ...current, transitioning: false }));
+  }
+
+  setBattleSeed(seed: number): void {
+    this.state.update(current => ({ ...current, battleSeed: seed }));
+  }
+
+  resetBattleUi(seed?: number): void {
+    this.logCounter = 0;
+    this.floatCounter = 0;
+    this.state.update(current => ({
+      ...current,
+      logs: [],
+      floatEvents: [],
+      battleSeed: seed ?? current.battleSeed
+    }));
   }
 }

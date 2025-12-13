@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+﻿import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppHeaderComponent, AppPanelComponent, AppCardComponent, AppButtonComponent, AppTagComponent, AppStatBarComponent, PremiumTeaseComponent } from '../../../shared/components';
 import { RunStateService } from '../../../core/services/run-state.service';
@@ -18,20 +18,20 @@ interface RouteOption {
   imports: [CommonModule, AppHeaderComponent, AppPanelComponent, AppCardComponent, AppButtonComponent, AppTagComponent, AppStatBarComponent, PremiumTeaseComponent],
   template: `
     <app-header
-      title="Escolha a Rota Inicial"
-      subtitle="Defina a identidade da sua run: crítico, espiritual ou impacto."
+      title="Choose your Starting Route"
+      subtitle="Define the tone of your run: Critical, Spiritual, or Impact builds."
       kicker="Run"
     ></app-header>
 
     <div class="grid gap-4 md:grid-cols-[1fr,1.2fr]">
-      <app-panel title="Velvet" subtitle="Status rápido">
+      <app-panel title="Velvet" subtitle="Quick status">
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-3">
             <div class="h-24 w-20 rounded-[12px] bg-gradient-to-br from-[#8A7CFF]/40 to-[#E28FE8]/20"></div>
             <div class="flex-1 space-y-2">
               <app-stat-bar label="HP" [current]="player.state().attributes.hp" [max]="player.state().attributes.maxHp" tone="hp"></app-stat-bar>
-              <app-stat-bar label="Postura" [current]="player.state().attributes.posture" [max]="player.state().attributes.maxPosture" tone="posture"></app-stat-bar>
-              <app-stat-bar label="Energia" [current]="player.state().attributes.energy" [max]="player.state().attributes.maxEnergy" tone="energy"></app-stat-bar>
+              <app-stat-bar label="Posture" [current]="player.state().attributes.posture" [max]="player.state().attributes.maxPosture" tone="posture"></app-stat-bar>
+              <app-stat-bar label="Energy" [current]="player.state().attributes.energy" [max]="player.state().attributes.maxEnergy" tone="energy"></app-stat-bar>
             </div>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -54,16 +54,16 @@ interface RouteOption {
             [ngClass]="{ 'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16]': selectedRoute === route.key }"
           >
             <div class="flex flex-col gap-2 text-sm text-[#A4A4B5]">
-              <p>Identidade inicial para sua build.</p>
-              <app-tag *ngIf="selectedRoute === route.key" label="Selecionada" tone="success"></app-tag>
+              <p>Initial identity for your build.</p>
+              <app-tag *ngIf="selectedRoute === route.key" label="Selected" tone="success"></app-tag>
             </div>
           </app-card>
         </div>
         <div class="flex items-center justify-between gap-3">
           <premium-tease size="compact"></premium-tease>
           <div class="flex gap-2">
-            <app-button label="Voltar" variant="ghost" (click)="cancel()"></app-button>
-            <app-button label="Confirmar" variant="primary" [disabled]="!selectedRoute" (click)="confirm()"></app-button>
+            <app-button label="Back" variant="ghost" (click)="cancel()"></app-button>
+            <app-button label="Confirm" variant="primary" [disabled]="!selectedRoute" (click)="confirm()"></app-button>
           </div>
         </div>
       </div>
@@ -75,9 +75,9 @@ export class RunStartPageComponent implements OnInit {
   protected readonly player = inject(PlayerStateService);
 
   protected routes: RouteOption[] = [
-    { key: 'A', name: 'Crítico', fantasy: 'Sentinela + multi-hit', tag: 'A' },
-    { key: 'B', name: 'Espiritual', fantasy: 'Ruína + DoT', tag: 'B' },
-    { key: 'C', name: 'Impacto', fantasy: 'Ressonância + postura', tag: 'C' }
+    { key: 'A', name: 'Critical', fantasy: 'Sentinel + multi-hit', tag: 'A' },
+    { key: 'B', name: 'Spiritual', fantasy: 'Ruin + DoT', tag: 'B' },
+    { key: 'C', name: 'Impact', fantasy: 'Resonance + posture', tag: 'C' }
   ];
 
   protected selectedRoute?: RouteKey;

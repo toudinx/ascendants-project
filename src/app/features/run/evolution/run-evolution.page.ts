@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppHeaderComponent, AppButtonComponent, AppTagComponent, PremiumTeaseComponent, WowBurstComponent, RarityTagComponent, SkinCardComponent } from '../../../shared/components';
 import { RunStateService } from '../../../core/services/run-state.service';
@@ -33,32 +33,32 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
             </div>
           </div>
           <div class="space-y-3">
-            <p class="text-[11px] uppercase tracking-[0.22em] text-[#A4A4B5]">Rota dominante</p>
-            <h3 class="text-2xl font-semibold text-white">Rota {{ dominantRoute }} — Lv {{ dominantLevel }}</h3>
+            <p class="text-[11px] uppercase tracking-[0.22em] text-[#A4A4B5]">Dominant Route</p>
+            <h3 class="text-2xl font-semibold text-white">Dominant Route {{ dominantRoute }} — Lv {{ dominantLevel }}</h3>
             <p class="text-sm text-[#A4A4B5]">{{ evoDescription }}</p>
             <div class="flex flex-wrap gap-2">
               <app-tag label="Tick-based" tone="accent"></app-tag>
-              <app-tag [label]="'Rota ' + dominantRoute" tone="muted"></app-tag>
+              <app-tag [label]="'Route ' + dominantRoute" tone="muted"></app-tag>
             </div>
-            <premium-tease size="full" title="Preview de Skin" subtitle="Skin ascendente liberada após esta run." cta="Ver Skin"></premium-tease>
+            <premium-tease size="full" title="Skin preview" subtitle="Ascendant skin unlocks after this run." cta="View Skin"></premium-tease>
           </div>
         </div>
       </div>
 
       <div class="flex flex-col gap-3 rounded-[16px] border border-white/10 bg-white/5 p-4">
         <div class="flex items-center justify-between">
-          <p class="text-xs uppercase tracking-[0.18em] text-[#A4A4B5]">Skin em uso</p>
+          <p class="text-xs uppercase tracking-[0.18em] text-[#A4A4B5]">Skin in use</p>
           <rarity-tag [rarity]="currentSkin.rarity"></rarity-tag>
         </div>
         <skin-card [skin]="currentSkin" [showInUse]="true" class="hover:scale-[1.02] transition-transform duration-200 ease-out"></skin-card>
         <div class="flex flex-wrap gap-2">
           <app-tag *ngFor="let tag of currentSkin.tags || []" [label]="tag" tone="accent"></app-tag>
-          <app-tag *ngIf="!(currentSkin.tags || []).length" label="Visual padrão" tone="muted"></app-tag>
+          <app-tag *ngIf="!(currentSkin.tags || []).length" label="Default look" tone="muted"></app-tag>
         </div>
       </div>
 
       <div class="flex justify-end">
-        <app-button label="Continuar" variant="primary" (click)="continueFlow()"></app-button>
+        <app-button label="Continue" variant="primary" (click)="continueFlow()"></app-button>
       </div>
     </div>
   `
@@ -82,17 +82,17 @@ export class RunEvolutionPageComponent implements OnInit {
   }
 
   get headerTitle(): string {
-    return this.isFinal ? 'Evolução Final' : 'Evolução Inicial';
+    return this.isFinal ? 'Final Evolution' : 'Opening Evolution';
   }
 
   get headerSubtitle(): string {
-    return this.isFinal ? 'Clímax da run - transformação final' : 'Marco de poder - após o mini-boss';
+    return this.isFinal ? 'Run climax — final transformation' : 'Power milestone after the mini-boss';
   }
 
   get evoDescription(): string {
     return this.isFinal
-      ? `Evolução Final — rota ${this.dominantRoute}: explosão máxima e visual ascendente.`
-      : `Evolução Inicial — rota ${this.dominantRoute}: reforço imediato e presença premium.`;
+      ? `Final Evolution — route ${this.dominantRoute}: max explosion and ascending visuals.`
+      : `Opening Evolution — route ${this.dominantRoute}: instant reinforcement and premium presence.`;
   }
 
   get currentSkin() {
