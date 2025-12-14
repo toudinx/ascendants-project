@@ -53,12 +53,11 @@ export class RunStateService {
 
   private readonly router = inject(Router);
   private readonly battle = inject(BattleEngineService);
+  private readonly player = inject(PlayerStateService);
+  private readonly enemy = inject(EnemyStateService);
+  private readonly ui = inject(UiStateService);
 
-  constructor(
-    private readonly player: PlayerStateService,
-    private readonly enemy: EnemyStateService,
-    private readonly ui: UiStateService
-  ) {
+  constructor() {
     this.battle.setRunContext({
       getPhase: () => this.phase(),
       getRouteLevels: () => this.routeLevels(),

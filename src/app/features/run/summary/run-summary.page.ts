@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppHeaderComponent, AppPanelComponent, AppTagComponent, AppButtonComponent, AppCardComponent, SkinCardComponent } from '../../../shared/components';
 import { RunStateService } from '../../../core/services/run-state.service';
@@ -14,22 +14,28 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
     <div class="space-y-4">
       <app-panel title="Skin in Use" subtitle="Run identity visual">
         <div class="max-w-xs">
-          <skin-card [skin]="currentSkin" [showInUse]="true" class="transition-transform duration-200 ease-out hover:scale-[1.02]"></skin-card>
+          <app-skin-card [skin]="currentSkin" [showInUse]="true" class="transition-transform duration-200 ease-out hover:scale-[1.02]"></app-skin-card>
         </div>
       </app-panel>
 
       <app-panel title="Final Routes" subtitle="Level distribution">
         <div class="grid gap-3 md:grid-cols-3">
-          <app-card *ngFor="let route of run.routes()" [title]="route.title" [subtitle]="route.emphasis" [tag]="'Lv ' + route.level">
-            <div class="text-sm text-[#A4A4B5]">Route {{ route.route }}</div>
-          </app-card>
+          @for (route of run.routes(); track route.route) {
+            <app-card [title]="route.title" [subtitle]="route.emphasis" [tag]="'Lv ' + route.level">
+              <div class="text-sm text-[#A4A4B5]">Route {{ route.route }}</div>
+            </app-card>
+          }
         </div>
       </app-panel>
 
       <app-panel title="Evolutions" subtitle="Transformational moments">
         <div class="flex flex-wrap gap-2">
-          <app-tag *ngFor="let evo of run.evolutions()" [label]="evo" tone="accent"></app-tag>
-          <app-tag *ngIf="!run.evolutions().length" label="No evolutions" tone="muted"></app-tag>
+          @for (evo of run.evolutions(); track evo) {
+            <app-tag [label]="evo" tone="accent"></app-tag>
+          }
+          @if (!run.evolutions().length) {
+            <app-tag label="No evolutions" tone="muted"></app-tag>
+          }
         </div>
       </app-panel>
 
@@ -48,11 +54,9 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
     </div>
   `
 })
-export class RunSummaryPageComponent implements OnInit {
+export class RunSummaryPageComponent {
   protected readonly run = inject(RunStateService);
   protected readonly skinState = inject(SkinStateService);
-
-  ngOnInit(): void {}
 
   get title(): string {
     switch (this.run.result()) {

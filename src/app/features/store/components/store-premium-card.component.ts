@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AppButtonComponent, AppTagComponent } from '../../../shared/components';
 
 @Component({
-  selector: 'store-premium-card',
+  selector: 'app-store-premium-card',
   standalone: true,
   imports: [CommonModule, AppButtonComponent, AppTagComponent],
   template: `
@@ -18,7 +18,9 @@ import { AppButtonComponent, AppTagComponent } from '../../../shared/components'
             <h3 class="text-lg font-semibold text-white">{{ title }}</h3>
             <p class="text-sm text-[#A4A4B5]">{{ subtitle }}</p>
           </div>
-          <app-tag *ngIf="highlight" [label]="highlight" tone="accent"></app-tag>
+          @if (highlight) {
+            <app-tag [label]="highlight" tone="accent"></app-tag>
+          }
         </div>
         <div class="h-36 rounded-[12px] bg-gradient-to-br from-white/10 via-white/5 to-transparent"></div>
         <p class="text-sm text-[#A4A4B5]">{{ description }}</p>

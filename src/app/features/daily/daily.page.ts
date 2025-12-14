@@ -29,7 +29,7 @@ interface DailyReward {
     WowBurstComponent,
   ],
   template: `
-    <wow-burst [trigger]="burst"></wow-burst>
+    <app-wow-burst [trigger]="burst"></app-wow-burst>
     <app-header
       title="Daily Login"
       subtitle="Claim rewards and keep the loop alive."
@@ -38,37 +38,38 @@ interface DailyReward {
 
     <div class="space-y-4">
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <app-card
-          *ngFor="let reward of rewards"
-          [title]="'Day ' + reward.day"
-          [subtitle]="reward.name"
-          [interactive]="false"
-          [ngClass]="{
-            'ring-2 ring-[#8A7CFF] ring-offset-2 ring-offset-[#0B0B16] scale-[1.01]':
-              reward.day === currentDay,
-            'opacity-60': reward.claimed,
-          }"
-        >
-          <div class="flex items-center justify-between text-sm text-[#A4A4B5]">
-            <span class="text-lg">{{ reward.icon }}</span>
-            <app-tag
-              [label]="
-                reward.claimed
-                  ? 'Claimed'
-                  : reward.day === currentDay
-                    ? 'Today'
-                    : 'Available'
-              "
-              [tone]="
-                reward.claimed
-                  ? 'muted'
-                  : reward.day === currentDay
-                    ? 'accent'
-                    : 'muted'
-              "
-            ></app-tag>
-          </div>
-        </app-card>
+        @for (reward of rewards; track reward.day) {
+          <app-card
+            [title]="'Day ' + reward.day"
+            [subtitle]="reward.name"
+            [interactive]="false"
+            [ngClass]="{
+              'ring-2 ring-[#8A7CFF] ring-offset-2 ring-offset-[#0B0B16] scale-[1.01]':
+                reward.day === currentDay,
+              'opacity-60': reward.claimed,
+            }"
+          >
+            <div class="flex items-center justify-between text-sm text-[#A4A4B5]">
+              <span class="text-lg">{{ reward.icon }}</span>
+              <app-tag
+                [label]="
+                  reward.claimed
+                    ? 'Claimed'
+                    : reward.day === currentDay
+                      ? 'Today'
+                      : 'Available'
+                "
+                [tone]="
+                  reward.claimed
+                    ? 'muted'
+                    : reward.day === currentDay
+                      ? 'accent'
+                      : 'muted'
+                "
+              ></app-tag>
+            </div>
+          </app-card>
+        }
       </div>
 
       <div
@@ -80,11 +81,11 @@ interface DailyReward {
           (click)="claim()"
           [disabled]="currentClaimed"
         ></app-button>
-        <premium-tease
+        <app-premium-tease
           size="compact"
           title="Extra bonus for ads"
           subtitle="Future: watch to double the reward."
-        ></premium-tease>
+        ></app-premium-tease>
       </div>
     </div>
   `,

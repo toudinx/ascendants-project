@@ -8,33 +8,35 @@ import {
 } from "@angular/core";
 
 @Component({
-  selector: "wow-burst",
+  selector: "app-wow-burst",
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div
-      *ngIf="active"
-      class="pointer-events-none fixed inset-0 z-50 overflow-hidden transition-opacity duration-300"
-      [class.opacity-0]="!visible"
-      [class.opacity-100]="visible"
-    >
+    @if (active) {
       <div
-        class="absolute inset-0 bg-gradient-to-br from-[#8A7CFF]/20 via-transparent to-[#E28FE8]/16 blur-2xl"
-      ></div>
-      <div class="absolute inset-0 flex items-center justify-center">
-        <div class="burst-core"></div>
-      </div>
-      <div class="absolute inset-0">
+        class="pointer-events-none fixed inset-0 z-50 overflow-hidden transition-opacity duration-300"
+        [class.opacity-0]="!visible"
+        [class.opacity-100]="visible"
+      >
         <div
-          *ngFor="let particle of particles"
-          class="burst-particle"
-          [style.left.%]="particle.x"
-          [style.top.%]="particle.y"
-          [style.--tx.px]="particle.tx"
-          [style.--ty.px]="particle.ty"
+          class="absolute inset-0 bg-gradient-to-br from-[#8A7CFF]/20 via-transparent to-[#E28FE8]/16 blur-2xl"
         ></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="burst-core"></div>
+        </div>
+        <div class="absolute inset-0">
+          @for (particle of particles; track $index) {
+            <div
+              class="burst-particle"
+              [style.left.%]="particle.x"
+              [style.top.%]="particle.y"
+              [style.--tx.px]="particle.tx"
+              [style.--ty.px]="particle.ty"
+            ></div>
+          }
+        </div>
       </div>
-    </div>
+    }
   `,
 })
 export class WowBurstComponent implements OnChanges, OnDestroy {

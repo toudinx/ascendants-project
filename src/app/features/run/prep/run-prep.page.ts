@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppPanelComponent, AppStatBarComponent, AppButtonComponent, AppTagComponent, AppCardComponent, AppModalComponent } from '../../../shared/components';
 import { PlayerStateService } from '../../../core/services/player-state.service';
@@ -16,7 +16,9 @@ import { RunStateService } from '../../../core/services/run-state.service';
           <app-stat-bar label="Posture" [current]="player.state().attributes.posture" [max]="player.state().attributes.maxPosture" tone="posture"></app-stat-bar>
           <app-stat-bar label="Energy" [current]="player.state().attributes.energy" [max]="player.state().attributes.maxEnergy" tone="energy"></app-stat-bar>
           <div class="flex flex-wrap gap-2">
-            <app-tag *ngFor="let buff of player.state().buffs" [label]="buff.name" [tone]="buff.type === 'buff' ? 'success' : 'danger'"></app-tag>
+            @for (buff of player.state().buffs; track buff.name) {
+              <app-tag [label]="buff.name" [tone]="buff.type === 'buff' ? 'success' : 'danger'"></app-tag>
+            }
           </div>
         </div>
       </app-panel>
@@ -70,12 +72,10 @@ import { RunStateService } from '../../../core/services/run-state.service';
     </app-modal>
   `
 })
-export class RunPrepPageComponent implements OnInit {
+export class RunPrepPageComponent {
   protected readonly player = inject(PlayerStateService);
   protected readonly run = inject(RunStateService);
   protected abandonModal = false;
-
-  ngOnInit(): void {}
 
   get nextRoomNumber(): number {
     return Math.min(this.run.totalRooms(), this.run.currentRoom() + 1);

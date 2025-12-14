@@ -44,23 +44,26 @@ interface RouteOption {
 
       <div class="space-y-4">
         <div class="grid gap-3 md:grid-cols-3">
-          <app-card
-            *ngFor="let route of routes"
-            [title]="route.name"
-            [subtitle]="route.fantasy"
-            [tag]="route.tag"
-            [interactive]="true"
-            (click)="selectRoute(route.key)"
-            [ngClass]="{ 'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16]': selectedRoute === route.key }"
-          >
-            <div class="flex flex-col gap-2 text-sm text-[#A4A4B5]">
-              <p>Initial identity for your build.</p>
-              <app-tag *ngIf="selectedRoute === route.key" label="Selected" tone="success"></app-tag>
-            </div>
-          </app-card>
+          @for (route of routes; track route.key) {
+            <app-card
+              [title]="route.name"
+              [subtitle]="route.fantasy"
+              [tag]="route.tag"
+              [interactive]="true"
+              (click)="selectRoute(route.key)"
+              [ngClass]="{ 'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16]': selectedRoute === route.key }"
+            >
+              <div class="flex flex-col gap-2 text-sm text-[#A4A4B5]">
+                <p>Initial identity for your build.</p>
+                @if (selectedRoute === route.key) {
+                  <app-tag label="Selected" tone="success"></app-tag>
+                }
+              </div>
+            </app-card>
+          }
         </div>
         <div class="flex items-center justify-between gap-3">
-          <premium-tease size="compact"></premium-tease>
+          <app-premium-tease size="compact"></app-premium-tease>
           <div class="flex gap-2">
             <app-button label="Back" variant="ghost" (click)="cancel()"></app-button>
             <app-button label="Confirm" variant="primary" [disabled]="!selectedRoute" (click)="confirm()"></app-button>

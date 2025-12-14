@@ -8,7 +8,7 @@ import { RunDebugPanelComponent, RunTransitionOverlayComponent } from './shared/
   imports: [RouterOutlet, RunDebugPanelComponent, RunTransitionOverlayComponent],
   template: `
     <div class="min-h-screen bg-black/40">
-      <run-transition-overlay></run-transition-overlay>
+      <app-run-transition-overlay></app-run-transition-overlay>
       <div class="mx-auto max-w-6xl px-4 py-6 md:py-10">
         <div class="mb-4 flex items-center justify-between">
           <div>

@@ -5,7 +5,7 @@ import { RarityTagComponent } from "../rarity-tag/rarity-tag.component";
 import { AppTagComponent } from "../app-tag/app-tag.component";
 
 @Component({
-  selector: "skin-card",
+  selector: "app-skin-card",
   standalone: true,
   imports: [CommonModule, RarityTagComponent, AppTagComponent],
   template: `
@@ -18,13 +18,16 @@ import { AppTagComponent } from "../app-tag/app-tag.component";
       }"
     >
       <div class="flex items-center justify-between text-sm text-[#A4A4B5]">
-        <rarity-tag [rarity]="skin.rarity"></rarity-tag>
-        <app-tag *ngIf="skin.isNew" label="New" tone="accent"></app-tag>
-        <app-tag
-          *ngIf="skin.unlocked && !skin.isNew && showInUse"
-          label="In Use"
-          tone="success"
-        ></app-tag>
+        <app-rarity-tag [rarity]="skin.rarity"></app-rarity-tag>
+        @if (skin.isNew) {
+          <app-tag label="New" tone="accent"></app-tag>
+        }
+        @if (skin.unlocked && !skin.isNew && showInUse) {
+          <app-tag
+            label="In Use"
+            tone="success"
+          ></app-tag>
+        }
       </div>
       <div
         class="h-24 rounded-[12px] bg-gradient-to-br from-white/10 via-white/5 to-transparent"
@@ -36,11 +39,12 @@ import { AppTagComponent } from "../app-tag/app-tag.component";
         </p>
       </div>
       <div class="flex flex-wrap gap-1">
-        <app-tag
-          *ngFor="let tag of skin.tags || []"
-          [label]="tag"
-          tone="accent"
-        ></app-tag>
+        @for (tag of skin.tags || []; track tag) {
+          <app-tag
+            [label]="tag"
+            tone="accent"
+          ></app-tag>
+        }
       </div>
     </div>
   `,

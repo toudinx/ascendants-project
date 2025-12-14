@@ -12,9 +12,9 @@ type TagTone = 'accent' | 'muted' | 'warning' | 'danger' | 'success';
       class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[12px] font-semibold uppercase tracking-wide"
       [ngClass]="tagClasses"
     >
-      <ng-container *ngIf="icon">
+      @if (icon) {
         <span class="text-base leading-none">{{ icon }}</span>
-      </ng-container>
+      }
       {{ label }}
     </span>
   `

@@ -10,7 +10,7 @@ import { UiStateService } from '../../core/services/ui-state.service';
   standalone: true,
   imports: [CommonModule, AppHeaderComponent, AppButtonComponent, AppCardComponent, PremiumTeaseComponent, WowBurstComponent, RarityTagComponent, SkinCardComponent, AppTagComponent],
   template: `
-    <wow-burst [trigger]="hasSSR()"></wow-burst>
+    <app-wow-burst [trigger]="hasSSR()"></app-wow-burst>
     <app-header title="Crimson Ascension Banner" subtitle="Focus: Velvet SSR Ascendant Eternal" kicker="Gacha"></app-header>
 
     <div class="space-y-4">
@@ -20,15 +20,15 @@ import { UiStateService } from '../../core/services/ui-state.service';
           <div class="space-y-2 text-sm text-[#A4A4B5]">
             <p>Summon premium visuals. No real-money payment required.</p>
             <div class="flex flex-wrap gap-2">
-              <rarity-tag rarity="SSR"></rarity-tag>
-              <rarity-tag rarity="SR"></rarity-tag>
-              <rarity-tag rarity="R"></rarity-tag>
+              <app-rarity-tag rarity="SSR"></app-rarity-tag>
+              <app-rarity-tag rarity="SR"></app-rarity-tag>
+              <app-rarity-tag rarity="R"></app-rarity-tag>
             </div>
             <div class="flex gap-2">
               <app-button label="Summon 1x" variant="secondary" (click)="pull(1)" [disabled]="pulling()"></app-button>
               <app-button label="Summon 10x" variant="primary" (click)="pull(10)" [disabled]="pulling()"></app-button>
             </div>
-            <premium-tease size="compact" title="No payments" subtitle="Visual demo only."></premium-tease>
+            <app-premium-tease size="compact" title="No payments" subtitle="Visual demo only."></app-premium-tease>
           </div>
         </div>
       </app-card>
@@ -39,32 +39,39 @@ import { UiStateService } from '../../core/services/ui-state.service';
           <app-tag tone="muted" label="Mock"></app-tag>
         </div>
         <div class="relative h-32 overflow-hidden rounded-[12px] bg-gradient-to-r from-[var(--primary)]/20 via-[var(--secondary)]/10 to-[#050511]">
-          <div *ngIf="pulling()" class="absolute inset-0 flex items-center justify-center text-white/70 animate-pulse">
-            Summoning...
-          </div>
-          <div *ngIf="!pulling() && hasResults()" class="absolute inset-0 flex items-center justify-center text-white/60">
-            Pull complete.
-          </div>
+          @if (pulling()) {
+            <div class="absolute inset-0 flex items-center justify-center text-white/70 animate-pulse">
+              Summoning...
+            </div>
+          }
+          @if (!pulling() && hasResults()) {
+            <div class="absolute inset-0 flex items-center justify-center text-white/60">
+              Pull complete.
+            </div>
+          }
         </div>
       </div>
 
-      <div *ngIf="hasResults()" class="space-y-3">
-        <div class="flex items-center justify-between">
-          <p class="text-sm text-[#A4A4B5] uppercase tracking-[0.2em]">Results</p>
-          <app-button label="View Collection" variant="ghost" (click)="router.navigate(['/collection'])"></app-button>
+      @if (hasResults()) {
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-[#A4A4B5] uppercase tracking-[0.2em]">Results</p>
+            <app-button label="View Collection" variant="ghost" (click)="router.navigate(['/collection'])"></app-button>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            @for (skin of results(); track skin.id) {
+              <app-skin-card
+                [skin]="skin"
+                class="transition-transform duration-200 ease-out hover:scale-[1.02]"
+                [ngClass]="{
+                  'ring-2 ring-[#FFD344] ring-offset-2 ring-offset-[#0B0B16]': skin.rarity === 'SSR',
+                  'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16]': skin.rarity === 'SR'
+                }"
+              ></app-skin-card>
+            }
+          </div>
         </div>
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <skin-card
-            *ngFor="let skin of results()"
-            [skin]="skin"
-            class="transition-transform duration-200 ease-out hover:scale-[1.02]"
-            [ngClass]="{
-              'ring-2 ring-[#FFD344] ring-offset-2 ring-offset-[#0B0B16]': skin.rarity === 'SSR',
-              'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16]': skin.rarity === 'SR'
-            }"
-          ></skin-card>
-        </div>
-      </div>
+      }
     </div>
   `
 })

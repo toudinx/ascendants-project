@@ -15,14 +15,26 @@ type TagTone = 'accent' | 'info' | 'warning' | 'danger';
         'hover:-translate-y-1 hover:border-white/20 hover:shadow-neon': interactive
       }"
     >
-      <div class="flex items-start justify-between gap-2" *ngIf="title || subtitle || tag">
-        <div class="space-y-1">
-          <p *ngIf="eyebrow" class="text-[11px] uppercase tracking-[0.22em] text-[#A4A4B5]">{{ eyebrow }}</p>
-          <h3 class="text-lg font-semibold text-white">{{ title }}</h3>
-          <p *ngIf="subtitle" class="text-sm text-[#A4A4B5] leading-relaxed">{{ subtitle }}</p>
+      @if (title || subtitle || tag) {
+        <div class="flex items-start justify-between gap-2">
+          <div class="space-y-1">
+            @if (eyebrow) {
+              <p class="text-[11px] uppercase tracking-[0.22em] text-[#A4A4B5]">
+                {{ eyebrow }}
+              </p>
+            }
+            <h3 class="text-lg font-semibold text-white">{{ title }}</h3>
+            @if (subtitle) {
+              <p class="text-sm text-[#A4A4B5] leading-relaxed">
+                {{ subtitle }}
+              </p>
+            }
+          </div>
+          @if (tag) {
+            <app-tag [label]="tag" [tone]="tagTone"></app-tag>
+          }
         </div>
-        <app-tag *ngIf="tag" [label]="tag" [tone]="tagTone"></app-tag>
-      </div>
+      }
       <ng-content></ng-content>
     </div>
   `

@@ -15,9 +15,11 @@ interface InventoryItem {
   template: `
     <app-header title="Inventory" subtitle="Quick items for the run." kicker="Goal"></app-header>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <app-card *ngFor="let item of items" [title]="item.name" [subtitle]="'Quantity: ' + item.quantity" [interactive]="false">
-        <app-tag [label]="item.rarity" [tone]="item.rarity === 'epic' ? 'accent' : 'muted'"></app-tag>
-      </app-card>
+      @for (item of items; track item.name) {
+        <app-card [title]="item.name" [subtitle]="'Quantity: ' + item.quantity" [interactive]="false">
+          <app-tag [label]="item.rarity" [tone]="item.rarity === 'epic' ? 'accent' : 'muted'"></app-tag>
+        </app-card>
+      }
       <app-card title="Empty slot" subtitle="Space for future items" [interactive]="false">
         <app-tag label="Locked" tone="muted"></app-tag>
       </app-card>

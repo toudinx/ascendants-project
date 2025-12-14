@@ -15,12 +15,19 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
       [ngClass]="buttonClasses"
       [attr.aria-busy]="loading"
     >
-      <span *ngIf="loading" class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
-      <span *ngIf="icon && !loading" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-lg text-white/90">
-        {{ icon }}
-      </span>
-      <ng-container *ngIf="label; else projected">{{ label }}</ng-container>
-      <ng-template #projected><ng-content></ng-content></ng-template>
+      @if (loading) {
+        <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+      }
+      @if (icon && !loading) {
+        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-lg text-white/90">
+          {{ icon }}
+        </span>
+      }
+      @if (label) {
+        {{ label }}
+      } @else {
+        <ng-content></ng-content>
+      }
     </button>
   `
 })

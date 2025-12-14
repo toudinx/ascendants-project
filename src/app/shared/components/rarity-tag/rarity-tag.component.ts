@@ -4,17 +4,17 @@ import { CommonModule } from '@angular/common';
 type Rarity = 'R' | 'SR' | 'SSR';
 
 @Component({
-  selector: 'rarity-tag',
+  selector: 'app-rarity-tag',
   standalone: true,
   imports: [CommonModule],
   template: `
     <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[12px] font-semibold uppercase tracking-wide"
       [ngClass]="classes">
-      <ng-container [ngSwitch]="rarity">
-        <span *ngSwitchCase="'R'">★</span>
-        <span *ngSwitchCase="'SR'">★★</span>
-        <span *ngSwitchCase="'SSR'">★★★</span>
-      </ng-container>
+      @switch (rarity) {
+        @case ('R') { <span>★</span> }
+        @case ('SR') { <span>★★</span> }
+        @case ('SSR') { <span>★★★</span> }
+      }
       {{ rarity }}
     </span>
   `

@@ -10,7 +10,7 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
   standalone: true,
   imports: [CommonModule, AppHeaderComponent, AppButtonComponent, AppTagComponent, PremiumTeaseComponent, WowBurstComponent, RarityTagComponent, SkinCardComponent],
   template: `
-    <wow-burst [trigger]="burst"></wow-burst>
+    <app-wow-burst [trigger]="burst"></app-wow-burst>
     <app-header [title]="headerTitle" [subtitle]="headerSubtitle" kicker="Run"></app-header>
 
     <div class="space-y-5">
@@ -29,7 +29,7 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
             </div>
             <div class="absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-black/50 px-3 py-1 text-xs text-white/80">
               <span class="uppercase tracking-[0.18em]">Velvet — {{ currentSkin.name }}</span>
-              <rarity-tag [rarity]="currentSkin.rarity"></rarity-tag>
+              <app-rarity-tag [rarity]="currentSkin.rarity"></app-rarity-tag>
             </div>
           </div>
           <div class="space-y-3">
@@ -40,7 +40,7 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
               <app-tag label="Tick-based" tone="accent"></app-tag>
               <app-tag [label]="'Route ' + dominantRoute" tone="muted"></app-tag>
             </div>
-            <premium-tease size="full" title="Skin preview" subtitle="Ascendant skin unlocks after this run." cta="View Skin"></premium-tease>
+            <app-premium-tease size="full" title="Skin preview" subtitle="Ascendant skin unlocks after this run." cta="View Skin"></app-premium-tease>
           </div>
         </div>
       </div>
@@ -48,12 +48,16 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
       <div class="flex flex-col gap-3 rounded-[16px] border border-white/10 bg-white/5 p-4">
         <div class="flex items-center justify-between">
           <p class="text-xs uppercase tracking-[0.18em] text-[#A4A4B5]">Skin in use</p>
-          <rarity-tag [rarity]="currentSkin.rarity"></rarity-tag>
+          <app-rarity-tag [rarity]="currentSkin.rarity"></app-rarity-tag>
         </div>
-        <skin-card [skin]="currentSkin" [showInUse]="true" class="hover:scale-[1.02] transition-transform duration-200 ease-out"></skin-card>
+        <app-skin-card [skin]="currentSkin" [showInUse]="true" class="hover:scale-[1.02] transition-transform duration-200 ease-out"></app-skin-card>
         <div class="flex flex-wrap gap-2">
-          <app-tag *ngFor="let tag of currentSkin.tags || []" [label]="tag" tone="accent"></app-tag>
-          <app-tag *ngIf="!(currentSkin.tags || []).length" label="Default look" tone="muted"></app-tag>
+          @for (tag of currentSkin.tags || []; track tag) {
+            <app-tag [label]="tag" tone="accent"></app-tag>
+          }
+          @if ( !(currentSkin.tags || []).length) {
+            <app-tag label="Default look" tone="muted"></app-tag>
+          }
         </div>
       </div>
 

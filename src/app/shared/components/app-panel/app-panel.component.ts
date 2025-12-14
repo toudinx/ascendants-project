@@ -10,11 +10,19 @@ import { AppTagComponent } from '../app-tag/app-tag.component';
     <section class="card-surface border border-white/8 p-4 md:p-5">
       <div class="mb-3 flex items-start justify-between gap-2">
         <div class="space-y-1">
-          <p *ngIf="eyebrow" class="text-[11px] uppercase tracking-[0.22em] text-[#A4A4B5]">{{ eyebrow }}</p>
+          @if (eyebrow) {
+            <p class="text-[11px] uppercase tracking-[0.22em] text-[#A4A4B5]">
+              {{ eyebrow }}
+            </p>
+          }
           <h2 class="text-base font-semibold text-white">{{ title }}</h2>
-          <p *ngIf="subtitle" class="text-sm text-[#A4A4B5]">{{ subtitle }}</p>
+          @if (subtitle) {
+            <p class="text-sm text-[#A4A4B5]">{{ subtitle }}</p>
+          }
         </div>
-        <app-tag *ngIf="tag" [label]="tag"></app-tag>
+        @if (tag) {
+          <app-tag [label]="tag"></app-tag>
+        }
       </div>
       <ng-content></ng-content>
     </section>

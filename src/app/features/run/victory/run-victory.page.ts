@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject } from "@angular/core";
+﻿import { Component, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Router } from "@angular/router";
 import {
@@ -25,7 +25,7 @@ import { SkinStateService } from "../../../core/services/skin-state.service";
     SkinCardComponent,
   ],
   template: `
-    <wow-burst [trigger]="true"></wow-burst>
+    <app-wow-burst [trigger]="true"></app-wow-burst>
     <app-header
       title="Ascension Achieved"
       subtitle="Final boss defeated. Velvet reigns."
@@ -78,34 +78,38 @@ import { SkinStateService } from "../../../core/services/skin-state.service";
           <app-tag label="Skin in use" tone="muted"></app-tag>
         </div>
         <div class="mt-4">
-          <skin-card
+          <app-skin-card
             [skin]="currentSkin"
             [showInUse]="true"
             class="max-w-xs transition-transform duration-200 ease-out hover:scale-[1.02]"
-          ></skin-card>
+          ></app-skin-card>
         </div>
       </div>
 
-      <div
-        *ngIf="newSkins.length"
-        class="rounded-[16px] border border-white/10 bg-white/5 p-4 space-y-3"
-      >
-        <div class="flex items-center justify-between">
-          <p class="text-sm font-semibold text-white">New skins obtained!</p>
-          <app-button
-            label="View Collection"
-            variant="ghost"
-            (click)="router.navigate(['/collection'])"
-          ></app-button>
+      @if (newSkins.length) {
+        <div
+          class="rounded-[16px] border border-white/10 bg-white/5 p-4 space-y-3"
+        >
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-semibold text-white">
+              New skins obtained!
+            </p>
+            <app-button
+              label="View Collection"
+              variant="ghost"
+              (click)="router.navigate(['/collection'])"
+            ></app-button>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            @for (skin of newSkins; track skin.id) {
+              <app-skin-card
+                [skin]="skin"
+                class="transition-transform duration-200 ease-out hover:scale-[1.02]"
+              ></app-skin-card>
+            }
+          </div>
         </div>
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <skin-card
-            *ngFor="let skin of newSkins"
-            [skin]="skin"
-            class="transition-transform duration-200 ease-out hover:scale-[1.02]"
-          ></skin-card>
-        </div>
-      </div>
+      }
 
       <div
         class="rounded-[14px] border border-[var(--primary)]/30 bg-[#111120]/80 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
@@ -145,7 +149,7 @@ import { SkinStateService } from "../../../core/services/skin-state.service";
     </div>
   `,
 })
-export class RunVictoryPageComponent implements OnInit {
+export class RunVictoryPageComponent {
   protected readonly run = inject(RunStateService);
   protected readonly router = inject(Router);
   protected readonly skinState = inject(SkinStateService);
@@ -161,8 +165,6 @@ export class RunVictoryPageComponent implements OnInit {
   get newSkins() {
     return this.skinState.lastObtainedSkins();
   }
-
-  ngOnInit(): void {}
 
   restart(): void {
     this.run.resetToStart();

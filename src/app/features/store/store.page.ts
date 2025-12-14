@@ -31,33 +31,40 @@ interface PremiumItem {
       <app-button label="Premium Store" [variant]="tab === 'premium' ? 'primary' : 'ghost'" (click)="tab = 'premium'"></app-button>
     </div>
 
-    <div *ngIf="tab === 'normal'" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <store-item-card *ngFor="let item of normalItems" [name]="item.name" [description]="item.description" [price]="item.price" [icon]="item.icon"></store-item-card>
-    </div>
+    @if (tab === 'normal') {
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        @for (item of normalItems; track item.name) {
+          <app-store-item-card [name]="item.name" [description]="item.description" [price]="item.price" [icon]="item.icon"></app-store-item-card>
+        }
+      </div>
+    }
 
-    <div *ngIf="tab === 'premium'" class="space-y-4">
-      <premium-tease size="full" title="Premium coming soon" subtitle="Skins, speed spikes and bonus rerolls." cta="Notify me"></premium-tease>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <store-premium-card
-          *ngFor="let item of premiumItems"
-          [title]="item.title"
-          [subtitle]="item.subtitle"
-          [description]="item.description"
-          [highlight]="item.highlight"
-        ></store-premium-card>
-        <store-premium-card
-          title="Summons / Gacha"
-          subtitle="Current banner"
-          description="Hunt rare Velvet skins (demo only)."
-          highlight="Gacha"
-        >
-          <app-button label="Go to Banner" variant="primary" (click)="router.navigate(['/gacha'])"></app-button>
-        </store-premium-card>
+    @if (tab === 'premium') {
+      <div class="space-y-4">
+        <app-premium-tease size="full" title="Premium coming soon" subtitle="Skins, speed spikes and bonus rerolls." cta="Notify me"></app-premium-tease>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          @for (item of premiumItems; track item.title) {
+            <app-store-premium-card
+              [title]="item.title"
+              [subtitle]="item.subtitle"
+              [description]="item.description"
+              [highlight]="item.highlight"
+            ></app-store-premium-card>
+          }
+          <app-store-premium-card
+            title="Summons / Gacha"
+            subtitle="Current banner"
+            description="Hunt rare Velvet skins (demo only)."
+            highlight="Gacha"
+          >
+            <app-button label="Go to Banner" variant="primary" (click)="router.navigate(['/gacha'])"></app-button>
+          </app-store-premium-card>
+        </div>
+        <div class="rounded-[14px] border border-white/10 bg-white/5 p-3 text-sm text-[#A4A4B5]">
+          Premium layer unlocks later.
+        </div>
       </div>
-      <div class="rounded-[14px] border border-white/10 bg-white/5 p-3 text-sm text-[#A4A4B5]">
-        Premium layer unlocks later.
-      </div>
-    </div>
+    }
   `
 })
 export class StorePageComponent {

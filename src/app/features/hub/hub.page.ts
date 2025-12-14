@@ -55,16 +55,14 @@ import { SkinStateService } from '../../core/services/skin-state.service';
                 <app-button label="Gacha" variant="ghost" (click)="router.navigate(['/gacha'])"></app-button>
               </div>
             </div>
-            <premium-tease size="compact"></premium-tease>
-            <div class="rounded-[12px] border border-white/10 bg-white/5 p-3">
-              <div class="flex items-center justify-between">
+            <app-premium-tease size="compact"></app-premium-tease>
+            <div class="flex items-center justify-between">
                 <div>
                   <p class="text-xs uppercase tracking-[0.18em] text-[#A4A4B5]">Banner</p>
                   <p class="text-sm font-semibold text-white">{{ bannerCopyTitle }}</p>
                   <p class="text-xs text-[#A4A4B5]">{{ bannerCopySubtitle }}</p>
                 </div>
                 <app-button label="Go to Gacha" variant="primary" class="max-w-[150px]" (click)="router.navigate(['/gacha'])"></app-button>
-              </div>
             </div>
           </div>
         </div>
@@ -89,11 +87,10 @@ import { SkinStateService } from '../../core/services/skin-state.service';
               <p>Rooms cleared: {{ Math.max(0, runState.currentRoom() - 1) }}</p>
               <p>Evolutions claimed: {{ runState.evolutions().length }}</p>
             </div>
-            <premium-tease size="compact"></premium-tease>
+            <app-premium-tease size="compact"></app-premium-tease>
           </div>
         </app-card>
       </div>
-    </div>
   `
 })
 export class HubPageComponent {

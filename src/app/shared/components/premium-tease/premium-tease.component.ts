@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AppButtonComponent } from '../app-button/app-button.component';
 
 @Component({
-  selector: 'premium-tease',
+  selector: 'app-premium-tease',
   standalone: true,
   imports: [CommonModule, AppButtonComponent],
   template: `
@@ -18,15 +18,18 @@ import { AppButtonComponent } from '../app-button/app-button.component';
       <div class="relative space-y-1">
         <p class="text-[11px] uppercase tracking-[0.22em] text-[#A4A4B5]">Premium</p>
         <h4 class="text-base font-semibold text-white">{{ title }}</h4>
-        <p *ngIf="subtitle" class="text-sm text-[#A4A4B5]">{{ subtitle }}</p>
+        @if (subtitle) {
+<p class="text-sm text-[#A4A4B5]">{{ subtitle }}</p>
+}
       </div>
-      <app-button
-        *ngIf="cta && size === 'full'"
+      @if (cta && size === 'full') {
+<app-button
         class="relative"
         variant="primary"
         [label]="cta"
         [disabled]="true"
       ></app-button>
+}
     </div>
   `
 })

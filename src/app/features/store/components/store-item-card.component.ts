@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AppButtonComponent } from '../../../shared/components';
 
 @Component({
-  selector: 'store-item-card',
+  selector: 'app-store-item-card',
   standalone: true,
   imports: [CommonModule, AppButtonComponent],
   template: `

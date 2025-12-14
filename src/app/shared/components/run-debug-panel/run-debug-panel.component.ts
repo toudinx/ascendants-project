@@ -12,7 +12,8 @@ const SHOW_DEBUG_PANEL = true;
   standalone: true,
   imports: [CommonModule, AppButtonComponent, AppCardComponent],
   template: `
-    <div *ngIf="SHOW" class="fixed bottom-4 right-4 z-40 w-[320px] space-y-2 rounded-[14px] border border-white/10 bg-black/70 p-3 text-xs text-white shadow-neon">
+    @if (SHOW) {
+<div class="fixed bottom-4 right-4 z-40 w-[320px] space-y-2 rounded-[14px] border border-white/10 bg-black/70 p-3 text-xs text-white shadow-neon">
       <div class="flex items-center justify-between">
         <span class="uppercase tracking-[0.12em] text-[#A4A4B5]">Debug Run</span>
         <span class="rounded-full bg-white/10 px-2 py-1 text-[11px] text-white/80">{{ run.phase() }}</span>
@@ -30,6 +31,7 @@ const SHOW_DEBUG_PANEL = true;
         <app-button label="Skip Prep" variant="ghost" (click)="run.goToPrep()"></app-button>
       </div>
     </div>
+}
   `
 })
 export class RunDebugPanelComponent {
