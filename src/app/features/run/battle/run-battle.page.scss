@@ -38,7 +38,11 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0)
+  );
   border: 1px solid var(--border);
   border-radius: 14px;
   z-index: 10;
@@ -99,7 +103,10 @@
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-primary, #f5f5fa);
   cursor: pointer;
-  transition: border-color 150ms ease, background 150ms ease, transform 120ms ease;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 120ms ease;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -165,11 +172,12 @@
 
 .battle-body {
   flex: 1;
+  width: 100%;
   display: flex;
-  gap: 12px;
+  gap: 2px;
   justify-content: center;
   overflow: hidden;
-  padding: 0 0 24px 0;
+  padding: 0 0 6px 0;
   min-height: 0;
 }
 
@@ -180,7 +188,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 10px;
+  gap: 2px;
   min-height: 0;
 }
 
@@ -201,7 +209,7 @@
   align-items: center;
   justify-content: center;
   padding: 3px;
-  height: 50%;
+  height: 100%;
 }
 
 .arena-stage {
@@ -213,15 +221,22 @@
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4), 0 0 32px rgba(138, 124, 255, 0.2);
-  background: radial-gradient(90% 70% at 50% 30%, rgba(255, 255, 255, 0.06), rgba(5, 5, 17, 0.9));
+  background: radial-gradient(
+    90% 70% at 50% 30%,
+    rgba(255, 255, 255, 0.06),
+    rgba(5, 5, 17, 0.9)
+  );
 }
 
 .arena-stage::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 80% at 50% 90%, rgba(0, 0, 0, 0.35), transparent 55%);
+  background: radial-gradient(
+    120% 80% at 50% 90%,
+    rgba(0, 0, 0, 0.35),
+    transparent 55%
+  );
   z-index: 1;
   pointer-events: none;
 }
@@ -323,10 +338,14 @@
 }
 
 .ruina-evolved .fx-layer::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(40% 30% at 50% 50%, rgba(95, 59, 255, 0.12), transparent 60%);
+  background: radial-gradient(
+    40% 30% at 50% 50%,
+    rgba(95, 59, 255, 0.12),
+    transparent 60%
+  );
   pointer-events: none;
 }
 
@@ -342,7 +361,11 @@
 
 .impacto-evolved .actor.break-pulse::after,
 .impacto-evolved .actor.superbreak-pulse::after {
-  background: radial-gradient(circle, rgba(255, 211, 68, 0.35), transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 211, 68, 0.35),
+    transparent 70%
+  );
 }
 
 .impacto-evolved .float-chip.posture {
@@ -350,7 +373,11 @@
 }
 
 .critico-evolved .actor.crit-flare::after {
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.65), transparent 65%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.65),
+    transparent 65%
+  );
   animation-duration: 200ms;
 }
 
@@ -368,7 +395,7 @@
 .actor.crit-flare::after,
 .actor.break-pulse::after,
 .actor.superbreak-pulse::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 6% 2% 0 2%;
   border-radius: 18px;
@@ -382,7 +409,11 @@
 }
 
 .actor.break-pulse::after {
-  background: radial-gradient(circle, rgba(255, 156, 106, 0.35), transparent 65%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 156, 106, 0.35),
+    transparent 65%
+  );
   animation: break-pulse 360ms ease;
 }
 
@@ -448,7 +479,9 @@
   height: 12px;
   border-radius: 999px;
   background: linear-gradient(135deg, #e28fe8, #8a7cff);
-  box-shadow: 0 0 12px rgba(226, 143, 232, 0.45), 0 0 20px rgba(138, 124, 255, 0.3);
+  box-shadow:
+    0 0 12px rgba(226, 143, 232, 0.45),
+    0 0 20px rgba(138, 124, 255, 0.3);
   transform: translate(var(--from-x), var(--from-y)) scale(0.9);
   animation: projectile 420ms ease-out forwards;
   opacity: 0;
@@ -486,7 +519,8 @@
   --float-scale-end: 1;
   --float-delay: 140ms;
   --float-duration: 940ms;
-  animation: float-chip var(--float-duration) ease-out var(--float-delay) forwards;
+  animation: float-chip var(--float-duration) ease-out var(--float-delay)
+    forwards;
   text-shadow: 0 0 12px rgba(0, 0, 0, 0.35);
   z-index: 5;
   background: rgba(5, 5, 17, 0.28);
@@ -507,7 +541,9 @@
   --float-scale-end: 1.22;
   --float-delay: 460ms;
   --float-duration: 980ms;
-  animation: float-chip var(--float-duration) ease-out var(--float-delay) forwards, crit-flare 280ms ease-out var(--float-delay) forwards;
+  animation:
+    float-chip var(--float-duration) ease-out var(--float-delay) forwards,
+    crit-flare 280ms ease-out var(--float-delay) forwards;
   filter: drop-shadow(0 0 8px rgba(255, 211, 68, 0.55));
 }
 
@@ -767,7 +803,11 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: border-color 150ms ease, background 150ms ease, transform 120ms ease, opacity 120ms ease;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 120ms ease,
+    opacity 120ms ease;
 }
 
 .action-btn:hover:enabled {
@@ -862,7 +902,9 @@
   max-width: 28vw;
   height: auto;
   transform: translateX(calc(100% + 24px));
-  transition: transform 180ms ease, opacity 180ms ease;
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
   opacity: 0;
   pointer-events: none;
   z-index: 40;
@@ -1098,7 +1140,11 @@
     opacity: 1;
   }
   100% {
-    transform: translate(calc(var(--from-x) + var(--dx)), calc(var(--from-y) + var(--dy))) scale(1.05);
+    transform: translate(
+        calc(var(--from-x) + var(--dx)),
+        calc(var(--from-y) + var(--dy))
+      )
+      scale(1.05);
     opacity: 0;
   }
 }
@@ -1293,13 +1339,19 @@
 
 @keyframes pulse-border-strong {
   0% {
-    box-shadow: 0 0 0 1px rgba(255, 84, 84, 0.4), 0 0 30px rgba(255, 84, 84, 0.16);
+    box-shadow:
+      0 0 0 1px rgba(255, 84, 84, 0.4),
+      0 0 30px rgba(255, 84, 84, 0.16);
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(255, 84, 84, 0.6), 0 0 36px rgba(255, 84, 84, 0.24);
+    box-shadow:
+      0 0 0 3px rgba(255, 84, 84, 0.6),
+      0 0 36px rgba(255, 84, 84, 0.24);
   }
   100% {
-    box-shadow: 0 0 0 1px rgba(255, 84, 84, 0.4), 0 0 30px rgba(255, 84, 84, 0.16);
+    box-shadow:
+      0 0 0 1px rgba(255, 84, 84, 0.4),
+      0 0 30px rgba(255, 84, 84, 0.16);
   }
 }
 

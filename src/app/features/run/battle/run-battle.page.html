@@ -112,7 +112,7 @@
               <div class="pause-veil">
                 <div class="pause-copy">
                   <span class="pause-icon">⏸</span>
-                  <span>Combate pausado</span>
+                  <span>Combat paused</span>
                 </div>
               </div>
             }
@@ -154,12 +154,12 @@
                 }
                 @if (isPlayerBroken) {
                   <span class="status-pill break"
-                    >Quebrada {{ playerState.breakTurns || 0 }}T</span
+                    >Broken {{ playerState.breakTurns || 0 }}T</span
                   >
                 }
                 @if (isPlayerSuperBroken) {
                   <span class="status-pill super"
-                    >Superquebrada {{ playerState.breakTurns || 0 }}T</span
+                    >Superbroken {{ playerState.breakTurns || 0 }}T</span
                   >
                 }
               </div>
@@ -192,7 +192,7 @@
               >
             </div>
             <div class="status-meter">
-              <span class="label">Postura</span>
+              <span class="label">Posture</span>
               <div class="meter">
                 <div
                   class="meter-fill shield"
@@ -220,7 +220,7 @@
               <div>
                 <strong>{{ enemyState.attributes.name }}</strong>
                 @if (enemyPreparing) {
-                  <span class="subtitle">Preparando ataque</span>
+                  <span class="subtitle">Preparing attack</span>
                 }
                 @if (!enemyPreparing) {
                   <span class="subtitle">{{ enemyState.state | uppercase }}</span>
@@ -232,12 +232,12 @@
                 }
                 @if (isEnemyBroken) {
                   <span class="status-pill break"
-                    >Quebrado {{ enemyState.breakTurns || 0 }}T</span
+                    >Broken {{ enemyState.breakTurns || 0 }}T</span
                   >
                 }
                 @if (isEnemySuperBroken) {
                   <span class="status-pill super"
-                    >Superquebrado {{ enemyState.breakTurns || 0 }}T</span
+                    >Superbroken {{ enemyState.breakTurns || 0 }}T</span
                   >
                 }
                 @if (hasDot('enemy')) {
@@ -264,7 +264,7 @@
               >
             </div>
             <div class="status-meter">
-              <span class="label">Postura</span>
+              <span class="label">Posture</span>
               <div class="meter">
                 <div
                   class="meter-fill shield"
@@ -284,15 +284,15 @@
           <div class="action-hint">
             @if (autoplay) {
               <span
-                >Autoplay ativo: Velvet ataca e usa a habilidade quando
-                pronta.</span
+                >Autoplay active: Velvet attacks and uses ability when
+                ready.</span
               >
             }
             @if (!autoplay && awaitingPlayer) {
-              <span>Modo manual: escolha a ação para o turno.</span>
+              <span>Manual mode: choose the action for the turn.</span>
             }
             @if (!autoplay && !awaitingPlayer) {
-              <span>Aguardando próximo turno do jogador...</span>
+              <span>Waiting for player's next turn...</span>
             }
           </div>
           <div class="action-buttons">
@@ -304,12 +304,12 @@
               (click)="handleAutoAttack()"
             >
               <div class="action-label">
-                <span>Autoataque</span>
+                <span>Auto-attack</span>
                 @if (autoplay) {
-                  <small>Indicador</small>
+                  <small>Indicator</small>
                 }
                 @if (!autoplay) {
-                  <small>Executar turno</small>
+                  <small>Execute turn</small>
                 }
               </div>
             </button>
@@ -326,17 +326,17 @@
               (click)="handleActiveSkill()"
             >
               <div class="action-label">
-                <span>Habilidade ativa</span>
-                <small>Custo {{ skillCost }} EP</small>
+                <span>Active skill</span>
+                <small>Cost {{ skillCost }} EP</small>
               </div>
               @if (skillOnCooldown) {
-                <div class="skill-state">Em cooldown</div>
+                <div class="skill-state">On cooldown</div>
               }
               @if (skillEnergyBlocked && !skillOnCooldown) {
-                <div class="skill-state">EP insuficiente</div>
+                <div class="skill-state">Insufficient EP</div>
               }
               @if (skillButtonEnabled && !skillOnCooldown && !skillEnergyBlocked) {
-                <div class="skill-state highlight">Pronta</div>
+                <div class="skill-state highlight">Ready</div>
               }
               @if (skillOnCooldown) {
                 <div
@@ -359,11 +359,11 @@
             </button>
             <button type="button" class="chip ghost" (click)="togglePause()">
               <span class="icon">{{ paused ? '▶' : '⏸' }}</span>
-              <span>{{ paused ? 'Continuar' : 'Pausar' }}</span>
+              <span>{{ paused ? 'Resume' : 'Pause' }}</span>
             </button>
             <button type="button" class="chip ghost" (click)="toggleLog()">
               <span class="icon">≡</span>
-              <span>{{ logOpen ? 'Fechar log' : 'Abrir log' }}</span>
+              <span>{{ logOpen ? 'Close log' : 'Open log' }}</span>
             </button>
           </div>
         </div>
@@ -441,8 +441,8 @@
       <div class="pause-title">
         <span class="icon">?</span>
         <div>
-          <strong>Combate pausado</strong>
-          <small>Aguardando dados do combate.</small>
+          <strong>Combat paused</strong>
+          <small>Waiting for combat data.</small>
         </div>
       </div>
       <div class="pause-actions">
@@ -451,10 +451,10 @@
           class="action-btn primary"
           (click)="togglePause()"
         >
-          Continuar
+          Resume
         </button>
         <button type="button" class="action-btn ghost" (click)="abandonRun()">
-          Abandonar run
+          Abandon run
         </button>
       </div>
     </div>
@@ -470,7 +470,7 @@
     <div class="overlay-card">
       <div class="icon">{{ evo.icon || '✶' }}</div>
       <div class="copy">
-        <span class="kicker">Evolução Desbloqueada</span>
+        <span class="kicker">Evolution Unlocked</span>
         <strong>{{ evo.name }}</strong>
       </div>
     </div>
