@@ -78,16 +78,17 @@ export class UiStateService {
     };
     this.state.update(current => ({
       ...current,
-      logs: [...current.logs, entry].slice(-50)
+      logs: [entry, ...current.logs].slice(0, 50)
     }));
     return entry;
   }
 
   setLogs(entries: UiLogEntry[]): void {
     this.logCounter = entries.length;
+    const trimmed = [...entries].slice(-50).reverse();
     this.state.update(current => ({
       ...current,
-      logs: [...entries].slice(-50)
+      logs: trimmed
     }));
   }
 

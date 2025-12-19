@@ -1,39 +1,70 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { RunPhase, RunResult, RunState, RoomType } from '../models/run.model';
-import { RouteKey, RouteProgress } from '../models/routes.model';
+import { RunLoadoutSnapshot, RunPhase, RunResult, RunState, RoomType, RunUpgrade } from '../models/run.model';
+import { TrackKey, TrackProgress } from '../models/tracks.model';
 import { UpgradeOption } from '../models/upgrades.model';
-import { PlayerStateService } from './player-state.service';
+import { PlayerBattleStartBonuses, PlayerAttributeModifierSet, PlayerStateService } from './player-state.service';
 import { EnemyStateService } from './enemy-state.service';
 import { UiStateService } from './ui-state.service';
 import { BattleEngineService } from './battle-engine.service';
 import { EvolutionVisualKey } from '../models/evolution-visual.model';
+import { ProfileStateService } from './profile-state.service';
+import { RunKaelisSnapshot } from '../models/kaelis.model';
+import { WeaponDefinition } from '../models/weapon.model';
+import { RingDefinition } from '../models/ring.model';
+import { EnemyFactoryService } from './enemy-factory.service';
+import { BALANCE_CONFIG } from '../../content/balance/balance.config';
+import { getUpgradesByTrack, validateUpgradeCatalog } from '../../content/upgrades';
+import { UpgradeDef, UpgradeModifiers, UpgradeRarity, UpgradeTrack } from '../../content/upgrades/upgrade.types';
+import { roomToStage } from '../config/balance.config';
+
+const RUN_TUNING = BALANCE_CONFIG.run;
+const POTION_CAP = RUN_TUNING.potionCap;
+const POTION_DROP_CHANCE = RUN_TUNING.potionDropChance;
+const TOTAL_ROOMS = RUN_TUNING.totalRooms;
+
+const UPGRADE_TRACKS: UpgradeTrack[] = ['A', 'B', 'C'];
 
 @Injectable({ providedIn: 'root' })
 export class RunStateService {
-  private readonly baseRoutes: RouteProgress[] = [
-    { route: 'A', title: 'Critical', level: 0, emphasis: 'Sentinel + multi-hit' },
-    { route: 'B', title: 'Spiritual', level: 0, emphasis: 'Ruin + DoT' },
-    { route: 'C', title: 'Impact', level: 0, emphasis: 'Resonance + burst' }
+  private readonly router = inject(Router);
+  private readonly battle = inject(BattleEngineService);
+  private readonly player = inject(PlayerStateService);
+  private readonly enemy = inject(EnemyStateService);
+  private readonly ui = inject(UiStateService);
+  private readonly profile = inject(ProfileStateService);
+  private readonly enemyFactory = inject(EnemyFactoryService);
+  private upgradeRoll = 0;
+
+  private readonly baseTracks: TrackProgress[] = [
+    { track: 'A', title: 'Critical', level: 0, emphasis: 'Sentinel + multi-hit' },
+    { track: 'B', title: 'Spiritual', level: 0, emphasis: 'Ruin + DoT' },
+    { track: 'C', title: 'Impact', level: 0, emphasis: 'Resonance + burst' }
   ];
 
   readonly phase = signal<RunPhase>('idle');
   readonly currentRoom = signal<number>(0);
-  readonly totalRooms = signal<number>(7);
+  readonly totalRooms = signal<number>(TOTAL_ROOMS);
   readonly roomType = signal<RoomType>('normal');
-  readonly routeLevels = signal<Record<RouteKey, number>>({ A: 0, B: 0, C: 0 });
-  readonly initialRouteChoice = signal<RouteKey | undefined>(undefined);
+  readonly trackLevels = signal<Record<TrackKey, number>>({ A: 0, B: 0, C: 0 });
+  readonly initialTrackChoice = signal<TrackKey | undefined>(undefined);
   readonly availableUpgrades = signal<UpgradeOption[]>([]);
   readonly evolutions = signal<string[]>([]);
   readonly rerollsAvailable = signal<number>(1);
-  readonly potions = signal<number>(2);
+  readonly potions = signal<number>(this.profile.potionCount());
   readonly result = signal<RunResult>('none');
   readonly isFinalEvolution = signal<boolean>(false);
   readonly battleSeed = signal<number | null>(null);
   readonly activeEvolutionVisual = signal<EvolutionVisualKey | null>(null);
+  readonly currentKaelis = signal<RunKaelisSnapshot | null>(null);
+  readonly potionCap = POTION_CAP;
+  readonly loadoutSnapshot = signal<RunLoadoutSnapshot | null>(null);
+  readonly runUpgradesSignal = signal<RunUpgrade[]>([]);
 
-  readonly routes = computed<RouteProgress[]>(() =>
-    this.baseRoutes.map(r => ({ ...r, level: this.routeLevels()[r.route] || 0 }))
+  readonly kaelis = computed(() => this.currentKaelis());
+
+  readonly tracks = computed<TrackProgress[]>(() =>
+    this.baseTracks.map(t => ({ ...t, level: this.trackLevels()[t.track] || 0 }))
   );
 
   readonly state = computed<RunState>(() => ({
@@ -41,26 +72,25 @@ export class RunStateService {
     currentRoom: this.currentRoom(),
     totalRooms: this.totalRooms(),
     roomType: this.roomType(),
-    routeLevels: this.routeLevels(),
-    initialRouteChoice: this.initialRouteChoice(),
+    trackLevels: this.trackLevels(),
+    initialTrackChoice: this.initialTrackChoice(),
     availableUpgrades: this.availableUpgrades(),
     evolutions: this.evolutions(),
     rerollsAvailable: this.rerollsAvailable(),
     potions: this.potions(),
     result: this.result(),
-    isFinalEvolution: this.isFinalEvolution()
+    isFinalEvolution: this.isFinalEvolution(),
+    kaelis: this.kaelis(),
+    loadout: this.loadoutSnapshot(),
+    runUpgrades: this.runUpgradesSignal()
   }));
-
-  private readonly router = inject(Router);
-  private readonly battle = inject(BattleEngineService);
-  private readonly player = inject(PlayerStateService);
-  private readonly enemy = inject(EnemyStateService);
-  private readonly ui = inject(UiStateService);
 
   constructor() {
     this.battle.setRunContext({
       getPhase: () => this.phase(),
-      getRouteLevels: () => this.routeLevels(),
+      getTrackLevels: () => this.trackLevels(),
+      getCurrentRoom: () => this.currentRoom(),
+      tickTurnUpgrades: actor => this.tickTurnUpgrades(actor),
       finishBattle: result => this.finishBattle(result)
     });
 
@@ -75,24 +105,50 @@ export class RunStateService {
 
   readonly runSeed = signal<number | null>(null);
 
-  startRun(initialRoute: RouteKey, seed?: number): void {
+  getLoadout(): RunLoadoutSnapshot | null {
+    return this.loadoutSnapshot();
+  }
+
+  isLoadoutLocked(): boolean {
+    return this.loadoutSnapshot() !== null;
+  }
+
+  getRunUpgrades(): RunUpgrade[] {
+    return this.runUpgradesSignal();
+  }
+
+  getPendingBattleBonuses(): PlayerBattleStartBonuses {
+    return this.collectNextFightBonuses();
+  }
+
+  startRun(initialTrack: TrackKey, seed?: number): void {
     this.ui.startTransition('Starting run...');
     const baseSeed = typeof seed === 'number' ? seed : this.randomSeed();
     this.runSeed.set(baseSeed);
-    this.routeLevels.set({ A: 0, B: 0, C: 0 });
-    this.routeLevels.update(levels => ({ ...levels, [initialRoute]: levels[initialRoute] + 1 }));
-    this.initialRouteChoice.set(initialRoute);
+    this.trackLevels.set({ A: 0, B: 0, C: 0 });
+    this.trackLevels.update(levels => ({ ...levels, [initialTrack]: levels[initialTrack] + 1 }));
+    this.initialTrackChoice.set(initialTrack);
     this.currentRoom.set(1);
-    this.totalRooms.set(7);
-    this.roomType.set(this.calculateRoomType(1, 7));
+    this.totalRooms.set(TOTAL_ROOMS);
+    this.roomType.set(this.calculateRoomType(1, TOTAL_ROOMS));
     this.rerollsAvailable.set(1);
-    this.potions.set(2);
+    this.syncPotionsFromProfile();
     this.result.set('none');
     this.isFinalEvolution.set(false);
     this.activeEvolutionVisual.set(null);
     this.evolutions.set([]);
+    const kaelis = this.profile.getActiveSnapshot();
+    this.currentKaelis.set(kaelis);
+    const weapon = this.profile.getEquippedWeapon(kaelis.id);
+    const rings = this.profile.getEquippedRings(kaelis.id);
+    const loadout = this.buildLoadoutSnapshot(weapon, rings);
+    this.loadoutSnapshot.set(loadout);
+    this.runUpgradesSignal.set([]);
+    this.upgradeRoll = 0;
+    const persistentModifiers = this.aggregatePersistentModifiers();
     this.refreshUpgrades();
-    this.player.resetForNewRun();
+    this.player.resetForNewRun(kaelis, loadout.weapon, loadout.sigils, persistentModifiers);
+    this.player.lockLoadout();
     this.enemy.reset();
     this.phase.set('start');
     this.startBattle();
@@ -104,7 +160,13 @@ export class RunStateService {
     const type = this.calculateRoomType(room, this.totalRooms());
     this.roomType.set(type);
     this.transitionToPhase('battle', 'Entering battle');
-    this.enemy.spawnForRoom(room, type);
+    const bonuses = this.consumeNextFightBonuses();
+    if (bonuses.energy || bonuses.postureShield) {
+      this.player.applyBattleStartBonuses(bonuses);
+    }
+    const encounter = this.enemyFactory.createEncounter(room, type);
+    this.enemy.spawnEncounter(encounter.enemy);
+    this.battle.setEnemyBehavior(encounter.behavior);
     const derivedSeed = this.deriveBattleSeed(seed);
     const battleSeed = this.battle.startBattle({ seed: derivedSeed });
     this.battleSeed.set(battleSeed);
@@ -134,16 +196,23 @@ export class RunStateService {
       this.applyEvolutionVisual(false);
       this.transitionToPhase('evolution', 'Opening Evolution');
     } else {
-      this.transitionToPhase('reward', 'Reward');
+      this.refreshUpgrades();
+      this.transitionToPhase('intermission', 'Intermission');
     }
+
+    this.tryPotionDrop();
+  }
+
+  goToIntermission(): void {
+    this.transitionToPhase('intermission', 'Intermission');
   }
 
   goToReward(): void {
-    this.transitionToPhase('reward', 'Reward');
+    this.goToIntermission();
   }
 
   goToPrep(): void {
-    this.transitionToPhase('prep', 'Preparation');
+    this.goToIntermission();
   }
 
   goToEvolution(isFinal: boolean): void {
@@ -180,20 +249,29 @@ export class RunStateService {
     this.result.set('none');
     this.currentRoom.set(0);
     this.roomType.set('normal');
-    this.routeLevels.set({ A: 0, B: 0, C: 0 });
+    this.trackLevels.set({ A: 0, B: 0, C: 0 });
     this.availableUpgrades.set([]);
     this.evolutions.set([]);
     this.rerollsAvailable.set(1);
-    this.potions.set(2);
-    this.initialRouteChoice.set(undefined);
+    this.totalRooms.set(TOTAL_ROOMS);
+    this.syncPotionsFromProfile();
+    this.initialTrackChoice.set(undefined);
     this.runSeed.set(null);
     this.battleSeed.set(null);
     this.activeEvolutionVisual.set(null);
+    this.currentKaelis.set(null);
+    this.loadoutSnapshot.set(null);
+    this.runUpgradesSignal.set([]);
+    this.upgradeRoll = 0;
+    this.player.unlockLoadout();
     this.ui.endTransition();
   }
 
   finishRun(): void {
     this.phase.set('finished');
+    this.runUpgradesSignal.set([]);
+    this.loadoutSnapshot.set(null);
+    this.player.unlockLoadout();
     this.ui.endTransition();
   }
 
@@ -207,14 +285,15 @@ export class RunStateService {
     this.transitionToPhase('summary', 'Run Summary');
   }
 
-  applyUpgrade(route: RouteKey): void {
-    if (!this.canUpgrade(route)) {
-      this.ui.pushLog('Upgrade locked (gating).');
+  applyUpgrade(option: UpgradeOption): void {
+    if (option.disabledReason) {
+      this.ui.pushLog(option.disabledReason);
       return;
     }
-    this.routeLevels.update(levels => ({ ...levels, [route]: levels[route] + 1 }));
+    const track = option.upgrade.track;
+    this.trackLevels.update(levels => ({ ...levels, [track]: levels[track] + 1 }));
+    this.addRunUpgrade(option);
     this.refreshUpgrades();
-    this.goToPrep();
   }
 
   rerollUpgrades(): void {
@@ -224,41 +303,35 @@ export class RunStateService {
   }
 
   consumePotion(): boolean {
-    let consumed = false;
-    this.potions.update(p => {
-      if (p <= 0) return p;
-      consumed = true;
-      return p - 1;
-    });
-    if (consumed) {
-      this.player.smallHeal(0.3);
+    if (this.phase() !== 'prep' && this.phase() !== 'intermission') {
+      this.ui.pushLog('Potions can only be used between rooms.');
+      return false;
     }
-    return consumed;
+    const current = this.potions();
+    if (current <= 0) return false;
+    this.persistPotionCount(current - 1);
+    this.player.smallHeal(0.3);
+    return true;
   }
 
   addPotion(amount = 1): void {
-    this.potions.update(p => p + amount);
+    if (amount <= 0) return;
+    const current = this.potions();
+    const next = Math.min(POTION_CAP, current + amount);
+    if (next === current) return;
+    this.persistPotionCount(next);
   }
 
-  canUpgrade(route: RouteKey): boolean {
-    const levels = this.routeLevels();
-    const desired = levels[route] + 1;
-    if (desired === 1) return true;
-    const others: RouteKey[] = ['A', 'B', 'C'].filter(r => r !== route) as RouteKey[];
-    return others.some(r => levels[r] >= desired - 1);
-  }
-
-  requiredLevelFor(route: RouteKey): number {
-    const levels = this.routeLevels();
-    return Math.max(1, levels[route] + 1);
+  canUpgrade(def: UpgradeDef): boolean {
+    return !this.getUpgradeLockReason(def, this.trackLevels());
   }
 
   getRoomTypeFor(room: number): RoomType {
     return this.calculateRoomType(room, this.totalRooms());
   }
 
-  registerEvolution(route: RouteKey, stage: 'mini' | 'final'): void {
-    const label = stage === 'final' ? `Final Evolution - route ${route}` : `Evolution - route ${route}`;
+  registerEvolution(track: TrackKey, stage: 'mini' | 'final'): void {
+    const label = stage === 'final' ? `Final Evolution - trilha ${track}` : `Evolution - trilha ${track}`;
     this.evolutions.update(list => [...list, label]);
   }
 
@@ -270,11 +343,18 @@ export class RunStateService {
   }
 
   private refreshUpgrades(): void {
-    this.availableUpgrades.set([
-      { id: this.uid(), name: '+1 Route A', description: 'Empowers route A (critical / multi-hit).', route: 'A', rarity: 'common' },
-      { id: this.uid(), name: '+1 Route B', description: 'Empowers route B (DoT / corrosion).', route: 'B', rarity: 'common' },
-      { id: this.uid(), name: '+1 Route C', description: 'Empowers route C (stance / impact).', route: 'C', rarity: 'common' }
-    ]);
+    const errors = validateUpgradeCatalog();
+    if (errors.length) {
+      console.warn('Upgrade catalog errors', errors);
+    }
+    this.upgradeRoll += 1;
+    const options = this.generateUpgrades(
+      this.trackLevels(),
+      this.currentRoom(),
+      this.runSeed() ?? undefined,
+      this.upgradeRoll
+    );
+    this.availableUpgrades.set(options);
   }
 
   private deriveBattleSeed(seed?: number): number {
@@ -291,7 +371,7 @@ export class RunStateService {
   }
 
   private pickEvolutionKey(): EvolutionVisualKey | null {
-    const choice = this.initialRouteChoice();
+    const choice = this.initialTrackChoice();
     if (choice === 'A') return 'critico';
     if (choice === 'B') return 'ruina';
     if (choice === 'C') return 'impacto';
@@ -313,10 +393,11 @@ export class RunStateService {
         return '/run/start';
       case 'battle':
         return '/run/battle';
+      case 'intermission':
+        return '/run/intermission';
       case 'reward':
-        return '/run/reward';
       case 'prep':
-        return '/run/prep';
+        return '/run/intermission';
       case 'evolution':
         return '/run/evolution';
       case 'summary':
@@ -330,6 +411,18 @@ export class RunStateService {
     }
   }
 
+  private tryPotionDrop(): void {
+    if (Math.random() >= POTION_DROP_CHANCE) return;
+    const current = this.potions();
+    if (current >= POTION_CAP) {
+      this.ui.pushLog('Potion drop wasted (cap reached).');
+      return;
+    }
+    const next = Math.min(POTION_CAP, current + 1);
+    this.persistPotionCount(next);
+    this.ui.pushLog(`Potion found! (${next}/${POTION_CAP})`);
+  }
+
   private uid(): string {
     return Math.random().toString(36).slice(2, 10);
   }
@@ -337,4 +430,231 @@ export class RunStateService {
   private randomSeed(): number {
     return Math.floor(Math.random() * 1_000_000_000);
   }
+
+  private syncPotionsFromProfile(): void {
+    this.potions.set(Math.min(POTION_CAP, this.profile.potionCount()));
+  }
+
+  private persistPotionCount(value: number): void {
+    const clamped = Math.min(POTION_CAP, Math.max(0, value));
+    this.potions.set(clamped);
+    this.profile.setPotionCount(clamped);
+  }
+
+  private buildLoadoutSnapshot(weapon: WeaponDefinition, rings: RingDefinition[]): RunLoadoutSnapshot {
+    return {
+      weapon: this.cloneWeapon(weapon),
+      sigils: rings.map(ring => this.cloneRing(ring))
+    };
+  }
+
+  private cloneWeapon(weapon: WeaponDefinition): WeaponDefinition {
+    return {
+      ...weapon,
+      flatStat: { ...weapon.flatStat },
+      secondaryStat: { ...weapon.secondaryStat }
+    };
+  }
+
+  private cloneRing(ring: RingDefinition): RingDefinition {
+    return {
+      ...ring,
+      mainStat: { ...ring.mainStat },
+      subStats: ring.subStats.map(stat => ({ ...stat }))
+    };
+  }
+
+  private addRunUpgrade(option: UpgradeOption): void {
+    const def = option.upgrade;
+    const upgrade: RunUpgrade = {
+      id: this.uid(),
+      defId: def.id,
+      track: def.track,
+      name: def.name,
+      rarity: def.rarity,
+      duration: def.duration,
+      effects: def.effects.map(effect => ({ ...effect })),
+      modifiers: { ...def.modifiers },
+      remainingTurns: def.duration.type === 'nTurns' ? def.duration.turns : undefined
+    };
+    this.runUpgradesSignal.update(list => [...list, upgrade]);
+    this.applyPersistentModifiers();
+  }
+
+  private applyPersistentModifiers(): void {
+    const modifiers = this.aggregatePersistentModifiers();
+    this.player.applyRunAttributeModifiers(modifiers);
+  }
+
+  private aggregatePersistentModifiers(): PlayerAttributeModifierSet {
+    const totals: PlayerAttributeModifierSet = {};
+    this.runUpgradesSignal().forEach(upgrade => {
+      if (upgrade.duration.type === 'run') {
+        this.applyUpgradeModifiers(totals, upgrade.modifiers);
+        return;
+      }
+      if (upgrade.duration.type === 'nTurns' && (upgrade.remainingTurns ?? 0) > 0) {
+        this.applyUpgradeModifiers(totals, upgrade.modifiers);
+      }
+    });
+    return totals;
+  }
+
+  private applyUpgradeModifiers(totals: PlayerAttributeModifierSet, mods: UpgradeModifiers): void {
+    if (mods.addHpFlat) totals.hpFlat = (totals.hpFlat ?? 0) + mods.addHpFlat;
+    if (mods.addAtkFlat) totals.atkFlat = (totals.atkFlat ?? 0) + mods.addAtkFlat;
+    if (mods.addCritRate) totals.critRate = (totals.critRate ?? 0) + mods.addCritRate;
+    if (mods.addCritDmg) totals.critDamage = (totals.critDamage ?? 0) + mods.addCritDmg;
+    if (mods.addDmgPct) totals.damagePercent = (totals.damagePercent ?? 0) + mods.addDmgPct;
+    if (mods.addDrPct) totals.damageReductionPercent = (totals.damageReductionPercent ?? 0) + mods.addDrPct;
+  }
+
+  private collectNextFightBonuses(): PlayerBattleStartBonuses {
+    const bonuses: PlayerBattleStartBonuses = {};
+    this.runUpgradesSignal().forEach(upgrade => {
+      if (upgrade.duration.type !== 'nextBattle') return;
+      if (upgrade.modifiers.startNextBattleEnergy) {
+        bonuses.energy = (bonuses.energy ?? 0) + upgrade.modifiers.startNextBattleEnergy;
+      }
+      if (upgrade.modifiers.startNextBattlePosture) {
+        bonuses.postureShield = (bonuses.postureShield ?? 0) + upgrade.modifiers.startNextBattlePosture;
+      }
+    });
+    return bonuses;
+  }
+
+  private consumeNextFightBonuses(): PlayerBattleStartBonuses {
+    const bonuses = this.collectNextFightBonuses();
+    if (!bonuses.energy && !bonuses.postureShield) {
+      return bonuses;
+    }
+    this.runUpgradesSignal.update(list => list.filter(upgrade => upgrade.duration.type !== 'nextBattle'));
+    this.applyPersistentModifiers();
+    return bonuses;
+  }
+
+  tickTurnUpgrades(actor: 'player' | 'enemy'): void {
+    let changed = false;
+    this.runUpgradesSignal.update(list => {
+      const next: RunUpgrade[] = [];
+      list.forEach(upgrade => {
+        if (upgrade.duration.type !== 'nTurns') {
+          next.push(upgrade);
+          return;
+        }
+        const shouldTick = upgrade.duration.ownerTurns ? actor === 'player' : actor === 'enemy';
+        if (!shouldTick) {
+          next.push(upgrade);
+          return;
+        }
+        const remaining = (upgrade.remainingTurns ?? upgrade.duration.turns) - 1;
+        changed = true;
+        if (remaining > 0) {
+          next.push({ ...upgrade, remainingTurns: remaining });
+        }
+      });
+      return next;
+    });
+    if (changed) {
+      this.applyPersistentModifiers();
+    }
+  }
+
+  private generateUpgrades(
+    trackLevels: Record<TrackKey, number>,
+    room: number,
+    seed?: number,
+    rollIndex = 0
+  ): UpgradeOption[] {
+    const rng = this.createRng(typeof seed === 'number' ? seed + room * 9973 + rollIndex * 101 : undefined);
+    return UPGRADE_TRACKS.map(track => {
+      const def = this.pickUpgradeForTrack(track, trackLevels, room, rng);
+      const disabledReason = this.getUpgradeLockReason(def, trackLevels);
+      return {
+        id: this.uid(),
+        upgrade: def,
+        disabledReason
+      };
+    });
+  }
+
+  private pickUpgradeForTrack(
+    track: UpgradeTrack,
+    trackLevels: Record<TrackKey, number>,
+    room: number,
+    rng: () => number
+  ): UpgradeDef {
+    const defs = getUpgradesByTrack(track);
+    if (!defs.length) {
+      return this.fallbackUpgrade(track);
+    }
+    const rarity = this.rollRarity(roomToStage(room), rng);
+    const eligible = defs.filter(def => !this.getUpgradeLockReason(def, trackLevels));
+    const pool = eligible.length ? eligible : defs;
+    const byRarity = pool.filter(def => def.rarity === rarity);
+    const finalPool = byRarity.length ? byRarity : pool;
+    const index = Math.floor(rng() * finalPool.length);
+    return finalPool[Math.max(0, Math.min(index, finalPool.length - 1))];
+  }
+
+  private rollRarity(stage: 'early' | 'mid' | 'late', rng: () => number): UpgradeRarity {
+    const roll = rng();
+    if (stage === 'early') {
+      return roll < 0.85 ? 'common' : 'rare';
+    }
+    if (stage === 'mid') {
+      if (roll < 0.6) return 'common';
+      if (roll < 0.9) return 'rare';
+      return 'epic';
+    }
+    if (roll < 0.35) return 'common';
+    if (roll < 0.75) return 'rare';
+    return 'epic';
+  }
+
+  private getUpgradeLockReason(def: UpgradeDef, trackLevels: Record<TrackKey, number>): string | undefined {
+    const gating = def.gating;
+    if (!gating) return undefined;
+    if (typeof gating.minTrackLevel === 'number') {
+      if (trackLevels[def.track] < gating.minTrackLevel) {
+        return `Requires Track ${def.track} level ${gating.minTrackLevel}.`;
+      }
+    }
+    if (typeof gating.requiresOtherTrackAtLeast === 'number') {
+      const meets = UPGRADE_TRACKS.filter(track => track !== def.track).some(
+        track => trackLevels[track] >= gating.requiresOtherTrackAtLeast!
+      );
+      if (!meets) {
+        return `Requires another track at level ${gating.requiresOtherTrackAtLeast}.`;
+      }
+    }
+    return undefined;
+  }
+
+  private createRng(seed?: number): () => number {
+    if (typeof seed !== 'number' || Number.isNaN(seed)) {
+      return Math.random;
+    }
+    let state = seed >>> 0;
+    return () => {
+      state += 0x6d2b79f5;
+      let t = state;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  private fallbackUpgrade(track: UpgradeTrack): UpgradeDef {
+    return {
+      id: `fallback-${track}`,
+      name: `Track ${track} Boost`,
+      track,
+      rarity: 'common',
+      duration: { type: 'run' },
+      effects: [{ text: 'Temporary fallback upgrade.' }],
+      modifiers: {}
+    };
+  }
 }
+

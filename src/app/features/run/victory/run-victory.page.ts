@@ -28,7 +28,7 @@ import { SkinStateService } from "../../../core/services/skin-state.service";
     <app-wow-burst [trigger]="true"></app-wow-burst>
     <app-header
       title="Ascension Achieved"
-      subtitle="Final boss defeated. Velvet reigns."
+      [subtitle]="'Final boss defeated. ' + kaelisName + ' reigns.'"
       kicker="Victory"
     ></app-header>
     <div class="space-y-4">
@@ -45,7 +45,7 @@ import { SkinStateService } from "../../../core/services/skin-state.service";
         </div>
         <div class="relative grid gap-4 md:grid-cols-2">
           <app-card
-            title="Final Routes"
+            title="Trilhas finais"
             [subtitle]="
               'A ' + levels.A + ' - B ' + levels.B + ' - C ' + levels.C
             "
@@ -116,7 +116,7 @@ import { SkinStateService } from "../../../core/services/skin-state.service";
       >
         <div>
           <p class="text-sm font-semibold text-white">
-            The current banner features Velvet's SSR skin
+            The current banner features {{ kaelisName }}'s SSR skin
           </p>
           <p class="text-xs text-[#A4A4B5]">
             Try your luck in the premium gacha and grow your collection.
@@ -155,7 +155,7 @@ export class RunVictoryPageComponent {
   protected readonly skinState = inject(SkinStateService);
 
   get levels() {
-    return this.run.routeLevels();
+    return this.run.trackLevels();
   }
 
   get currentSkin() {
@@ -164,6 +164,10 @@ export class RunVictoryPageComponent {
 
   get newSkins() {
     return this.skinState.lastObtainedSkins();
+  }
+
+  get kaelisName(): string {
+    return this.run.kaelis()?.name ?? 'Kaelis';
   }
 
   restart(): void {

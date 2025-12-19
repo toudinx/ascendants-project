@@ -1,3 +1,8 @@
+import { KaelisRouteType } from './kaelis-route.model';
+import { KaelisKitConfig } from './kaelis.model';
+import { WeaponId } from './weapon.model';
+import { RingSetKey, RingSkillBuffEffect } from './ring.model';
+
 export type BuffType = 'buff' | 'debuff';
 
 export interface PlayerBuff {
@@ -22,6 +27,11 @@ export interface PlayerAttributes {
   multiHitChance: number;
   dotChance: number;
   penetration: number;
+  energyRegenPercent: number;
+  damageBonusPercent?: number;
+  damageReductionPercent?: number;
+  healBonusPercent?: number;
+  postureDamageBonusPercent?: number;
 }
 
 export interface PlayerState {
@@ -30,4 +40,19 @@ export interface PlayerState {
   status?: 'normal' | 'broken' | 'superbroken';
   breakTurns?: number;
   skillCooldown?: number;
+  kaelisRoute: KaelisRouteType;
+  kaelisId: string;
+  kaelisName: string;
+  kaelisSprite: string;
+  kit: KaelisKitConfig;
+  weaponId: WeaponId;
+  ringSetCounts?: Record<RingSetKey, number>;
+  ringSkillBuffs?: PlayerRingSkillBuff[];
+  ringDamageBuffPercent?: number;
+  ringDamageBuffTurns?: number;
+  ringDamageBuffSource?: RingSetKey;
+}
+
+export interface PlayerRingSkillBuff extends RingSkillBuffEffect {
+  setKey: RingSetKey;
 }

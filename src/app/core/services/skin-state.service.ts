@@ -1,4 +1,5 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { ProfileStateService } from './profile-state.service';
 
 export interface VelvetSkin {
   id: string;
@@ -13,6 +14,7 @@ export interface VelvetSkin {
 
 @Injectable({ providedIn: 'root' })
 export class SkinStateService {
+  private readonly profile = inject(ProfileStateService);
   private readonly initialSkins: VelvetSkin[] = [
     {
       id: 'default',
@@ -46,18 +48,39 @@ export class SkinStateService {
 
   readonly currentSkin = computed(() => this.getCurrentSkin());
 
+  constructor() {
+    effect(() => {
+      const cosmetics = this.profile.cosmetics();
+      const owned = new Set(cosmetics.ownedSkinIds);
+      this.skins.update(list =>
+        list.map(s => ({
+          ...s,
+          unlocked: owned.has(s.id) || s.unlocked
+        }))
+      );
+      const active = cosmetics.activeSkinByKaelis[this.profile.selectedKaelisId()] ?? 'default';
+      if (this.currentSkinId() !== active) {
+        this.currentSkinId.set(active);
+      }
+    });
+  }
+
   getCurrentSkin(): VelvetSkin {
     const current = this.currentSkinId();
     return this.skins().find(s => s.id === current) ?? this.skins()[0];
   }
 
   setCurrentSkin(id: string): void {
-    if (!this.skins().find(s => s.id === id && s.unlocked)) return;
+    const skin = this.skins().find(s => s.id === id && s.unlocked);
+    if (!skin) return;
+    const kaelisId = this.profile.selectedKaelisId();
+    this.profile.setActiveSkin(kaelisId, id);
     this.currentSkinId.set(id);
     this.markSkinAsSeen(id);
   }
 
   unlockSkin(id: string): void {
+    this.profile.unlockSkin(id);
     this.skins.update(list =>
       list.map(s => (s.id === id ? { ...s, unlocked: true, isNew: true } : s))
     );
@@ -71,6 +94,7 @@ export class SkinStateService {
 
   addObtainedSkins(skins: VelvetSkin[]): void {
     const ids = skins.map(s => s.id);
+    ids.forEach(id => this.profile.unlockSkin(id));
     this.skins.update(list =>
       list.map(s => (ids.includes(s.id) ? { ...s, unlocked: true, isNew: true } : s))
     );

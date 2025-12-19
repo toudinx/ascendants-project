@@ -8,6 +8,7 @@ import {
 } from "../../shared/components";
 import { RunStateService } from "../../core/services/run-state.service";
 import { SkinStateService } from "../../core/services/skin-state.service";
+import { ProfileStateService } from "../../core/services/profile-state.service";
 
 @Component({
   selector: "app-hub-page",
@@ -62,21 +63,31 @@ import { SkinStateService } from "../../core/services/skin-state.service";
                          bg-black/40 px-3 py-1
                          text-xs text-white/80"
                 >
-                  Welcome back
+                  Active Kaelis · {{ profile.activeKaelis().name }}
                 </div>
               </div>
 
               <div class="mt-3 flex items-center justify-between">
                 <p class="text-sm text-[#A4A4B5]">
+                  {{ profile.activeKaelis().name }} · {{ profile.activeKaelis().routeType }} route
+                  <br />
                   Equipped skin: {{ skinState.currentSkin().name }}
                 </p>
 
-                <app-button
-                  label="Change Outfit"
-                  variant="ghost"
-                  size="sm"
-                  (click)="router.navigate(['/collection'])"
-                ></app-button>
+                <div class="flex gap-2">
+                  <app-button
+                    label="Manage Kaelis"
+                    variant="ghost"
+                    size="sm"
+                    (click)="router.navigate(['/character-select'])"
+                  ></app-button>
+                  <app-button
+                    label="Adjust Loadout"
+                    variant="ghost"
+                    size="sm"
+                    (click)="router.navigate(['/loadout'])"
+                  ></app-button>
+                </div>
               </div>
             </div>
 
@@ -92,8 +103,21 @@ import { SkinStateService } from "../../core/services/skin-state.service";
               ></app-button>
 
               <p class="mt-2 text-xs text-[#A4A4B5]">
-                Select character and prepare your run
+                Active Kaelis: {{ profile.activeKaelis().name }} ({{ profile.activeKaelis().routeType }})
               </p>
+              <div class="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-[#7F7F95]">
+                <span>Gold: {{ profile.currencies().gold | number : '1.0-0' }}</span>
+                <span>Sigils: {{ profile.currencies().sigils | number : '1.0-0' }}</span>
+                <span>Potions: {{ profile.potionCount() }} / 2</span>
+              </div>
+              <div class="mt-3 flex justify-center">
+                <app-button
+                  label="Change Outfit"
+                  variant="ghost"
+                  size="sm"
+                  (click)="router.navigate(['/collection'])"
+                ></app-button>
+              </div>
             </div>
 
             <!-- DAILY / GOAL -->
@@ -190,6 +214,7 @@ export class HubPageComponent {
   protected readonly runState = inject(RunStateService);
   protected readonly router = inject(Router);
   protected readonly skinState = inject(SkinStateService);
+  protected readonly profile = inject(ProfileStateService);
   startRun(): void {
     this.runState.resetToStart();
   }

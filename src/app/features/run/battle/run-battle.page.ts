@@ -56,13 +56,26 @@ interface TurnLogEvent {
   value?: number;
 }
 
+type SummaryTone =
+  | "damage"
+  | "dot"
+  | "posture"
+  | "break"
+  | "superbreak"
+  | "neutral";
+
+interface TurnSummaryChip {
+  text: string;
+  tone: SummaryTone;
+}
+
 interface TurnLogGroup {
   id: string;
   number: number;
   actor: TimelineActor;
   actorLabel: string;
   events: TurnLogEvent[];
-  summary: string[];
+  summary: TurnSummaryChip[];
   isLatest?: boolean;
 }
 
@@ -99,9 +112,6 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
   paused = false;
   logOpen = true;
   awaitingPlayer = false;
-
-  readonly skillCost = 40;
-  readonly cooldownMaxTurns = 3;
 
   private readonly processedFloatIds = new Set<string>();
   private lastTurnRef = "";
@@ -247,8 +257,27 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
     );
   }
 
+  get playerName(): string {
+    return this.playerState.kaelisName || "Kaelis";
+  }
+
+  get playerSprite(): string {
+    return (
+      this.playerState.kaelisSprite ||
+      "assets/battle/characters/velvet_battle_idle.png"
+    );
+  }
+
   get skillCooldown(): number {
     return this.playerState.skillCooldown ?? 0;
+  }
+
+  get skillCost(): number {
+    return this.player.state().kit.skillEnergyCost;
+  }
+
+  get cooldownMaxTurns(): number {
+    return this.player.state().kit.skillCooldownTurns;
   }
 
   get skillOnCooldown(): boolean {
@@ -265,7 +294,8 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
 
   get skillCooldownRatio(): number {
     if (!this.skillOnCooldown) return 0;
-    return Math.min(1, this.skillCooldown / this.cooldownMaxTurns);
+    const maxTurns = Math.max(1, this.cooldownMaxTurns);
+    return Math.min(1, this.skillCooldown / maxTurns);
   }
 
   get skillButtonEnabled(): boolean {
@@ -458,7 +488,7 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
         container.scrollTop = 0;
         return;
       }
-      container.scrollTop = target.offsetTop;
+      container.scrollTop = Math.max(target.offsetTop - 8, 0);
     });
   }
 
@@ -548,10 +578,10 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
   }
 
   private trackDotFromLog(logs: UiLogEntry[]): void {
-    const last = logs.at(-1);
-    if (!last || last.id === this.lastLogId) return;
-    this.lastLogId = last.id;
-    const lower = last.text.toLowerCase();
+    const latest = logs.length ? logs[0] : undefined;
+    if (!latest || latest.id === this.lastLogId) return;
+    this.lastLogId = latest.id;
+    const lower = latest.text.toLowerCase();
     if (lower.includes("dot applied")) {
       this.dotStacks.update((state) => ({ ...state, enemy: 2 }));
     }
@@ -715,7 +745,7 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
   }
 
   private actorLabel(actor: TimelineActor): string {
-    if (actor === "player") return "Velvet";
+    if (actor === "player") return this.playerName;
     if (actor === "enemy") return "Enemy";
     return "System";
   }
@@ -746,14 +776,14 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
       case "damage":
         return {
           icon: "\u{1F5E1}",
-          text: value !== undefined ? `${value} damage` : "Damage dealt",
+          text: value !== undefined ? `-${value} HP` : "Damage dealt",
           tone: "damage",
           value,
         };
       case "multihit":
         return {
           icon: "\u{1F4A5}",
-          text: value !== undefined ? `+${value} multi-hit` : "Multi-hit bonus",
+          text: value !== undefined ? `+${value} combo` : "Multi-hit bonus",
           tone: "multihit",
           value,
         };
@@ -768,7 +798,7 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
       case "posture":
         return {
           icon: "\u{1F6E1}",
-          text: value !== undefined ? `-${value} posture` : "Posture reduced",
+          text: value !== undefined ? `-${value} posture` : "Posture hit",
           tone: "posture",
           value,
         };
@@ -808,13 +838,12 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
     return `${trimmed.slice(0, 45)}?`;
   }
 
-  private buildTurnSummary(events: TurnLogEvent[]): string[] {
+  private buildTurnSummary(events: TurnLogEvent[]): TurnSummaryChip[] {
     let totalDamage = 0;
     let bonusDamage = 0;
     let dotActive = false;
     let postureHit = false;
-    let broke = false;
-    let superBreak = false;
+    let breakFlag: SummaryTone = "neutral";
 
     for (const event of events) {
       if (event.kind === "damage" && typeof event.value === "number") {
@@ -829,45 +858,45 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
       if (event.kind === "posture") {
         postureHit = true;
       }
-      if (event.kind === "break") {
-        broke = true;
-      }
       if (event.kind === "superbreak") {
-        superBreak = true;
+        breakFlag = "superbreak";
+      } else if (event.kind === "break" && breakFlag !== "superbreak") {
+        breakFlag = "break";
       }
     }
 
-    const summary: string[] = [];
+    const chips: TurnSummaryChip[] = [];
     const combinedDamage = totalDamage + bonusDamage;
     if (combinedDamage > 0) {
-      summary.push(`${combinedDamage} total damage`);
+      chips.push({ text: `${combinedDamage} dmg`, tone: "damage" });
     }
+
     if (dotActive) {
-      summary.push("DoT active");
+      chips.push({ text: "DoT active", tone: "dot" });
     }
+
     if (postureHit) {
-      summary.push("Posture reduced");
+      chips.push({ text: "Posture hit", tone: "posture" });
     }
-    if (superBreak) {
-      summary.push("Superbreak confirmed");
-    } else if (broke) {
-      summary.push("Break confirmed");
+
+    if (breakFlag === "superbreak") {
+      chips.push({ text: "Superbreak", tone: "superbreak" });
+    } else if (breakFlag === "break") {
+      chips.push({ text: "Break", tone: "break" });
     }
-    if (!summary.length) {
-      summary.push("No major changes");
+
+    if (!chips.length) {
+      chips.push({ text: "No major changes", tone: "neutral" });
     }
-    return summary;
+
+    return chips;
   }
 
   private latestTurnGroupId(): string | null {
-    const logs = this.ui.state().logs;
-    let latest = 0;
-    for (const entry of logs) {
-      if (entry.turn > latest) {
-        latest = entry.turn;
-      }
-    }
-    return latest > 0 ? `turn-${latest}` : null;
+    const latest = this.ui
+      .state()
+      .logs.find((entry) => entry.turn && entry.turn > 0);
+    return latest ? `turn-${latest.turn}` : null;
   }
 
   private ensureLatestTurnExpanded(): void {

@@ -9,7 +9,7 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
   standalone: true,
   imports: [CommonModule, AppHeaderComponent, AppPanelComponent, AppTagComponent, AppButtonComponent, AppCardComponent, SkinCardComponent],
   template: `
-    <app-header [title]="title" subtitle="Routes, evolutions and quick stats." kicker="Run"></app-header>
+    <app-header [title]="title + ' — ' + kaelisName" subtitle="Trilhas, evolutions and quick stats." kicker="Run"></app-header>
 
     <div class="space-y-4">
       <app-panel title="Skin in Use" subtitle="Run identity visual">
@@ -18,11 +18,11 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
         </div>
       </app-panel>
 
-      <app-panel title="Final Routes" subtitle="Level distribution">
+      <app-panel title="Trilhas finais" subtitle="Level distribution">
         <div class="grid gap-3 md:grid-cols-3">
-          @for (route of run.routes(); track route.route) {
-            <app-card [title]="route.title" [subtitle]="route.emphasis" [tag]="'Lv ' + route.level">
-              <div class="text-sm text-[#A4A4B5]">Route {{ route.route }}</div>
+          @for (track of run.tracks(); track track.track) {
+            <app-card [title]="track.title" [subtitle]="track.emphasis" [tag]="'Lv ' + track.level">
+              <div class="text-sm text-[#A4A4B5]">Trilha {{ track.track }}</div>
             </app-card>
           }
         </div>
@@ -85,8 +85,12 @@ export class RunSummaryPageComponent {
   }
 
   get totalUpgrades(): number {
-    const levels = this.run.routeLevels();
+    const levels = this.run.trackLevels();
     return levels.A + levels.B + levels.C;
+  }
+
+  get kaelisName(): string {
+    return this.run.kaelis()?.name ?? 'Kaelis';
   }
 
   get currentSkin() {

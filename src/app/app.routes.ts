@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { HubPageComponent } from './features/hub/hub.page';
 import { RunStartPageComponent } from './features/run/start/run-start.page';
 import { RunBattlePageComponent } from './features/run/battle/run-battle.page';
+import { RunIntermissionPageComponent } from './features/run/intermission/run-intermission.page';
 import { RunRewardPageComponent } from './features/run/reward/run-reward.page';
 import { RunPrepPageComponent } from './features/run/prep/run-prep.page';
 import { RunEvolutionPageComponent } from './features/run/evolution/run-evolution.page';
@@ -13,21 +14,77 @@ import { StorePageComponent } from './features/store/store.page';
 import { DailyPageComponent } from './features/daily/daily.page';
 import { VelvetCollectionPageComponent } from './features/collection/velvet-collection.page';
 import { GachaPageComponent } from './features/gacha/gacha.page';
+import { EventsPageComponent } from './features/events/events.page';
+import { CharacterSelectPageComponent } from './features/character-select/character-select.page';
+import { runActiveCanActivate, runActiveCanMatch } from './core/guards/run-active.guard';
+import { LoadoutPageComponent } from './features/loadout/loadout.page';
+import { ContentWorkshopPageComponent } from './features/dev/content-workshop/content-workshop.page';
+import { devOnlyCanActivate, devOnlyCanMatch } from './core/guards/dev-only.guard';
 
 export const appRoutes: Routes = [
   { path: '', component: HubPageComponent },
   { path: 'run/start', component: RunStartPageComponent },
-  { path: 'run/battle', component: RunBattlePageComponent },
-  { path: 'run/reward', component: RunRewardPageComponent },
-  { path: 'run/prep', component: RunPrepPageComponent },
-  { path: 'run/evolution', component: RunEvolutionPageComponent },
-  { path: 'run/death', component: RunDeathPageComponent },
-  { path: 'run/victory', component: RunVictoryPageComponent },
-  { path: 'run/summary', component: RunSummaryPageComponent },
+  {
+    path: 'run/battle',
+    component: RunBattlePageComponent,
+    canActivate: [runActiveCanActivate],
+    canMatch: [runActiveCanMatch]
+  },
+  {
+    path: 'run/intermission',
+    component: RunIntermissionPageComponent,
+    canActivate: [runActiveCanActivate],
+    canMatch: [runActiveCanMatch]
+  },
+  {
+    path: 'run/reward',
+    component: RunRewardPageComponent,
+    canActivate: [runActiveCanActivate],
+    canMatch: [runActiveCanMatch]
+  },
+  {
+    path: 'run/prep',
+    component: RunPrepPageComponent,
+    canActivate: [runActiveCanActivate],
+    canMatch: [runActiveCanMatch]
+  },
+  {
+    path: 'run/evolution',
+    component: RunEvolutionPageComponent,
+    canActivate: [runActiveCanActivate],
+    canMatch: [runActiveCanMatch]
+  },
+  {
+    path: 'run/death',
+    component: RunDeathPageComponent,
+    canActivate: [runActiveCanActivate],
+    canMatch: [runActiveCanMatch]
+  },
+  {
+    path: 'run/victory',
+    component: RunVictoryPageComponent,
+    canActivate: [runActiveCanActivate],
+    canMatch: [runActiveCanMatch]
+  },
+  {
+    path: 'run/summary',
+    component: RunSummaryPageComponent,
+    canActivate: [runActiveCanActivate],
+    canMatch: [runActiveCanMatch]
+  },
   { path: 'inventory', component: InventoryPageComponent },
   { path: 'store', component: StorePageComponent },
   { path: 'daily', component: DailyPageComponent },
   { path: 'collection', component: VelvetCollectionPageComponent },
   { path: 'gacha', component: GachaPageComponent },
+  { path: 'events', component: EventsPageComponent },
+  { path: 'character-select', component: CharacterSelectPageComponent },
+  { path: 'loadout', component: LoadoutPageComponent },
+  {
+    path: 'dev/content',
+    component: ContentWorkshopPageComponent,
+    canActivate: [devOnlyCanActivate],
+    canMatch: [devOnlyCanMatch]
+  },
   { path: '**', redirectTo: '' }
 ];

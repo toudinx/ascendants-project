@@ -978,12 +978,67 @@
   padding-bottom: 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .log-turn__actor {
   font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--text-primary, #f5f5fa);
+}
+
+.log-turn__summary-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 10px;
+}
+
+.summary-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #a4a4b5);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.summary-chip.damage {
+  color: #ff9c6a;
+  border-color: rgba(255, 140, 101, 0.45);
+  background: rgba(255, 140, 101, 0.08);
+}
+
+.summary-chip.dot {
+  color: #2de3c8;
+  border-color: rgba(45, 227, 200, 0.4);
+  background: rgba(45, 227, 200, 0.1);
+}
+
+.summary-chip.posture {
+  color: #7a8cff;
+  border-color: rgba(122, 140, 255, 0.35);
+  background: rgba(122, 140, 255, 0.08);
+}
+
+.summary-chip.break {
+  color: #ff9c6a;
+  border-color: rgba(255, 156, 106, 0.45);
+  background: rgba(255, 156, 106, 0.12);
+}
+
+.summary-chip.superbreak {
+  color: #ff5a78;
+  border-color: rgba(255, 90, 120, 0.45);
+  background: rgba(255, 90, 120, 0.12);
+}
+
+.summary-chip.neutral {
+  color: var(--text-secondary, #a4a4b5);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .log-turn__events {
@@ -1016,6 +1071,36 @@
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+.log-event.damage {
+  border-color: rgba(255, 140, 101, 0.45);
+  background: rgba(255, 140, 101, 0.08);
+}
+
+.log-event.multihit {
+  border-color: rgba(255, 211, 68, 0.4);
+  background: rgba(255, 211, 68, 0.08);
+}
+
+.log-event.dot {
+  border-color: rgba(45, 227, 200, 0.35);
+  background: rgba(45, 227, 200, 0.08);
+}
+
+.log-event.posture {
+  border-color: rgba(122, 140, 255, 0.35);
+  background: rgba(122, 140, 255, 0.08);
+}
+
+.log-event.break {
+  border-color: rgba(255, 156, 106, 0.4);
+  background: rgba(255, 156, 106, 0.08);
+}
+
+.log-event.superbreak {
+  border-color: rgba(255, 90, 120, 0.45);
+  background: rgba(255, 90, 120, 0.1);
+}
+
 .log-event__icon {
   font-size: 13px;
   line-height: 1;
@@ -1024,6 +1109,10 @@
 .log-event__text {
   color: var(--text-secondary, #a4a4b5);
   line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
 }
 
 .pause-overlay {

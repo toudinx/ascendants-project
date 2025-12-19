@@ -1,9 +1,10 @@
-import { Component } from "@angular/core";
+import { Component, inject } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import {
   RunDebugPanelComponent,
   RunTransitionOverlayComponent,
 } from "./shared/components";
+import { ProfileStateService } from "./core/services/profile-state.service";
 
 @Component({
   selector: "app-root",
@@ -40,4 +41,6 @@ import {
     </div>
   `,
 })
-export class AppComponent {}
+export class AppComponent {
+  private readonly profile = inject(ProfileStateService);
+}

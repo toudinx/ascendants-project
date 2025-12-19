@@ -17,7 +17,7 @@ import { RunStateService } from '../../../core/services/run-state.service';
         </div>
         <div class="relative grid gap-4 md:grid-cols-2">
           <app-card title="Room reached" [subtitle]="run.currentRoom() + '/' + run.totalRooms()" [interactive]="false"></app-card>
-          <app-card title="Final Routes" [subtitle]="'A ' + levels.A + ' - B ' + levels.B + ' - C ' + levels.C" [interactive]="false"></app-card>
+          <app-card title="Trilhas finais" [subtitle]="'A ' + levels.A + ' - B ' + levels.B + ' - C ' + levels.C" [interactive]="false"></app-card>
           <app-card title="Damage dealt" subtitle="~12.4k (mock)" [interactive]="false"></app-card>
           <app-card title="Run time" subtitle="~4m32s (mock)" [interactive]="false"></app-card>
         </div>
@@ -38,7 +38,7 @@ export class RunDeathPageComponent {
   protected readonly run = inject(RunStateService);
 
   get levels() {
-    return this.run.routeLevels();
+    return this.run.trackLevels();
   }
 
   restart(): void {

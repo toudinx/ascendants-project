@@ -1,0 +1,706 @@
+<div class="content-workshop space-y-6">
+  <header class="space-y-2">
+    <p class="text-[11px] uppercase tracking-[0.3em] text-[#7F7F95]">Developer Utility</p>
+    <div class="flex flex-wrap items-center gap-3">
+      <div>
+        <h1 class="text-2xl font-semibold text-white">Content Workshop</h1>
+        <p class="text-sm text-[#A4A4B5]">
+          Generate Kaelis / Enemy templates and validate the live content catalog. Dev-only &mdash; no files are
+          touched.
+        </p>
+      </div>
+      <app-tag label="Dev Only" tone="warning"></app-tag>
+    </div>
+  </header>
+
+  <div class="workshop-tabs">
+    @for (tab of tabs; track tab.key) {
+      <button
+        type="button"
+        class="tab-button"
+        [class.tab-button--active]="activeTab() === tab.key"
+        (click)="setActiveTab(tab.key)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  @if (activeTab() === 'kaelis') {
+    <div class="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+      <app-panel title="Kaelis Parameters" subtitle="Fill the fields to sketch a new Kaelis definition.">
+        <div class="form-section">
+          <p class="section-title">Identity</p>
+          <div class="field-grid">
+            <label class="form-field">
+              <span>Id</span>
+              <input
+                class="workshop-input"
+                type="text"
+                [ngModel]="kaelisForm().id"
+                (ngModelChange)="updateKaelisField('id', ($event ?? '').trim())"
+              />
+            </label>
+            <label class="form-field">
+              <span>Name</span>
+              <input
+                class="workshop-input"
+                type="text"
+                [ngModel]="kaelisForm().name"
+                (ngModelChange)="updateKaelisField('name', $event ?? '')"
+              />
+            </label>
+            <label class="form-field">
+              <span>Route Type</span>
+              <select
+                class="workshop-input"
+                [ngModel]="kaelisForm().routeType"
+                (ngModelChange)="updateKaelisField('routeType', $event)"
+              >
+                @for (option of routeTypeOptions; track option) {
+                  <option [ngValue]="option">{{ option }}</option>
+                }
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <p class="section-title">Base Stats</p>
+          <div class="field-grid">
+            <label class="form-field">
+              <span>HP</span>
+              <input
+                class="workshop-input"
+                type="number"
+                min="1"
+                step="100"
+                [ngModel]="kaelisForm().hp"
+                (ngModelChange)="updateKaelisField('hp', Number($event ?? 0))"
+              />
+            </label>
+            <label class="form-field">
+              <span>ATK</span>
+              <input
+                class="workshop-input"
+                type="number"
+                min="1"
+                step="10"
+                [ngModel]="kaelisForm().atk"
+                (ngModelChange)="updateKaelisField('atk', Number($event ?? 0))"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <p class="section-title">Kit (Core)</p>
+          <div class="field-grid">
+            <label class="form-field">
+              <span>Auto Multiplier</span>
+              <input
+                class="workshop-input"
+                type="number"
+                min="0"
+                step="0.01"
+                [ngModel]="kaelisForm().autoMultiplier"
+                (ngModelChange)="updateKaelisField('autoMultiplier', Number($event ?? 0))"
+              />
+            </label>
+            <label class="form-field">
+              <span>Skill Multiplier</span>
+              <input
+                class="workshop-input"
+                type="number"
+                min="0"
+                step="0.01"
+                [ngModel]="kaelisForm().skillMultiplier"
+                (ngModelChange)="updateKaelisField('skillMultiplier', Number($event ?? 0))"
+              />
+            </label>
+            <label class="form-field">
+              <span>Skill Cooldown (turns)</span>
+              <input
+                class="workshop-input"
+                type="number"
+                min="0"
+                step="1"
+                [ngModel]="kaelisForm().skillCooldownTurns"
+                (ngModelChange)="updateKaelisField('skillCooldownTurns', Number($event ?? 0))"
+              />
+            </label>
+            <label class="form-field">
+              <span>Skill Energy Cost</span>
+              <input
+                class="workshop-input"
+                type="number"
+                min="0"
+                step="5"
+                [ngModel]="kaelisForm().skillEnergyCost"
+                (ngModelChange)="updateKaelisField('skillEnergyCost', Number($event ?? 0))"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <p class="section-title">Advanced Effects</p>
+          <label class="checkbox-field">
+            <input
+              type="checkbox"
+              [ngModel]="kaelisForm().includeMultihit"
+              (ngModelChange)="updateKaelisField('includeMultihit', $event)"
+            />
+            <span>Enable Multihit</span>
+          </label>
+          @if (kaelisForm().includeMultihit) {
+            <div class="field-grid mt-3">
+              <label class="form-field">
+                <span>Hit Count</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  [ngModel]="kaelisForm().multihitCount"
+                  (ngModelChange)="updateKaelisField('multihitCount', Number($event ?? 0))"
+                />
+              </label>
+              <label class="form-field">
+                <span>Per-Hit Multiplier</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [ngModel]="kaelisForm().multihitMultiplier"
+                  (ngModelChange)="updateKaelisField('multihitMultiplier', Number($event ?? 0))"
+                />
+              </label>
+            </div>
+          }
+
+          <label class="checkbox-field mt-4">
+            <input
+              type="checkbox"
+              [ngModel]="kaelisForm().includeDot"
+              (ngModelChange)="updateKaelisField('includeDot', $event)"
+            />
+            <span>Enable DoT</span>
+          </label>
+          @if (kaelisForm().includeDot) {
+            <div class="field-grid mt-3">
+              <label class="form-field">
+                <span>Duration (turns)</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  [ngModel]="kaelisForm().dotDuration"
+                  (ngModelChange)="updateKaelisField('dotDuration', Number($event ?? 0))"
+                />
+              </label>
+              <label class="form-field">
+                <span>Stacks per Use</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  [ngModel]="kaelisForm().dotStacks"
+                  (ngModelChange)="updateKaelisField('dotStacks', Number($event ?? 0))"
+                />
+              </label>
+              <label class="form-field">
+                <span>Tick Multiplier</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [ngModel]="kaelisForm().dotTickMultiplier"
+                  (ngModelChange)="updateKaelisField('dotTickMultiplier', Number($event ?? 0))"
+                />
+              </label>
+            </div>
+          }
+        </div>
+      </app-panel>
+
+      <div class="space-y-5">
+        <app-panel title="Validation &amp; Power Budget" subtitle="Scores refresh automatically.">
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <p>Damage Score</p>
+              <strong>{{ kaelisValidation().damageScore | number: '1.2-2' }}</strong>
+            </div>
+            <div class="metric-card">
+              <p>Survivability Score</p>
+              <strong>{{ kaelisValidation().survivabilityScore | number: '1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <div class="validation-summary">
+            @if (kaelisValidation().errors.length === 0) {
+              <app-tag label="No blocking errors" tone="accent"></app-tag>
+            } @else {
+              <app-tag
+                [label]="'Errors: ' + kaelisValidation().errors.length"
+                tone="danger"
+              ></app-tag>
+            }
+            @if (kaelisValidation().warnings.length) {
+              <app-tag
+                [label]="'Warnings: ' + kaelisValidation().warnings.length"
+                tone="warning"
+              ></app-tag>
+            }
+          </div>
+
+          @if (kaelisValidation().errors.length) {
+            <ul class="validation-list">
+              @for (error of kaelisValidation().errors; track $index) {
+                <li class="validation-item validation-item--error">{{ error }}</li>
+              }
+            </ul>
+          }
+          @if (kaelisValidation().warnings.length) {
+            <ul class="validation-list">
+              @for (warning of kaelisValidation().warnings; track $index) {
+                <li class="validation-item validation-item--warning">{{ warning }}</li>
+              }
+            </ul>
+          }
+        </app-panel>
+
+        <app-panel title="Kaelis Definition Snippet" subtitle="Copy/paste into content/kaelis/defs/*.def.ts">
+          <textarea class="code-area" readonly [value]="kaelisSnippet()"></textarea>
+          <div class="mt-3 flex flex-wrap justify-end gap-2">
+            <app-button label="Copy Snippet" variant="secondary" (click)="copyToClipboard(kaelisSnippet())">
+            </app-button>
+          </div>
+        </app-panel>
+      </div>
+    </div>
+  }
+
+  @if (activeTab() === 'enemy') {
+    <div class="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+      <app-panel title="Enemy Parameters" subtitle="Configure a new encounter template.">
+        <div class="form-section">
+          <p class="section-title">Identity</p>
+          <div class="field-grid">
+            <label class="form-field">
+              <span>Id</span>
+              <input
+                class="workshop-input"
+                type="text"
+                [ngModel]="enemyForm().id"
+                (ngModelChange)="updateEnemyField('id', ($event ?? '').trim())"
+              />
+            </label>
+            <label class="form-field">
+              <span>Name</span>
+              <input
+                class="workshop-input"
+                type="text"
+                [ngModel]="enemyForm().name"
+                (ngModelChange)="updateEnemyField('name', $event ?? '')"
+              />
+            </label>
+            <label class="form-field">
+              <span>Kind</span>
+              <select
+                class="workshop-input"
+                [ngModel]="enemyForm().kind"
+                (ngModelChange)="updateEnemyField('kind', $event)"
+              >
+                @for (kind of enemyKindOptions; track kind) {
+                  <option [ngValue]="kind">{{ kind | titlecase }}</option>
+                }
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <p class="section-title">Base Stats</p>
+          <div class="field-grid">
+            <label class="form-field">
+              <span>HP</span>
+              <input
+                class="workshop-input"
+                type="number"
+                min="1"
+                step="100"
+                [ngModel]="enemyForm().hp"
+                (ngModelChange)="updateEnemyField('hp', Number($event ?? 0))"
+              />
+            </label>
+            <label class="form-field">
+              <span>ATK</span>
+              <input
+                class="workshop-input"
+                type="number"
+                min="1"
+                step="10"
+                [ngModel]="enemyForm().attack"
+                (ngModelChange)="updateEnemyField('attack', Number($event ?? 0))"
+              />
+            </label>
+            <label class="form-field">
+              <span>Posture</span>
+              <input
+                class="workshop-input"
+                type="number"
+                min="1"
+                step="10"
+                [ngModel]="enemyForm().posture"
+                (ngModelChange)="updateEnemyField('posture', Number($event ?? 0))"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <p class="section-title">Heavy Attack</p>
+          <label class="checkbox-field">
+            <input
+              type="checkbox"
+              [ngModel]="enemyForm().includeHeavy"
+              (ngModelChange)="updateEnemyField('includeHeavy', $event)"
+            />
+            <span>Enable Heavy Attack</span>
+          </label>
+          @if (enemyForm().includeHeavy) {
+            <div class="field-grid mt-3">
+              <label class="form-field">
+                <span>Telegraph (turns)</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  [ngModel]="enemyForm().heavyTelegraph"
+                  (ngModelChange)="updateEnemyField('heavyTelegraph', Number($event ?? 0))"
+                />
+              </label>
+              <label class="form-field">
+                <span>Damage Multiplier</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="1"
+                  step="0.1"
+                  [ngModel]="enemyForm().heavyMultiplier"
+                  (ngModelChange)="updateEnemyField('heavyMultiplier', Number($event ?? 0))"
+                />
+              </label>
+            </div>
+          }
+        </div>
+
+        <div class="form-section">
+          <p class="section-title">Damage over Time</p>
+          <label class="checkbox-field">
+            <input
+              type="checkbox"
+              [ngModel]="enemyForm().includeDot"
+              (ngModelChange)="updateEnemyField('includeDot', $event)"
+            />
+            <span>Enable DoT</span>
+          </label>
+          @if (enemyForm().includeDot) {
+            <div class="field-grid mt-3">
+              <label class="form-field">
+                <span>Chance</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  [ngModel]="enemyForm().dotChance"
+                  (ngModelChange)="updateEnemyField('dotChance', Number($event ?? 0))"
+                />
+              </label>
+              <label class="form-field">
+                <span>Tick Damage</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  [ngModel]="enemyForm().dotDamage"
+                  (ngModelChange)="updateEnemyField('dotDamage', Number($event ?? 0))"
+                />
+              </label>
+              <label class="form-field">
+                <span>Duration (turns)</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  [ngModel]="enemyForm().dotDuration"
+                  (ngModelChange)="updateEnemyField('dotDuration', Number($event ?? 0))"
+                />
+              </label>
+              <label class="form-field">
+                <span>Posture Ratio</span>
+                <input
+                  class="workshop-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [ngModel]="enemyForm().dotPostureRatio"
+                  (ngModelChange)="updateEnemyField('dotPostureRatio', Number($event ?? 0))"
+                />
+              </label>
+            </div>
+          }
+        </div>
+
+        <div class="form-section">
+          <p class="section-title">AI Plan</p>
+          <select
+            class="workshop-input"
+            [ngModel]="enemyForm().aiPlan"
+            (ngModelChange)="updateEnemyField('aiPlan', $event)"
+          >
+            @for (plan of enemyPlanOptions; track plan.key) {
+              <option [ngValue]="plan.key">{{ plan.label }}</option>
+            }
+          </select>
+          <p class="mt-2 text-xs text-[#7F7F95]">
+            {{ enemyPlanDescription(enemyForm().aiPlan) }}
+          </p>
+        </div>
+      </app-panel>
+
+      <div class="space-y-5">
+        <app-panel title="Validation Summary" subtitle="Ensure encounter defs stay sane.">
+          <div class="validation-summary">
+            @if (enemyValidation().errors.length === 0) {
+              <app-tag label="No blocking errors" tone="accent"></app-tag>
+            } @else {
+              <app-tag
+                [label]="'Errors: ' + enemyValidation().errors.length"
+                tone="danger"
+              ></app-tag>
+            }
+            @if (enemyValidation().warnings.length) {
+              <app-tag
+                [label]="'Warnings: ' + enemyValidation().warnings.length"
+                tone="warning"
+              ></app-tag>
+            }
+          </div>
+          @if (enemyValidation().errors.length) {
+            <ul class="validation-list">
+              @for (error of enemyValidation().errors; track $index) {
+                <li class="validation-item validation-item--error">{{ error }}</li>
+              }
+            </ul>
+          }
+          @if (enemyValidation().warnings.length) {
+            <ul class="validation-list">
+              @for (warning of enemyValidation().warnings; track $index) {
+                <li class="validation-item validation-item--warning">{{ warning }}</li>
+              }
+            </ul>
+          }
+        </app-panel>
+
+        <app-panel title="Enemy Definition Snippet" subtitle="Copy/paste into content/enemies/defs/*.def.ts">
+          <textarea class="code-area" readonly [value]="enemySnippet()"></textarea>
+          <div class="mt-3 flex flex-wrap justify-end gap-2">
+            <app-button label="Copy Snippet" variant="secondary" (click)="copyToClipboard(enemySnippet())">
+            </app-button>
+          </div>
+        </app-panel>
+      </div>
+    </div>
+  }
+
+  @if (activeTab() === 'validate') {
+    <div class="space-y-5">
+      <app-panel title="Catalog Validation" subtitle="Runs Kaelis and Enemy validators across all defs.">
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-xs text-[#7F7F95]">Filter</span>
+          <div class="filter-group">
+            <button
+              type="button"
+              class="filter-chip"
+              [class.filter-chip--active]="catalogFilter() === 'all'"
+              (click)="catalogFilter.set('all')"
+            >
+              All
+            </button>
+            <button
+              type="button"
+              class="filter-chip"
+              [class.filter-chip--active]="catalogFilter() === 'errors'"
+              (click)="catalogFilter.set('errors')"
+            >
+              Errors
+            </button>
+            <button
+              type="button"
+              class="filter-chip"
+              [class.filter-chip--active]="catalogFilter() === 'warnings'"
+              (click)="catalogFilter.set('warnings')"
+            >
+              Warnings
+            </button>
+          </div>
+        </div>
+
+        <div class="catalog-grid">
+          <section>
+            <header class="catalog-header">
+              <h3>Kaelis Catalog</h3>
+              <div class="catalog-counts">
+                <app-tag
+                  [label]="'Errors: ' + kaelisCatalogTotals().errors"
+                  tone="danger"
+                ></app-tag>
+                <app-tag
+                  [label]="'Warnings: ' + kaelisCatalogTotals().warnings"
+                  tone="warning"
+                ></app-tag>
+                <app-tag
+                  [label]="'Total: ' + kaelisCatalogTotals().total"
+                  tone="accent"
+                ></app-tag>
+              </div>
+            </header>
+            <div class="catalog-list">
+              @if (!filteredKaelisCatalog().length) {
+                <p class="text-xs text-[#7F7F95]">No entries match the selected filter.</p>
+              } @else {
+                @for (entry of filteredKaelisCatalog(); track entry.def.id) {
+                  <div class="catalog-entry">
+                    <div class="catalog-entry__header">
+                      <div>
+                        <p class="catalog-entry__name">{{ entry.def.name }}</p>
+                        <p class="catalog-entry__meta">{{ entry.def.id }} ・ {{ entry.def.routeType }}</p>
+                      </div>
+                      <div class="catalog-entry__scores text-right">
+                        <span>DMG {{ entry.damageScore | number: '1.2-2' }}</span>
+                        <span>Sustain {{ entry.survivabilityScore | number: '1.2-2' }}</span>
+                      </div>
+                    </div>
+                    <div class="catalog-entry__issues">
+                      @if (entry.errors.length) {
+                        <ul class="validation-list">
+                          @for (issue of entry.errors; track $index) {
+                            <li class="validation-item validation-item--error">{{ issue }}</li>
+                          }
+                        </ul>
+                      }
+                      @if (entry.warnings.length) {
+                        <ul class="validation-list">
+                          @for (issue of entry.warnings; track $index) {
+                            <li class="validation-item validation-item--warning">{{ issue }}</li>
+                          }
+                        </ul>
+                      }
+                      @if (!entry.errors.length && !entry.warnings.length) {
+                        <p class="text-xs text-[#7F7F95]">All checks passed.</p>
+                      }
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          </section>
+
+          <section>
+            <header class="catalog-header">
+              <h3>Enemy Catalog</h3>
+              <div class="catalog-counts">
+                <app-tag
+                  [label]="'Errors: ' + enemyCatalogTotals().errors"
+                  tone="danger"
+                ></app-tag>
+                <app-tag
+                  [label]="'Warnings: ' + enemyCatalogTotals().warnings"
+                  tone="warning"
+                ></app-tag>
+                <app-tag
+                  [label]="'Total: ' + enemyCatalogTotals().total"
+                  tone="accent"
+                ></app-tag>
+              </div>
+            </header>
+            <div class="catalog-list">
+              @if (!filteredEnemyCatalog().length) {
+                <p class="text-xs text-[#7F7F95]">No entries match the filter.</p>
+              } @else {
+                @for (entry of filteredEnemyCatalog(); track entry.def.id) {
+                  <div class="catalog-entry">
+                    <div class="catalog-entry__header">
+                      <div>
+                        <p class="catalog-entry__name">{{ entry.def.name }}</p>
+                        <p class="catalog-entry__meta">{{ entry.def.id }} ・ {{ entry.def.kind | titlecase }}</p>
+                      </div>
+                    </div>
+                    <div class="catalog-entry__issues">
+                      @if (entry.errors.length) {
+                        <ul class="validation-list">
+                          @for (issue of entry.errors; track $index) {
+                            <li class="validation-item validation-item--error">{{ issue }}</li>
+                          }
+                        </ul>
+                      }
+                      @if (entry.warnings.length) {
+                        <ul class="validation-list">
+                          @for (issue of entry.warnings; track $index) {
+                            <li class="validation-item validation-item--warning">{{ issue }}</li>
+                          }
+                        </ul>
+                      }
+                      @if (!entry.errors.length && !entry.warnings.length) {
+                        <p class="text-xs text-[#7F7F95]">All checks passed.</p>
+                      }
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          </section>
+        </div>
+      </app-panel>
+
+      <app-panel title="Kaelis Power Budget Table" subtitle="Compare definitions quickly.">
+        <div class="power-table-wrapper">
+          <table class="power-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Damage Score</th>
+                <th>Survivability</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of kaelisPowerTable(); track entry.id) {
+                <tr>
+                  <td>
+                    <div class="flex flex-col">
+                      <span class="text-white">{{ entry.name }}</span>
+                      <span class="text-xs text-[#7F7F95]">{{ entry.id }}</span>
+                    </div>
+                  </td>
+                  <td>{{ entry.damageScore | number: '1.2-2' }}</td>
+                  <td>{{ entry.survivabilityScore | number: '1.2-2' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-panel>
+    </div>
+  }
+</div>

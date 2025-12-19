@@ -1,0 +1,264 @@
+:host {
+  display: block;
+  padding-bottom: 4rem;
+}
+
+.workshop-tabs {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.02);
+  color: #a4a4b5;
+  transition: all 0.15s ease;
+}
+
+.tab-button--active {
+  color: #0b0b16;
+  background: var(--primary);
+  border-color: transparent;
+  box-shadow: 0 0 20px rgba(127, 115, 255, 0.3);
+}
+
+.form-section + .form-section {
+  margin-top: 1.5rem;
+}
+
+.section-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: #7f7f95;
+  margin-bottom: 0.75rem;
+}
+
+.field-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #7f7f95;
+}
+
+.workshop-input,
+.code-area,
+.filter-chip {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 8, 18, 0.8);
+  color: #fff;
+  font-size: 0.95rem;
+  padding: 0.7rem 0.9rem;
+}
+
+.workshop-input:focus,
+.code-area:focus {
+  outline: none;
+  border-color: rgba(143, 123, 255, 0.8);
+  box-shadow: 0 0 0 1px rgba(143, 123, 255, 0.5);
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #a4a4b5;
+}
+
+.code-area {
+  width: 100%;
+  min-height: 220px;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  resize: vertical;
+}
+
+.metrics-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin-bottom: 1rem;
+}
+
+.metric-card {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.metric-card p {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #7f7f95;
+}
+
+.metric-card strong {
+  font-size: 1.35rem;
+  display: block;
+  color: #fff;
+  margin-top: 0.15rem;
+}
+
+.validation-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.validation-list {
+  padding-left: 1rem;
+  margin: 0.4rem 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.validation-item {
+  font-size: 0.85rem;
+  color: #a4a4b5;
+}
+
+.validation-item--error {
+  color: #ff8ca5;
+}
+
+.validation-item--warning {
+  color: #ffc877;
+}
+
+.filter-group {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.filter-chip {
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  color: #7f7f95;
+  padding-inline: 1.1rem;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.15s ease;
+}
+
+.filter-chip--active {
+  color: #0b0b16;
+  background: var(--primary);
+}
+
+.catalog-grid {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.catalog-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.catalog-header h3 {
+  font-size: 1rem;
+  color: #fff;
+  margin: 0;
+}
+
+.catalog-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.catalog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.catalog-entry {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 0.95rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.catalog-entry__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.catalog-entry__name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.catalog-entry__meta {
+  font-size: 0.8rem;
+  color: #7f7f95;
+}
+
+.catalog-entry__scores {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #a4a4b5;
+}
+
+.catalog-entry__issues {
+  margin-top: 0.75rem;
+}
+
+.power-table-wrapper {
+  overflow-x: auto;
+}
+
+.power-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.power-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #7f7f95;
+  padding-bottom: 0.5rem;
+}
+
+.power-table td {
+  padding: 0.45rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  color: #a4a4b5;
+}
+
+.power-table tr:first-of-type td {
+  border-top: none;
+}

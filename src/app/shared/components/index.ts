@@ -11,3 +11,4 @@ export * from './run-debug-panel/run-debug-panel.component';
 export * from './run-transition-overlay/run-transition-overlay.component';
 export * from './rarity-tag/rarity-tag.component';
 export * from './skin-card/skin-card.component';
+export * from './upgrade-card/upgrade-card.component';

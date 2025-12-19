@@ -2,7 +2,7 @@
 import { CommonModule } from '@angular/common';
 import { AppHeaderComponent, AppButtonComponent, AppTagComponent, PremiumTeaseComponent, WowBurstComponent, RarityTagComponent, SkinCardComponent } from '../../../shared/components';
 import { RunStateService } from '../../../core/services/run-state.service';
-import { RouteKey } from '../../../core/models/routes.model';
+import { TrackKey } from '../../../core/models/tracks.model';
 import { SkinStateService } from '../../../core/services/skin-state.service';
 
 @Component({
@@ -28,17 +28,17 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
               <div class="h-64 w-48 rounded-[16px] bg-gradient-to-br from-[var(--primary)]/40 via-[var(--secondary)]/25 to-[#050511]"></div>
             </div>
             <div class="absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-black/50 px-3 py-1 text-xs text-white/80">
-              <span class="uppercase tracking-[0.18em]">Velvet — {{ currentSkin.name }}</span>
+              <span class="uppercase tracking-[0.18em]">{{ kaelisName }} - {{ currentSkin.name }}</span>
               <app-rarity-tag [rarity]="currentSkin.rarity"></app-rarity-tag>
             </div>
           </div>
           <div class="space-y-3">
-            <p class="text-[11px] uppercase tracking-[0.22em] text-[#A4A4B5]">Dominant Route</p>
-            <h3 class="text-2xl font-semibold text-white">Dominant Route {{ dominantRoute }} — Lv {{ dominantLevel }}</h3>
+            <p class="text-[11px] uppercase tracking-[0.22em] text-[#A4A4B5]">Trilha dominante</p>
+            <h3 class="text-2xl font-semibold text-white">Trilha {{ dominantTrack }} - Lv {{ dominantLevel }}</h3>
             <p class="text-sm text-[#A4A4B5]">{{ evoDescription }}</p>
             <div class="flex flex-wrap gap-2">
               <app-tag label="Tick-based" tone="accent"></app-tag>
-              <app-tag [label]="'Route ' + dominantRoute" tone="muted"></app-tag>
+              <app-tag [label]="'Trilha ' + dominantTrack" tone="muted"></app-tag>
             </div>
             <app-premium-tease size="full" title="Skin preview" subtitle="Ascendant skin unlocks after this run." cta="View Skin"></app-premium-tease>
           </div>
@@ -71,14 +71,14 @@ export class RunEvolutionPageComponent implements OnInit {
   protected readonly run = inject(RunStateService);
   protected readonly skinState = inject(SkinStateService);
   protected burst = false;
-  private chosenRoute: RouteKey = 'A';
+  private chosenTrack: TrackKey = 'A';
 
-  get dominantRoute(): RouteKey {
-    return this.chosenRoute;
+  get dominantTrack(): TrackKey {
+    return this.chosenTrack;
   }
 
   get dominantLevel(): number {
-    return this.run.routeLevels()[this.chosenRoute];
+    return this.run.trackLevels()[this.chosenTrack];
   }
 
   get isFinal(): boolean {
@@ -95,8 +95,8 @@ export class RunEvolutionPageComponent implements OnInit {
 
   get evoDescription(): string {
     return this.isFinal
-      ? `Final Evolution — route ${this.dominantRoute}: max explosion and ascending visuals.`
-      : `Opening Evolution — route ${this.dominantRoute}: instant reinforcement and premium presence.`;
+      ? `Final Evolution - trilha ${this.dominantTrack}: max explosion and ascending visuals.`
+      : `Opening Evolution - trilha ${this.dominantTrack}: instant reinforcement and premium presence.`;
   }
 
   get currentSkin() {
@@ -113,13 +113,17 @@ export class RunEvolutionPageComponent implements OnInit {
     return this.currentSkin.rarity === 'SSR' ? 'shadow-[0_0_16px_rgba(255,211,68,0.35)]' : '';
   }
 
+  get kaelisName(): string {
+    return this.run.kaelis()?.name ?? 'Kaelis';
+  }
+
   ngOnInit(): void {
-    this.chosenRoute = this.pickDominantRoute();
+    this.chosenTrack = this.pickDominantTrack();
     this.burst = true;
   }
 
   continueFlow(): void {
-    this.run.registerEvolution(this.dominantRoute, this.isFinal ? 'final' : 'mini');
+    this.run.registerEvolution(this.dominantTrack, this.isFinal ? 'final' : 'mini');
     if (this.isFinal) {
       this.run.goToVictory();
     } else {
@@ -128,10 +132,10 @@ export class RunEvolutionPageComponent implements OnInit {
     }
   }
 
-  private pickDominantRoute(): RouteKey {
-    const levels = this.run.routeLevels();
+  private pickDominantTrack(): TrackKey {
+    const levels = this.run.trackLevels();
     const max = Math.max(levels.A, levels.B, levels.C);
-    const candidates = (['A', 'B', 'C'] as RouteKey[]).filter(r => levels[r] === max);
-    return candidates[Math.floor(Math.random() * candidates.length)] as RouteKey;
+    const candidates = (['A', 'B', 'C'] as TrackKey[]).filter(r => levels[r] === max);
+    return candidates[Math.floor(Math.random() * candidates.length)] as TrackKey;
   }
 }

@@ -1,12 +1,15 @@
 import { EnemyAttributes, EnemyState } from './enemy.model';
-import { PlayerAttributes, PlayerBuff, PlayerState } from './player.model';
+import { PlayerAttributes, PlayerBuff, PlayerRingSkillBuff, PlayerState } from './player.model';
 import { LogActor, LogKind, UiLogEntry } from '../services/ui-state.service';
+import { KaelisKitConfig } from './kaelis.model';
+import { WeaponId } from './weapon.model';
+import { RingSetKey } from './ring.model';
 
-export interface SerializedDotState {
-  damage: number;
-  posture: number;
-  ticks: number;
-  originTurn: number;
+export interface SerializedDotStack {
+  source: 'player' | 'enemy';
+  ticksRemaining: number;
+  tickHp: number;
+  tickPosture: number;
 }
 
 export interface SerializedPlayerState {
@@ -14,15 +17,26 @@ export interface SerializedPlayerState {
   status?: PlayerState['status'];
   breakTurns?: number;
   skillCooldown?: number;
-  dot?: SerializedDotState | null;
+  dots?: SerializedDotStack[];
   buffs?: PlayerBuff[];
+  kaelisRoute?: PlayerState['kaelisRoute'];
+  kaelisId?: string;
+  kaelisName?: string;
+  kaelisSprite?: string;
+  kit?: KaelisKitConfig;
+  weaponId?: WeaponId;
+  ringSetCounts?: Record<RingSetKey, number>;
+  ringSkillBuffs?: PlayerRingSkillBuff[];
+  ringDamageBuffPercent?: number;
+  ringDamageBuffTurns?: number;
+  ringDamageBuffSource?: RingSetKey;
 }
 
 export interface SerializedEnemyState {
   attributes: EnemyAttributes;
   state: EnemyState;
   breakTurns?: number;
-  dot?: SerializedDotState | null;
+  dots?: SerializedDotStack[];
 }
 
 export interface BattleEvent {

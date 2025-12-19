@@ -11,10 +11,12 @@ import {
 } from "../../../shared/components";
 import { RunStateService } from "../../../core/services/run-state.service";
 import { PlayerStateService } from "../../../core/services/player-state.service";
-import { RouteKey } from "../../../core/models/routes.model";
+import { ProfileStateService } from "../../../core/services/profile-state.service";
+import { TrackKey } from "../../../core/models/tracks.model";
+import { Router } from "@angular/router";
 
-interface RouteOption {
-  key: RouteKey;
+interface TrackOption {
+  key: TrackKey;
   name: string;
   fantasy: string;
   tag: string;
@@ -35,18 +37,23 @@ interface RouteOption {
   ],
   template: `
     <app-header
-      title="Choose your Starting Route"
+      title="Choose your Starting Trilha"
       subtitle="Define the tone of your run: Critical, Spiritual, or Impact builds."
       kicker="Run"
     ></app-header>
 
     <div class="grid gap-4 md:grid-cols-[1fr,1.2fr]">
-      <app-panel title="Velvet" subtitle="Quick status">
+      <app-panel
+        [title]="activeKaelis.name"
+        [subtitle]="activeKaelis.title + ' · ' + activeKaelis.routeType"
+      >
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-3">
-            <div
-              class="h-24 w-20 rounded-[12px] bg-gradient-to-br from-[#8A7CFF]/40 to-[#E28FE8]/20"
-            ></div>
+            <img
+              class="h-24 w-20 rounded-[12px] border border-white/10 object-cover"
+              [src]="activeKaelis.portrait"
+              [alt]="activeKaelis.name"
+            />
             <div class="flex-1 space-y-2">
               <app-stat-bar
                 label="HP"
@@ -71,27 +78,28 @@ interface RouteOption {
           <div class="flex flex-wrap gap-2">
             <app-tag label="Tick-based" tone="accent"></app-tag>
             <app-tag label="Auto-battle" tone="muted"></app-tag>
+            <app-tag [label]="activeKaelis.routeType + ' route'" tone="accent"></app-tag>
           </div>
         </div>
       </app-panel>
 
       <div class="space-y-4">
         <div class="grid gap-3 md:grid-cols-3">
-          @for (route of routes; track route.key) {
+          @for (trackOption of tracks; track trackOption.key) {
             <app-card
-              [title]="route.name"
-              [subtitle]="route.fantasy"
-              [tag]="route.tag"
+              [title]="trackOption.name"
+              [subtitle]="trackOption.fantasy"
+              [tag]="trackOption.tag"
               [interactive]="true"
-              (click)="selectRoute(route.key)"
+              (click)="selectTrack(trackOption.key)"
               [ngClass]="{
                 'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16]':
-                  selectedRoute === route.key,
+                  selectedTrack === trackOption.key,
               }"
             >
               <div class="flex flex-col gap-2 text-sm text-[#A4A4B5]">
                 <p>Initial identity for your build.</p>
-                @if (selectedRoute === route.key) {
+                @if (selectedTrack === trackOption.key) {
                   <app-tag label="Selected" tone="success"></app-tag>
                 }
               </div>
@@ -102,16 +110,21 @@ interface RouteOption {
           <app-premium-tease size="compact"></app-premium-tease>
           <div class="flex gap-2">
             <app-button
+              label="Edit Loadout"
+              variant="ghost"
+              (click)="goToLoadout()"
+            ></app-button>
+            <app-button
               label="Back"
               variant="ghost"
               (click)="cancel()"
             ></app-button>
-            <app-button
-              label="Confirm"
-              variant="primary"
-              [disabled]="!selectedRoute"
-              (click)="confirm()"
-            ></app-button>
+              <app-button
+                label="Confirm"
+                variant="primary"
+                [disabled]="!selectedTrack"
+                (click)="confirm()"
+              ></app-button>
           </div>
         </div>
       </div>
@@ -121,14 +134,16 @@ interface RouteOption {
 export class RunStartPageComponent implements OnInit {
   protected readonly runState = inject(RunStateService);
   protected readonly player = inject(PlayerStateService);
+  protected readonly profile = inject(ProfileStateService);
+  protected readonly router = inject(Router);
 
-  protected routes: RouteOption[] = [
+  protected tracks: TrackOption[] = [
     { key: "A", name: "Critical", fantasy: "Sentinel + multi-hit", tag: "A" },
     { key: "B", name: "Spiritual", fantasy: "Ruin + DoT", tag: "B" },
     { key: "C", name: "Impact", fantasy: "Resonance + posture", tag: "C" },
   ];
 
-  protected selectedRoute?: RouteKey;
+  protected selectedTrack?: TrackKey;
 
   ngOnInit(): void {
     if (
@@ -139,16 +154,24 @@ export class RunStartPageComponent implements OnInit {
     }
   }
 
-  selectRoute(route: RouteKey): void {
-    this.selectedRoute = route;
+  get activeKaelis() {
+    return this.profile.activeKaelis();
+  }
+
+  selectTrack(track: TrackKey): void {
+    this.selectedTrack = track;
   }
 
   confirm(): void {
-    if (!this.selectedRoute) return;
-    this.runState.startRun(this.selectedRoute);
+    if (!this.selectedTrack) return;
+    this.runState.startRun(this.selectedTrack);
   }
 
   cancel(): void {
     this.runState.finishRun();
+  }
+
+  goToLoadout(): void {
+    this.router.navigate(['/loadout']);
   }
 }
