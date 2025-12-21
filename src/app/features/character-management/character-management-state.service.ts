@@ -4,7 +4,7 @@ import { LoadoutService } from '../../core/services/loadout.service';
 import { KaelisId } from '../../core/models/kaelis.model';
 import { RingId, RING_SLOTS } from '../../core/models/ring.model';
 
-export type CharacterManagementTab = 'details' | 'weapon' | 'sigils' | 'skins';
+export type CharacterManagementTab = 'details' | 'weapon' | 'sigils';
 
 @Injectable({ providedIn: 'root' })
 export class CharacterManagementStateService {

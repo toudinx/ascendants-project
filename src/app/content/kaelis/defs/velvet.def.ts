@@ -1,21 +1,21 @@
-import { KaelisDef } from '../kaelis.types';
+import { KaelisDef } from "../kaelis.types";
 
 export const VELVET_DEF: KaelisDef = {
-  id: 'velvet',
-  name: 'Velvet Arclight',
-  title: 'Echo Duelist',
-  description: 'Sentinel prodigy who leans on relentless multihit tempo.',
-  routeType: 'Sentinel',
-  portrait: 'assets/battle/characters/velvet/velvet_battle_idle.png',
-  sprite: 'assets/battle/characters/velvet/velvet_battle_idle.png',
-  imageUrl: 'assets/battle/characters/velvet/velvet_skin_default.png',
-  role: 'Adaptive skirmisher',
-  tags: ['multi-hit', 'tempo'],
+  id: "velvet",
+  name: "Velvet Arclight",
+  title: "Echo Duelist",
+  description: "Sentinel prodigy who leans on relentless multihit tempo.",
+  routeType: "Sentinel",
+  portrait: "assets/battle/characters/velvet/velvet_battle_default.png",
+  sprite: "assets/battle/characters/velvet/velvet_battle_default.png",
+  imageUrl: "assets/battle/characters/velvet/velvet_skin_default.png",
+  role: "Adaptive skirmisher",
+  tags: ["multi-hit", "tempo"],
   profile: {
     level: 72,
     xpCurrent: 8450,
     xpMax: 10000,
-    affinity: 8
+    affinity: 8,
   },
   base: {
     hp: 9800,
@@ -31,7 +31,7 @@ export const VELVET_DEF: KaelisDef = {
     multiHitChance: 0.34,
     dotChance: 0.2,
     penetration: 0.22,
-    energyRegenPercent: 115
+    energyRegenPercent: 115,
   },
   kit: {
     autoMultiplier: 0.82,
@@ -40,6 +40,6 @@ export const VELVET_DEF: KaelisDef = {
     skillCooldownTurns: 3,
     skillEnergyCost: 40,
     multihitBonus: 0.1,
-    tags: ['flurry']
-  }
+    tags: ["flurry"],
+  },
 };

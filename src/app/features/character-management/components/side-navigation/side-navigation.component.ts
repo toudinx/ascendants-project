@@ -21,8 +21,7 @@ export class SideNavigationComponent {
   readonly tabs: NavTab[] = [
     { id: 'details', label: 'Details' },
     { id: 'weapon', label: 'Weapon' },
-    { id: 'sigils', label: 'Sigils' },
-    { id: 'skins', label: 'Skins' }
+    { id: 'sigils', label: 'Sigils' }
   ];
 
   setTab(tab: CharacterManagementTab): void {

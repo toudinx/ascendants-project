@@ -70,12 +70,8 @@ export class CharacterManagementPageComponent {
     if (!id) return -1;
     return list.findIndex(item => item.id === id);
   });
-  protected readonly canPrevSkin = computed(() => this.previewSkinIndex() > 0);
-  protected readonly canNextSkin = computed(() => {
-    const list = this.skins();
-    const index = this.previewSkinIndex();
-    return list.length > 0 && index >= 0 && index < list.length - 1;
-  });
+  protected readonly canPrevSkin = computed(() => this.skins().length > 1);
+  protected readonly canNextSkin = computed(() => this.skins().length > 1);
   protected readonly isPreviewSkinOwned = computed(() => {
     const skin = this.previewSkin();
     return skin ? this.loadout.isSkinOwned(skin.id) : false;

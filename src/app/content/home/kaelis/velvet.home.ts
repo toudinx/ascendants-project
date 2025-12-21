@@ -4,7 +4,7 @@ export const VELVET_HOME: HomeKaelisDef = {
   id: "velvet-quiet",
   kaelisId: "velvet",
   name: "Velvet - Quiet Guard",
-  imageUrl: "assets/battle/characters/velvet/velvet_battle_idle.png",
+  imageUrl: "assets/battle/characters/velvet/velvet_battle_default.png",
   pose: "idle",
   scale: 1,
   offsetX: 0,

@@ -43,7 +43,7 @@ export class CenterPreviewComponent {
     if (this.activeTab === 'weapon') {
       return this.weaponImageUrl || this.characterImageUrl;
     }
-    if (this.activeTab === 'skins') {
+    if (this.activeTab === 'details') {
       return this.previewSkin?.imageUrl || this.equippedSkin?.imageUrl || this.characterImageUrl;
     }
     return this.equippedSkin?.imageUrl || this.characterImageUrl;
@@ -63,6 +63,10 @@ export class CenterPreviewComponent {
     if (this.canNextSkin) {
       this.nextSkin.emit();
     }
+  }
+
+  get equipSkinLabel(): string {
+    return this.isSkinEquipped ? 'Equipped' : 'Equip Skin';
   }
 
   equipSkinClick(): void {

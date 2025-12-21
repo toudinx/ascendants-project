@@ -9,22 +9,27 @@
     <div class="preview-frame">
       <div class="preview-glow"></div>
       @if (previewImageUrl) {
-        <img class="preview-image" [src]="previewImageUrl" [alt]="kaelis?.name || 'Kaelis'" />
+        <img
+          class="preview-image"
+          [class.full-height]="activeTab === 'details'"
+          [src]="previewImageUrl"
+          [alt]="kaelis?.name || 'Kaelis'"
+        />
       } @else {
         <div class="preview-placeholder">Kaelis</div>
       }
     </div>
   }
 
-  @if (activeTab === 'skins') {
+  @if (activeTab === 'details') {
     <div class="skin-overlay">
       <div class="skin-meta">
         <div class="skin-name">{{ previewSkin?.name || 'Select a skin' }}</div>
         <div class="skin-desc">{{ previewSkin?.description }}</div>
       </div>
       <app-button
-        label="Equip Skin"
-        variant="primary"
+        [label]="equipSkinLabel"
+        [variant]="isSkinEquipped ? 'ghost' : 'primary'"
         size="sm"
         [disabled]="isSkinEquipped"
         (click)="equipSkinClick()"
