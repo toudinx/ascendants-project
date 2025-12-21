@@ -4,12 +4,19 @@ export const VELVET_DEF: KaelisDef = {
   id: 'velvet',
   name: 'Velvet Arclight',
   title: 'Echo Duelist',
-  description: 'Sentinela prodigy who leans on relentless multihit tempo.',
-  routeType: 'Sentinela',
-  portrait: 'assets/battle/characters/velvet_battle_idle.png',
-  sprite: 'assets/battle/characters/velvet_battle_idle.png',
+  description: 'Sentinel prodigy who leans on relentless multihit tempo.',
+  routeType: 'Sentinel',
+  portrait: 'assets/battle/characters/velvet/velvet_battle_idle.png',
+  sprite: 'assets/battle/characters/velvet/velvet_battle_idle.png',
+  imageUrl: 'assets/battle/characters/velvet/velvet_skin_default.png',
   role: 'Adaptive skirmisher',
   tags: ['multi-hit', 'tempo'],
+  profile: {
+    level: 72,
+    xpCurrent: 8450,
+    xpMax: 10000,
+    affinity: 8
+  },
   base: {
     hp: 9800,
     atk: 920,

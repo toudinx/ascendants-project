@@ -1,0 +1,58 @@
+<div class="home-shell">
+  <app-home-background
+    [background]="homeScene.currentBackground()"
+  ></app-home-background>
+
+  <div class="home-stage">
+    <app-home-character-stage
+      [kaelis]="homeScene.currentKaelis()"
+    ></app-home-character-stage>
+
+    <app-home-top-left-hud
+      title="Kaezan: Awakening"
+      commanderName="Commander"
+      [level]="52"
+      [xpProgress]="0.65"
+    ></app-home-top-left-hud>
+
+    <app-home-top-right-actions
+      [actions]="actionItems"
+    ></app-home-top-right-actions>
+
+    <app-home-main-navigation
+      [items]="mainNavItems"
+    ></app-home-main-navigation>
+
+    <app-home-raid-banner
+      label="Event Active"
+      title="Boss Raid: Kraken"
+      timer="Ends in 12h 45m"
+    ></app-home-raid-banner>
+
+    <button
+      type="button"
+      class="home-customize-trigger"
+      (click)="openCustomize()"
+    >
+      <span class="customize-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
+          />
+        </svg>
+      </span>
+      Customize Home
+    </button>
+  </div>
+
+  <app-home-customize-panel
+    [open]="customizeOpen()"
+    [backgrounds]="backgrounds"
+    [kaelisOptions]="kaelisOptions"
+    [selectedBackgroundId]="homeScene.currentBackgroundId()"
+    [selectedKaelisId]="homeScene.currentKaelisId()"
+    (closed)="closeCustomize()"
+    (backgroundSelected)="selectBackground($event)"
+    (kaelisSelected)="selectKaelis($event)"
+  ></app-home-customize-panel>
+</div>

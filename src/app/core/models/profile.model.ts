@@ -1,9 +1,10 @@
 import { KAELIS_LIST } from '../../content/kaelis';
 import { WEAPON_LIST } from '../../content/equipment/weapons';
 import { SIGIL_LIST } from '../../content/equipment/sigils';
+import { DEFAULT_SKIN_BY_KAELIS, SKIN_LIST } from '../../content/equipment/skins';
 import { KaelisId } from './kaelis.model';
 import { WeaponId } from './weapon.model';
-import { RingId, RingSlot, RING_SLOTS } from './ring.model';
+import { RingId, RING_SLOTS } from './ring.model';
 
 export type CurrencyType = 'gold' | 'sigils';
 
@@ -36,7 +37,7 @@ export interface ProfilePersistedState {
 
 export interface ProfileEquipmentState {
   weaponByKaelis: Record<KaelisId, WeaponId>;
-  ringSlotsByKaelis: Record<KaelisId, Record<RingSlot, RingId | null>>;
+  ringSlotsByKaelis: Record<KaelisId, Array<RingId | null>>;
 }
 
 export interface ProfileRingsState {
@@ -48,32 +49,36 @@ export function createDefaultProfileState(): ProfilePersistedState {
   const defaultWeapon = WEAPON_LIST[0]?.id ?? 'ascendant-blade';
   const ringInventory = SIGIL_LIST.map(ring => ring.id);
   const activeSkinByKaelis = KAELIS_LIST.reduce<Record<KaelisId, string>>((map, kaelis) => {
-    map[kaelis.id] = 'default';
+    map[kaelis.id] = DEFAULT_SKIN_BY_KAELIS[kaelis.id] ?? 'default';
     return map;
   }, {} as Record<KaelisId, string>);
+  const ownedSkinIds = Array.from(
+    new Set([
+      ...Object.values(activeSkinByKaelis),
+      ...SKIN_LIST.filter(skin => skin.isDefault).map(skin => skin.id)
+    ])
+  );
 
   const weaponByKaelis = KAELIS_LIST.reduce<Record<KaelisId, WeaponId>>((map, kaelis) => {
     map[kaelis.id] = defaultWeapon;
     return map;
   }, {} as Record<KaelisId, WeaponId>);
 
-  const ringSlotsByKaelis = KAELIS_LIST.reduce<Record<KaelisId, Record<RingSlot, RingId | null>>>(
+  const ringSlotsByKaelis = KAELIS_LIST.reduce<Record<KaelisId, Array<RingId | null>>>(
     (map, kaelis) => {
-      const slots = RING_SLOTS.reduce<Record<RingSlot, RingId | null>>((slotMap, slot) => {
-        slotMap[slot] = null;
-        return slotMap;
-      }, {} as Record<RingSlot, RingId | null>);
+      const slots = Array.from({ length: RING_SLOTS.length }, () => null as RingId | null);
       if (kaelis.id === primaryKaelis) {
         SIGIL_LIST.forEach(ring => {
-          if (slots[ring.slot] === null) {
-            slots[ring.slot] = ring.id;
+          const slotIndex = RING_SLOTS.indexOf(ring.slot);
+          if (slotIndex >= 0 && slots[slotIndex] === null) {
+            slots[slotIndex] = ring.id;
           }
         });
       }
       map[kaelis.id] = slots;
       return map;
     },
-    {} as Record<KaelisId, Record<RingSlot, RingId | null>>
+    {} as Record<KaelisId, Array<RingId | null>>
   );
 
   return {
@@ -83,7 +88,7 @@ export function createDefaultProfileState(): ProfilePersistedState {
       sigils: 0
     },
     cosmetics: {
-      ownedSkinIds: ['default'],
+      ownedSkinIds,
       activeSkinByKaelis
     },
     equipment: {

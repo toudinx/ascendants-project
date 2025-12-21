@@ -1,4 +1,5 @@
 import { KaelisRouteType } from '../../core/models/kaelis-route.model';
+import { KaelisProfileMeta } from '../../core/models/kaelis.model';
 
 export interface KaelisBaseTemplate {
   hp: number;
@@ -49,8 +50,10 @@ export interface KaelisDef {
   routeType: KaelisRouteType;
   portrait: string;
   sprite: string;
+  imageUrl: string;
   role: string;
   tags?: string[];
   base: KaelisBaseTemplate;
   kit: KaelisKitDef;
+  profile: KaelisProfileMeta;
 }

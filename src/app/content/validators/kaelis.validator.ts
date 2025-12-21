@@ -9,7 +9,7 @@ export interface KaelisValidationContext {
   referenceSurvivabilityScore?: number;
 }
 
-const ROUTE_TYPES = new Set(['Sentinela', 'Ruína', 'Ressonância', 'Fortuna', 'Colosso', 'Ira']);
+const ROUTE_TYPES = new Set(['Sentinel', 'Ruin', 'Resonance', 'Fortune', 'Colossus', 'Wrath']);
 const ID_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function computeKaelisScores(def: KaelisDef): { damageScore: number; survivabilityScore: number } {

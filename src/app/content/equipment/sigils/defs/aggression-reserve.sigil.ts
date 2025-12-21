@@ -2,8 +2,9 @@ import { SigilDef } from '../sigil.types';
 
 export const AGGRESSION_RESERVE_DEF: SigilDef = {
   id: 'agressao-reserve',
-  name: 'Agressão Reserve Band',
+  name: 'Aggression Reserve Band',
   description: 'Spare band for custom builds.',
+  imageUrl: 'assets/battle/fx/shadow_ground.png',
   level: 60,
   slot: 'slot3',
   setKey: 'agressao',
@@ -15,3 +16,4 @@ export const AGGRESSION_RESERVE_DEF: SigilDef = {
     { type: 'energy_regen_percent', value: 6 }
   ]
 };
+

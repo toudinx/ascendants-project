@@ -1,68 +1,49 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { ProfileStateService } from './profile-state.service';
+import { SkinDefinition } from '../models/skin.model';
+import { KaelisId } from '../models/kaelis.model';
+import { DEFAULT_SKIN_BY_KAELIS, getSkinsForKaelis } from '../../content/equipment/skins';
 
-export interface VelvetSkin {
-  id: string;
-  name: string;
-  rarity: 'R' | 'SR' | 'SSR';
-  description: string;
+export interface VelvetSkin extends SkinDefinition {
   unlocked: boolean;
   isNew?: boolean;
-  tags?: string[];
-  artUrl?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class SkinStateService {
   private readonly profile = inject(ProfileStateService);
-  private readonly initialSkins: VelvetSkin[] = [
-    {
-      id: 'default',
-      name: 'Initial Transcendence',
-      rarity: 'R',
-      description: "Velvet's base look, minimalist premium.",
-      unlocked: true,
-      tags: ['base']
-    },
-    {
-      id: 'carmesim',
-      name: 'Velvet Crimson',
-      rarity: 'SR',
-      description: 'Rouge arcana with crimson detailing.',
-      unlocked: false,
-      tags: ['event', 'premium']
-    },
-    {
-      id: 'ascendente-eterna',
-      name: 'Velvet Eternal Ascendant',
-      rarity: 'SSR',
-      description: 'Gilded ascendant form, eternal aura.',
-      unlocked: false,
-      tags: ['limited', 'banner']
-    }
-  ];
 
-  readonly skins = signal<VelvetSkin[]>([...this.initialSkins]);
-  readonly currentSkinId = signal<string>('default');
+  readonly skins = signal<VelvetSkin[]>(
+    this.buildSkins(this.profile.selectedKaelisId(), this.profile.cosmetics(), [])
+  );
+  readonly currentSkinId = signal<string>(
+    this.profile.getActiveSkinFor(this.profile.selectedKaelisId()) ||
+      DEFAULT_SKIN_BY_KAELIS[this.profile.selectedKaelisId()] ||
+      ''
+  );
   readonly lastObtainedSkins = signal<VelvetSkin[]>([]);
 
   readonly currentSkin = computed(() => this.getCurrentSkin());
 
   constructor() {
-    effect(() => {
-      const cosmetics = this.profile.cosmetics();
-      const owned = new Set(cosmetics.ownedSkinIds);
-      this.skins.update(list =>
-        list.map(s => ({
-          ...s,
-          unlocked: owned.has(s.id) || s.unlocked
-        }))
-      );
-      const active = cosmetics.activeSkinByKaelis[this.profile.selectedKaelisId()] ?? 'default';
-      if (this.currentSkinId() !== active) {
-        this.currentSkinId.set(active);
-      }
-    });
+    effect(
+      () => {
+        const kaelisId = this.profile.selectedKaelisId();
+        const cosmetics = this.profile.cosmetics();
+        const nextSkins = this.buildSkins(kaelisId, cosmetics, this.skins());
+        this.skins.set(nextSkins);
+
+        const active =
+          cosmetics.activeSkinByKaelis[kaelisId] ??
+          DEFAULT_SKIN_BY_KAELIS[kaelisId] ??
+          nextSkins[0]?.id ??
+          '';
+        if (active && this.currentSkinId() !== active) {
+          this.currentSkinId.set(active);
+        }
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   getCurrentSkin(): VelvetSkin {
@@ -110,5 +91,19 @@ export class SkinStateService {
 
   clearLastObtained(): void {
     this.lastObtainedSkins.set([]);
+  }
+
+  private buildSkins(
+    kaelisId: KaelisId,
+    cosmetics: { ownedSkinIds: string[] },
+    existing: VelvetSkin[]
+  ): VelvetSkin[] {
+    const owned = new Set(cosmetics.ownedSkinIds);
+    const existingFlags = new Map(existing.map(skin => [skin.id, skin.isNew]));
+    return getSkinsForKaelis(kaelisId).map(def => ({
+      ...def,
+      unlocked: owned.has(def.id) || !!def.isDefault,
+      isNew: existingFlags.get(def.id)
+    }));
   }
 }

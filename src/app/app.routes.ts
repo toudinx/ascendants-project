@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { HubPageComponent } from './features/hub/hub.page';
+import { HomePageComponent } from './features/home/home.page';
 import { RunStartPageComponent } from './features/run/start/run-start.page';
 import { RunBattlePageComponent } from './features/run/battle/run-battle.page';
 import { RunIntermissionPageComponent } from './features/run/intermission/run-intermission.page';
@@ -15,14 +15,14 @@ import { DailyPageComponent } from './features/daily/daily.page';
 import { VelvetCollectionPageComponent } from './features/collection/velvet-collection.page';
 import { GachaPageComponent } from './features/gacha/gacha.page';
 import { EventsPageComponent } from './features/events/events.page';
-import { CharacterSelectPageComponent } from './features/character-select/character-select.page';
 import { runActiveCanActivate, runActiveCanMatch } from './core/guards/run-active.guard';
 import { LoadoutPageComponent } from './features/loadout/loadout.page';
+import { CharacterManagementPageComponent } from './features/character-management/character-management.page';
 import { ContentWorkshopPageComponent } from './features/dev/content-workshop/content-workshop.page';
 import { devOnlyCanActivate, devOnlyCanMatch } from './core/guards/dev-only.guard';
 
 export const appRoutes: Routes = [
-  { path: '', component: HubPageComponent },
+  { path: '', component: HomePageComponent },
   { path: 'run/start', component: RunStartPageComponent },
   {
     path: 'run/battle',
@@ -78,7 +78,7 @@ export const appRoutes: Routes = [
   { path: 'collection', component: VelvetCollectionPageComponent },
   { path: 'gacha', component: GachaPageComponent },
   { path: 'events', component: EventsPageComponent },
-  { path: 'character-select', component: CharacterSelectPageComponent },
+  { path: 'character-management', component: CharacterManagementPageComponent },
   { path: 'loadout', component: LoadoutPageComponent },
   {
     path: 'dev/content',

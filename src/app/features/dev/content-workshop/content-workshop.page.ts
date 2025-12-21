@@ -91,12 +91,12 @@ export class ContentWorkshopPageComponent {
   ];
   protected readonly activeTab = signal<WorkshopTab>("kaelis");
   protected readonly routeTypeOptions: KaelisRouteType[] = [
-    "Sentinela",
-    "Ruína",
-    "Ressonância",
-    "Fortuna",
-    "Colosso",
-    "Ira",
+    "Sentinel",
+    "Ruin",
+    "Resonance",
+    "Fortune",
+    "Colossus",
+    "Wrath",
   ];
   protected readonly enemyKindOptions: EnemyKind[] = [
     "normal",
@@ -122,7 +122,7 @@ export class ContentWorkshopPageComponent {
     {
       key: "boss",
       label: "Boss Cycle (4 turns)",
-      description: "Charge → slam → auto → auto repeating cycle.",
+      description: "Charge -> slam -> auto -> auto repeating cycle.",
     },
   ];
 
@@ -132,7 +132,7 @@ export class ContentWorkshopPageComponent {
   protected readonly kaelisForm = signal<KaelisFormState>({
     id: "new-kaelis",
     name: "New Kaelis",
-    routeType: "Sentinela",
+    routeType: "Sentinel",
     hp: 9500,
     atk: 900,
     autoMultiplier: 0.9,
@@ -317,7 +317,14 @@ export class ContentWorkshopPageComponent {
       routeType: form.routeType,
       portrait: "assets/battle/characters/placeholder.png",
       sprite: "assets/battle/characters/placeholder.png",
+      imageUrl: "assets/battle/characters/placeholder.png",
       role: "Custom",
+      profile: {
+        level: 1,
+        xpCurrent: 0,
+        xpMax: 100,
+        affinity: 1,
+      },
       base: {
         hp: form.hp,
         atk: form.atk,

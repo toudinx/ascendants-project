@@ -1,7 +1,7 @@
 export type KaelisRouteType =
-  | 'Sentinela'
-  | 'Ruína'
-  | 'Ressonância'
-  | 'Fortuna'
-  | 'Colosso'
-  | 'Ira';
+  | 'Sentinel'
+  | 'Ruin'
+  | 'Resonance'
+  | 'Fortune'
+  | 'Colossus'
+  | 'Wrath';

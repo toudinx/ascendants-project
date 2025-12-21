@@ -264,7 +264,7 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
   get playerSprite(): string {
     return (
       this.playerState.kaelisSprite ||
-      "assets/battle/characters/velvet_battle_idle.png"
+      "assets/battle/characters/velvet/velvet_battle_idle.png"
     );
   }
 

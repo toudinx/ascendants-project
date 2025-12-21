@@ -2,8 +2,9 @@ import { SigilDef } from '../sigil.types';
 
 export const AGGRESSION_CREST_II_DEF: SigilDef = {
   id: 'agressao-slot2',
-  name: 'Agressão Crest II',
+  name: 'Aggression Crest II',
   description: 'Stabilizes energy throughput.',
+  imageUrl: 'assets/battle/fx/shadow_ground.png',
   level: 75,
   slot: 'slot2',
   setKey: 'agressao',
@@ -15,3 +16,4 @@ export const AGGRESSION_CREST_II_DEF: SigilDef = {
     { type: 'hp_flat', value: 300 }
   ]
 };
+

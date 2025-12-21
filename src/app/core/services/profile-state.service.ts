@@ -3,6 +3,7 @@ import { KaelisDefinition, KaelisId, RunKaelisSnapshot } from '../models/kaelis.
 import { KAELIS_LIST } from '../../content/kaelis';
 import { WEAPON_LIST } from '../../content/equipment/weapons';
 import { SIGIL_LIST } from '../../content/equipment/sigils';
+import { DEFAULT_SKIN_BY_KAELIS } from '../../content/equipment/skins';
 import {
   CurrencyType,
   ProfilePersistedState,
@@ -153,25 +154,28 @@ export class ProfileStateService {
   }
 
   getActiveSkinFor(kaelisId: KaelisId): string {
-    return this.state().cosmetics.activeSkinByKaelis[kaelisId] ?? 'default';
+    return this.state().cosmetics.activeSkinByKaelis[kaelisId] ?? DEFAULT_SKIN_BY_KAELIS[kaelisId] ?? 'default';
   }
 
   equipRing(kaelisId: KaelisId, slot: RingSlot, ringId: RingId | null): void {
-    if (!RING_SLOTS.includes(slot)) return;
+    const slotIndex = RING_SLOTS.indexOf(slot);
+    if (slotIndex < 0) return;
     if (ringId && !this.state().rings.inventory.includes(ringId)) return;
     this.state.update(current => {
-      const currentSlot = current.equipment.ringSlotsByKaelis[kaelisId]?.[slot] ?? null;
+      const currentSlots =
+        current.equipment.ringSlotsByKaelis[kaelisId] ??
+        Array.from({ length: RING_SLOTS.length }, () => null as RingId | null);
+      const currentSlot = currentSlots[slotIndex] ?? null;
       if (currentSlot === ringId) return current;
+      const nextSlots = [...currentSlots];
+      nextSlots[slotIndex] = ringId ?? null;
       return {
         ...current,
         equipment: {
           ...current.equipment,
           ringSlotsByKaelis: {
             ...current.equipment.ringSlotsByKaelis,
-            [kaelisId]: {
-              ...current.equipment.ringSlotsByKaelis[kaelisId],
-              [slot]: ringId
-            }
+            [kaelisId]: nextSlots
           }
         }
       };
@@ -207,10 +211,10 @@ export class ProfileStateService {
   }
 
   getEquippedRingSlots(kaelisId: KaelisId): { slot: RingSlot; ring: RingDefinition | null }[] {
-    const slots = this.state().equipment.ringSlotsByKaelis[kaelisId] ?? {};
-    return RING_SLOTS.map(slot => ({
+    const slots = this.state().equipment.ringSlotsByKaelis[kaelisId] ?? [];
+    return RING_SLOTS.map((slot, index) => ({
       slot,
-      ring: this.getRingById(slots[slot] ?? null) ?? null
+      ring: this.getRingById(slots[index] ?? null) ?? null
     }));
   }
 

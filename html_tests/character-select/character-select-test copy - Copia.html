@@ -1,0 +1,2118 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KAEZAN: AWAKENING — Kaelis</title>
+    <style>
+      :root {
+        --bg: #050511;
+        --text: rgba(245, 245, 250, 0.94);
+        --muted: rgba(164, 164, 181, 0.88);
+
+        --stroke: rgba(255, 255, 255, 0.1);
+        --stroke2: rgba(255, 255, 255, 0.14);
+
+        --panel: rgba(12, 12, 22, 0.58);
+        --panel2: rgba(0, 0, 0, 0.18);
+
+        --primary: #8a7cff;
+        --secondary: #e28fe8;
+        --good: #2de3c8;
+        --warn: #ffd344;
+
+        --r: 18px;
+        --shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
+        --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        overflow: hidden;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial;
+        background:
+          radial-gradient(
+            1200px 800px at 26% 55%,
+            rgba(138, 124, 255, 0.15),
+            rgba(5, 5, 17, 0.88)
+          ),
+          radial-gradient(
+            900px 700px at 74% 30%,
+            rgba(226, 143, 232, 0.12),
+            rgba(5, 5, 17, 0.92)
+          ),
+          var(--bg);
+      }
+
+      .stars {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.55;
+        mix-blend-mode: screen;
+        background:
+          radial-gradient(
+            2px 2px at 14% 28%,
+            rgba(255, 255, 255, 0.22),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 62% 22%,
+            rgba(255, 255, 255, 0.18),
+            transparent 60%
+          ),
+          radial-gradient(
+            2px 2px at 82% 64%,
+            rgba(255, 255, 255, 0.16),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 34% 72%,
+            rgba(255, 255, 255, 0.14),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 46% 54%,
+            rgba(255, 255, 255, 0.1),
+            transparent 60%
+          );
+      }
+
+      .app {
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px 10px 18px;
+      }
+      .brand {
+        display: grid;
+        gap: 6px;
+      }
+      .kicker {
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.62);
+      }
+      .title {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .title h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 980;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+      .icon-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(0, 0, 0, 0.2);
+        color: rgba(255, 255, 255, 0.86);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease);
+      }
+      .icon-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.35);
+      }
+
+      .roster {
+        padding: 0 18px 12px 18px;
+        display: flex;
+        justify-content: center;
+      }
+      .roster-bar {
+        width: min(980px, calc(100vw - 36px));
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: rgba(0, 0, 0, 0.16);
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .roster-arrow {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.18);
+        color: rgba(255, 255, 255, 0.82);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease);
+      }
+      .roster-arrow:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.24);
+      }
+
+      .roster-track {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        min-width: 0;
+      }
+      .roster-scroll {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 2px 8px;
+        scrollbar-width: none;
+      }
+      .roster-scroll::-webkit-scrollbar {
+        display: none;
+      }
+
+      .portrait {
+        width: 72px;
+        height: 72px;
+        border-radius: 22px;
+        flex: 0 0 auto;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: linear-gradient(
+          135deg,
+          rgba(138, 124, 255, 0.22),
+          rgba(226, 143, 232, 0.18)
+        );
+        cursor: pointer;
+        position: relative;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease),
+          box-shadow 140ms var(--ease);
+      }
+      .portrait:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.28);
+      }
+      .portrait.active {
+        border-color: rgba(138, 124, 255, 0.58);
+        box-shadow:
+          0 0 0 1px rgba(138, 124, 255, 0.22),
+          0 0 26px rgba(138, 124, 255, 0.18);
+      }
+      .portrait .lvl {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.38);
+        font-weight: 950;
+        font-size: 10px;
+      }
+
+      .main {
+        padding: 0 18px 18px 18px;
+        display: grid;
+        grid-template-columns: 200px 1fr 420px;
+        gap: 14px;
+        min-height: 0;
+      }
+
+      .nav {
+        border-radius: var(--r);
+        border: 1px solid var(--stroke);
+        background: rgba(0, 0, 0, 0.14);
+        padding: 12px 10px;
+        align-self: start;
+      }
+      .nav a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 10px;
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.82);
+        text-decoration: none;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        transition:
+          background 140ms var(--ease),
+          color 140ms var(--ease);
+      }
+      .nav a .ico {
+        width: 22px;
+        text-align: center;
+        opacity: 0.95;
+      }
+      .nav a:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .nav a.active {
+        background: rgba(138, 124, 255, 0.1);
+        color: rgba(255, 255, 255, 0.92);
+      }
+      .nav a.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 3px;
+        border-radius: 999px;
+        background: linear-gradient(
+          180deg,
+          rgba(138, 124, 255, 0.95),
+          rgba(226, 143, 232, 0.55)
+        );
+        box-shadow: 0 0 18px rgba(138, 124, 255, 0.28);
+      }
+
+      .stage {
+        border-radius: var(--r);
+        border: 1px solid var(--stroke);
+        background: rgba(0, 0, 0, 0.16);
+        overflow: hidden;
+        position: relative;
+        min-height: 0;
+      }
+      .stage::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            900px 540px at 30% 55%,
+            var(--themeA),
+            transparent 60%
+          ),
+          radial-gradient(
+            720px 540px at 70% 32%,
+            var(--themeB),
+            transparent 62%
+          ),
+          linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.62));
+      }
+      .stage .grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.14;
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px
+          );
+        background-size: 44px 44px;
+        mask-image: radial-gradient(
+          ellipse at 50% 55%,
+          black 26%,
+          transparent 70%
+        );
+      }
+      .stage-inner {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 22px;
+      }
+
+      .pose {
+        width: clamp(220px, 22vw, 340px);
+        height: clamp(320px, 52vh, 520px);
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background:
+          radial-gradient(
+            280px 280px at 40% 25%,
+            rgba(255, 255, 255, 0.1),
+            transparent 60%
+          ),
+          linear-gradient(
+            135deg,
+            rgba(138, 124, 255, 0.22),
+            rgba(226, 143, 232, 0.14)
+          ),
+          linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.68));
+        box-shadow: 0 28px 92px rgba(0, 0, 0, 0.58);
+        position: relative;
+        overflow: hidden;
+      }
+      .pose::after {
+        content: "";
+        position: absolute;
+        inset: -60%;
+        background: conic-gradient(
+          from 180deg,
+          rgba(138, 124, 255, 0),
+          rgba(138, 124, 255, 0.16),
+          rgba(226, 143, 232, 0.1),
+          rgba(138, 124, 255, 0)
+        );
+        opacity: 0.42;
+        animation: spin 12s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .stage-foot {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+      }
+      .nameplate {
+        display: grid;
+        gap: 6px;
+      }
+      .nameplate .role {
+        color: rgba(255, 255, 255, 0.66);
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+      .nameplate .name {
+        font-weight: 980;
+        font-size: 20px;
+      }
+      .tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .tag {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.2);
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.82);
+      }
+      .tag.primary {
+        border-color: rgba(138, 124, 255, 0.44);
+        box-shadow: 0 0 0 1px rgba(138, 124, 255, 0.18);
+      }
+
+      .hud {
+        border-radius: var(--r);
+        border: 1px solid var(--stroke);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+
+      .hud-head {
+        padding: 14px 14px 12px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .hud-head .left {
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+      }
+      .hud-name {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        min-width: 0;
+      }
+      .hud-name h2 {
+        margin: 0;
+        font-weight: 980;
+        font-size: 16px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .hud-sub {
+        color: rgba(164, 164, 181, 0.92);
+        font-weight: 650;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .hud-level {
+        width: 168px;
+        padding: 10px 10px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.18);
+        display: grid;
+        gap: 8px;
+      }
+      .hud-level .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        font-weight: 950;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.86);
+      }
+      .hud-level .tier {
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.58);
+      }
+      .xpbar {
+        height: 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        overflow: hidden;
+        position: relative;
+      }
+      .xpbar > i {
+        display: block;
+        height: 100%;
+        width: var(--xp, 42%);
+        background: linear-gradient(
+          90deg,
+          rgba(138, 124, 255, 0.85),
+          rgba(226, 143, 232, 0.45)
+        );
+        box-shadow: 0 0 22px rgba(138, 124, 255, 0.18);
+        border-radius: 999px;
+      }
+      .xpmeta {
+        display: flex;
+        justify-content: space-between;
+        color: rgba(255, 255, 255, 0.62);
+        font-weight: 850;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+      }
+
+      .hud-body {
+        padding: 12px 14px 14px 14px;
+        overflow: auto;
+        min-height: 0;
+      }
+
+      .hud-foot {
+        padding: 12px 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0),
+          rgba(0, 0, 0, 0.22)
+        );
+      }
+      .hud-cta {
+        width: 100%;
+        border: 1px solid rgba(138, 124, 255, 0.42);
+        background: linear-gradient(
+          90deg,
+          rgba(138, 124, 255, 0.22),
+          rgba(226, 143, 232, 0.14)
+        );
+        border-radius: 14px;
+        padding: 14px 12px;
+        font-weight: 950;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.92);
+        cursor: pointer;
+        transition: transform 140ms var(--ease);
+        box-shadow:
+          0 0 0 1px rgba(138, 124, 255, 0.16),
+          0 0 22px rgba(138, 124, 255, 0.12);
+      }
+      .hud-cta:hover {
+        transform: translateY(-1px);
+      }
+
+      .divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.07);
+        margin: 12px 0;
+      }
+
+      .statlist {
+        display: grid;
+        gap: 8px;
+      }
+      .statline {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 10px 10px;
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .statline .l {
+        color: rgba(255, 255, 255, 0.62);
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .statline .v {
+        font-weight: 980;
+        font-size: 14px;
+      }
+
+      .affinity {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.14);
+      }
+      .affinity .left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .heart {
+        width: 38px;
+        height: 38px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        display: grid;
+        place-items: center;
+      }
+      .affinity .t {
+        font-weight: 950;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.84);
+      }
+      .affinity .s {
+        color: rgba(164, 164, 181, 0.92);
+        font-weight: 650;
+        font-size: 12px;
+      }
+      .affinity .v {
+        font-weight: 980;
+        font-size: 14px;
+      }
+
+      .loadout-lines {
+        display: grid;
+        gap: 10px;
+      }
+      .linebtn {
+        width: 100%;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.14);
+        padding: 12px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        cursor: pointer;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease);
+      }
+      .linebtn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.22);
+      }
+      .linebtn .left {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        min-width: 0;
+      }
+      .linebtn .ico {
+        width: 38px;
+        height: 38px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        display: grid;
+        place-items: center;
+      }
+      .linebtn .txt {
+        display: grid;
+        gap: 3px;
+        min-width: 0;
+      }
+      .linebtn .txt .t {
+        font-weight: 950;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.84);
+      }
+      .linebtn .txt .s {
+        font-weight: 650;
+        font-size: 12px;
+        color: rgba(164, 164, 181, 0.92);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 290px;
+      }
+      .linebtn .chev {
+        color: rgba(255, 255, 255, 0.55);
+        font-weight: 900;
+        font-size: 18px;
+      }
+
+      .equip-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .equip-title {
+        display: grid;
+        gap: 4px;
+      }
+      .equip-title h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 980;
+      }
+      .equip-sub {
+        color: rgba(164, 164, 181, 0.92);
+        font-weight: 650;
+        font-size: 12px;
+      }
+      .btn {
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.16);
+        color: rgba(255, 255, 255, 0.88);
+        font-weight: 950;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease);
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.22);
+      }
+      .btn.primary {
+        border-color: rgba(138, 124, 255, 0.42);
+        box-shadow: 0 0 0 1px rgba(138, 124, 255, 0.14);
+      }
+
+      .equip-grid {
+        margin-top: 10px;
+        display: grid;
+        gap: 8px;
+      }
+      .equip-kv {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 10px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.14);
+      }
+      .equip-kv .k {
+        color: rgba(255, 255, 255, 0.62);
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .equip-kv .v {
+        font-weight: 850;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.86);
+        text-align: right;
+      }
+      .panelbox {
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.12);
+        padding: 12px;
+      }
+      .panelbox .head {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .panelbox .head b {
+        font-size: 13px;
+      }
+      .panelbox .head span {
+        font-weight: 950;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.65);
+      }
+      .note {
+        color: rgba(164, 164, 181, 0.92);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        place-items: center;
+        z-index: 30;
+      }
+      .modal.show {
+        display: grid;
+      }
+      .modal .overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.62);
+        backdrop-filter: blur(6px);
+      }
+      .modal .box {
+        position: relative;
+        width: min(980px, calc(100vw - 28px));
+        height: min(640px, calc(100vh - 28px));
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background:
+          radial-gradient(
+            900px 600px at 20% 30%,
+            rgba(138, 124, 255, 0.16),
+            transparent 60%
+          ),
+          radial-gradient(
+            720px 520px at 70% 40%,
+            rgba(226, 143, 232, 0.12),
+            transparent 60%
+          ),
+          rgba(12, 12, 22, 0.74);
+        box-shadow: 0 30px 110px rgba(0, 0, 0, 0.7);
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+      }
+      .modal .side {
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 14px;
+        overflow: auto;
+      }
+      .modal .main {
+        padding: 14px;
+        overflow: auto;
+      }
+      .modal .mhead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .modal .mhead h3 {
+        margin: 0;
+        font-weight: 980;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .xbtn {
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.16);
+        color: rgba(255, 255, 255, 0.86);
+        cursor: pointer;
+      }
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+      .list-item {
+        padding: 12px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.14);
+        cursor: pointer;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease);
+      }
+      .list-item:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.22);
+      }
+      .list-item.active {
+        border-color: rgba(138, 124, 255, 0.52);
+        box-shadow: 0 0 0 1px rgba(138, 124, 255, 0.14);
+      }
+      .list-item .t {
+        font-weight: 980;
+        font-size: 13px;
+      }
+      .list-item .s {
+        margin-top: 4px;
+        color: rgba(164, 164, 181, 0.92);
+        font-weight: 650;
+        font-size: 12px;
+      }
+
+      .sigils-stage {
+        width: min(780px, 92%);
+        height: min(560px, 82%);
+        position: relative;
+        display: none;
+      }
+      .sigils-stage.show {
+        display: block;
+      }
+
+      .sigils-bg {
+        position: absolute;
+        inset: 0;
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background:
+          radial-gradient(
+            520px 380px at 50% 50%,
+            rgba(255, 255, 255, 0.06),
+            rgba(0, 0, 0, 0.1)
+          ),
+          linear-gradient(
+            135deg,
+            rgba(138, 124, 255, 0.1),
+            rgba(226, 143, 232, 0.06)
+          );
+        box-shadow: 0 28px 120px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+      }
+      .sigils-bg::before {
+        content: "";
+        position: absolute;
+        inset: -40%;
+        background: conic-gradient(
+          from 90deg,
+          rgba(138, 124, 255, 0),
+          rgba(138, 124, 255, 0.16),
+          rgba(226, 143, 232, 0.1),
+          rgba(138, 124, 255, 0)
+        );
+        opacity: 0.36;
+        animation: spin 18s linear infinite;
+      }
+      .sigils-bg::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            2px 2px at 18% 30%,
+            rgba(255, 255, 255, 0.12),
+            transparent 60%
+          ),
+          radial-gradient(
+            2px 2px at 64% 42%,
+            rgba(255, 255, 255, 0.1),
+            transparent 60%
+          ),
+          radial-gradient(
+            2px 2px at 78% 66%,
+            rgba(255, 255, 255, 0.12),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 40% 72%,
+            rgba(255, 255, 255, 0.1),
+            transparent 60%
+          );
+        opacity: 0.32;
+        mix-blend-mode: screen;
+      }
+
+      .sigils-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        filter: drop-shadow(0 0 18px rgba(138, 124, 255, 0.1));
+      }
+
+      .sigils-emblem {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        translate: -50% -50%;
+        width: 120px;
+        height: 120px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: radial-gradient(
+          circle at 40% 35%,
+          rgba(255, 255, 255, 0.08),
+          rgba(0, 0, 0, 0.18)
+        );
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+        display: grid;
+        place-items: center;
+      }
+      .sigils-emblem > div {
+        width: 72px;
+        height: 72px;
+        border-radius: 22px;
+        border: 1px dashed rgba(255, 255, 255, 0.14);
+        display: grid;
+        place-items: center;
+        color: rgba(255, 255, 255, 0.78);
+        font-weight: 950;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-size: 11px;
+      }
+
+      .sigil-node {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        translate: -50% -50%;
+        width: 180px;
+        height: 88px;
+        transform: translate(var(--x), var(--y));
+      }
+      .sigil-btn {
+        width: 100%;
+        height: 100%;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.18);
+        display: grid;
+        grid-template-columns: 42px 1fr;
+        gap: 10px;
+        align-items: center;
+        padding: 12px 12px;
+        cursor: pointer;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease),
+          background 140ms var(--ease);
+      }
+      .sigil-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.22);
+      }
+      .sigil-btn.active {
+        border-color: rgba(138, 124, 255, 0.55);
+        box-shadow:
+          0 0 0 1px rgba(138, 124, 255, 0.18),
+          0 0 22px rgba(138, 124, 255, 0.14);
+        background: rgba(138, 124, 255, 0.08);
+      }
+      .sigil-ico {
+        width: 42px;
+        height: 42px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        display: grid;
+        place-items: center;
+        font-weight: 950;
+      }
+      .sigil-txt {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+      .sigil-txt .t {
+        font-weight: 950;
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.78);
+      }
+      .sigil-txt .s {
+        font-weight: 700;
+        font-size: 12px;
+        color: rgba(164, 164, 181, 0.92);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .skins-stage {
+        width: min(920px, 96%);
+        height: min(600px, 86%);
+        position: relative;
+        display: none;
+      }
+      .skins-stage.show {
+        display: block;
+      }
+
+      .skin-frame {
+        position: absolute;
+        inset: 0;
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background:
+          radial-gradient(
+            900px 560px at 50% 45%,
+            rgba(255, 255, 255, 0.06),
+            rgba(0, 0, 0, 0.16)
+          ),
+          linear-gradient(
+            135deg,
+            rgba(138, 124, 255, 0.12),
+            rgba(226, 143, 232, 0.08)
+          );
+        box-shadow: 0 28px 120px rgba(0, 0, 0, 0.62);
+        overflow: hidden;
+      }
+      .skin-frame::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            2px 2px at 20% 30%,
+            rgba(255, 255, 255, 0.12),
+            transparent 60%
+          ),
+          radial-gradient(
+            2px 2px at 72% 42%,
+            rgba(255, 255, 255, 0.1),
+            transparent 60%
+          ),
+          radial-gradient(
+            2px 2px at 84% 66%,
+            rgba(255, 255, 255, 0.12),
+            transparent 60%
+          );
+        opacity: 0.3;
+        mix-blend-mode: screen;
+      }
+
+      .skin-portrait {
+        position: absolute;
+        left: 50%;
+        top: 46%;
+        translate: -50% -50%;
+        width: clamp(260px, 26vw, 420px);
+        height: clamp(360px, 56vh, 560px);
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background:
+          radial-gradient(
+            280px 280px at 40% 25%,
+            rgba(255, 255, 255, 0.1),
+            transparent 60%
+          ),
+          linear-gradient(
+            135deg,
+            rgba(138, 124, 255, 0.2),
+            rgba(226, 143, 232, 0.12)
+          ),
+          linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.72));
+        box-shadow: 0 30px 110px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .skin-arrow {
+        position: absolute;
+        top: 46%;
+        translate: 0 -50%;
+        width: 54px;
+        height: 54px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.2);
+        color: rgba(255, 255, 255, 0.86);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease);
+        z-index: 2;
+      }
+      .skin-arrow:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.24);
+      }
+      .skin-arrow.left {
+        left: 10%;
+      }
+      .skin-arrow.right {
+        right: 10%;
+      }
+
+      .skin-info {
+        position: absolute;
+        left: 50%;
+        bottom: 10%;
+        translate: -50% 0;
+        width: min(720px, 86%);
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.22);
+        backdrop-filter: blur(8px);
+        padding: 14px;
+        display: grid;
+        gap: 10px;
+        z-index: 2;
+      }
+      .skin-info-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .skin-info-top .name {
+        font-weight: 980;
+        font-size: 16px;
+      }
+      .skin-info-top .state {
+        color: rgba(255, 255, 255, 0.62);
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .stage[data-mode="skins"] .stage-foot {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      @media (max-width: 1180px) {
+        body {
+          overflow: auto;
+        }
+        .main {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="stars"></div>
+
+    <div class="app">
+      <div class="topbar">
+        <div class="brand">
+          <div class="kicker">KAEZAN: AWAKENING</div>
+          <div class="title">
+            <h1>Kaelis</h1>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="icon-btn" title="Back">⟵</button>
+          <button class="icon-btn" title="Inventory">🎒</button>
+          <button class="icon-btn" title="Settings">⚙️</button>
+        </div>
+      </div>
+
+      <div class="roster">
+        <div class="roster-bar">
+          <button class="roster-arrow" id="rosterLeft" title="Prev">‹</button>
+          <div class="roster-track">
+            <div class="roster-scroll" id="rosterScroll"></div>
+          </div>
+          <button class="roster-arrow" id="rosterRight" title="Next">›</button>
+        </div>
+      </div>
+
+      <div class="main">
+        <aside class="nav">
+          <a class="active" data-tab="details"
+            ><span class="ico">📌</span> Details</a
+          >
+          <a data-tab="weapon"><span class="ico">🗡️</span> Weapon</a>
+          <a data-tab="sigils"><span class="ico">🜂</span> Sigils</a>
+          <a data-tab="skins"><span class="ico">🎭</span> Skins</a>
+        </aside>
+
+        <section class="stage" id="stage" data-mode="pose">
+          <div class="grid"></div>
+          <div class="stage-inner">
+            <div class="pose" id="poseBox"></div>
+
+            <div class="sigils-stage" id="sigilsStage">
+              <div class="sigils-bg"></div>
+              <svg
+                class="sigils-svg"
+                viewBox="0 0 1000 700"
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  <linearGradient id="g1" x1="0" x2="1">
+                    <stop offset="0" stop-color="rgba(138,124,255,.75)" />
+                    <stop offset="1" stop-color="rgba(226,143,232,.40)" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M500 110 L760 270 L670 560 L330 560 L240 270 Z"
+                  fill="rgba(0,0,0,.10)"
+                  stroke="rgba(255,255,255,.14)"
+                  stroke-width="2"
+                />
+                <path
+                  d="M500 110 L760 270 L670 560 L330 560 L240 270 Z"
+                  fill="transparent"
+                  stroke="url(#g1)"
+                  stroke-width="3"
+                  opacity=".55"
+                />
+                <path
+                  d="M500 110 L500 350"
+                  stroke="rgba(255,255,255,.10)"
+                  stroke-width="2"
+                />
+                <path
+                  d="M760 270 L500 350"
+                  stroke="rgba(255,255,255,.10)"
+                  stroke-width="2"
+                />
+                <path
+                  d="M670 560 L500 350"
+                  stroke="rgba(255,255,255,.10)"
+                  stroke-width="2"
+                />
+                <path
+                  d="M330 560 L500 350"
+                  stroke="rgba(255,255,255,.10)"
+                  stroke-width="2"
+                />
+                <path
+                  d="M240 270 L500 350"
+                  stroke="rgba(255,255,255,.10)"
+                  stroke-width="2"
+                />
+                <circle
+                  cx="500"
+                  cy="350"
+                  r="86"
+                  fill="rgba(0,0,0,.08)"
+                  stroke="rgba(255,255,255,.10)"
+                  stroke-width="2"
+                />
+                <circle
+                  cx="500"
+                  cy="350"
+                  r="58"
+                  fill="transparent"
+                  stroke="rgba(255,255,255,.08)"
+                  stroke-width="2"
+                  stroke-dasharray="7 10"
+                />
+              </svg>
+
+              <div class="sigils-emblem"><div>SIGILS</div></div>
+              <div id="sigilsNodes"></div>
+            </div>
+
+            <div class="skins-stage" id="skinsStage">
+              <div class="skin-frame"></div>
+              <button class="skin-arrow left" id="skinPrev" title="Prev">
+                ‹
+              </button>
+              <div class="skin-portrait" id="skinPortrait"></div>
+              <button class="skin-arrow right" id="skinNext" title="Next">
+                ›
+              </button>
+              <div class="skin-info">
+                <div class="skin-info-top">
+                  <div>
+                    <div class="name" id="skinName">Quiet Guard</div>
+                    <div class="state" id="skinState">Owned</div>
+                  </div>
+                  <button class="btn primary" id="skinEquip">Equip</button>
+                </div>
+                <div class="note" id="skinDesc">
+                  Default combat attire. Clean and restrained silhouette.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stage-foot">
+            <div class="nameplate">
+              <div class="role" id="stageRole">ECHO DUELIST</div>
+              <div class="name" id="stageName">Velvet Arclight</div>
+            </div>
+            <div class="tags" id="stageTags"></div>
+          </div>
+        </section>
+
+        <aside class="hud" id="hud">
+          <div class="hud-head">
+            <div class="left">
+              <div class="hud-name">
+                <h2 id="hudKaelisName">Velvet Arclight</h2>
+              </div>
+              <div class="hud-sub" id="hudKaelisSub">
+                Echo Duelist · Sentinela
+              </div>
+            </div>
+
+            <div class="hud-level" id="hudLevelBox">
+              <div class="top">
+                <span id="hudLv">Lv 52</span>
+                <span class="tier" id="hudTier">Tier III · 41–60</span>
+              </div>
+              <div class="xpbar" id="xpBar" style="--xp: 46%"><i></i></div>
+              <div class="xpmeta">
+                <span id="xpNow">EXP 1240</span>
+                <span id="xpNext">/ 2700</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hud-body" id="hudBody"></div>
+
+          <div class="hud-foot">
+            <button class="hud-cta" id="btnConfirm">Confirm Kaelis</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="modal" id="armoryModal" aria-hidden="true">
+      <div class="overlay" data-close></div>
+      <div class="box">
+        <div class="side">
+          <div class="mhead">
+            <h3>Armory</h3>
+            <button class="xbtn" data-close title="Close">✕</button>
+          </div>
+          <div class="list" id="armoryList"></div>
+        </div>
+        <div class="main">
+          <div class="mhead">
+            <h3>Weapon</h3>
+            <div style="display: flex; gap: 10px">
+              <button class="btn" data-close>Cancel</button>
+              <button class="btn primary" id="btnEquipWeapon">Equip</button>
+            </div>
+          </div>
+          <div id="armoryDetails"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const WEAPONS = [
+        {
+          id: "ascBlade",
+          name: "Ascendant Blade",
+          type: "Blade",
+          tier: "SR",
+          level: 40,
+          stats: { atk: "+140", crit: "+20%" },
+          passive: "After Basic ATK, gain <b>Tempo</b> for 1 turn.",
+        },
+        {
+          id: "nightpiercer",
+          name: "Nightpiercer",
+          type: "Blade",
+          tier: "SSR",
+          level: 20,
+          stats: { atk: "+110", critDmg: "+18%" },
+          passive:
+            "Crits mark the target. Marked targets take <b>+10%</b> Skill damage.",
+        },
+        {
+          id: "astra",
+          name: "Astra Coil",
+          type: "Catalyst",
+          tier: "SR",
+          level: 30,
+          stats: { atk: "+90", energyRegen: "+12%" },
+          passive:
+            "When Energy overflows, convert excess into <b>DoT Amplification</b>.",
+        },
+        {
+          id: "ruinSpindle",
+          name: "Ruin Spindle",
+          type: "Catalyst",
+          tier: "SR",
+          level: 35,
+          stats: { atk: "+100", dot: "+14%" },
+          passive:
+            "DoT ticks have a <b>25%</b> chance to spread a minor Ruin debuff.",
+        },
+      ];
+
+      const SIGILS_SET = {
+        name: "Aggression",
+        owned: "5/5",
+        effects: [
+          { req: "2-PC", text: "ATK increases by <b>10%</b>." },
+          {
+            req: "4-PC",
+            text: "Basic ATK and Skill damage increase by <b>10%</b>.",
+          },
+          {
+            req: "5-PC",
+            text: "After a Crit, gain <b>Fury</b>: next hit deals <b>+12%</b> damage (once per turn).",
+          },
+        ],
+      };
+
+      const KAELIS = [
+        {
+          id: "velvet",
+          name: "Velvet Arclight",
+          role: "Echo Duelist",
+          tags: ["Sentinela", "Adaptive Skirmisher"],
+          level: 52,
+          tier: { name: "Tier III", range: "41–60" },
+          xp: { now: 1240, next: 2700 },
+          affinity: 7,
+          stats: { hp: 9000, atk: 920, crit: "34%", dot: "20%", energy: 110 },
+          themeA: "rgba(138,124,255,.18)",
+          themeB: "rgba(226,143,232,.12)",
+          weaponId: "ascBlade",
+          sigils: [
+            {
+              slot: 1,
+              name: "Aggression Crest II",
+              lvl: 12,
+              main: "ATK +15%",
+              sub: "Crit +6%",
+            },
+            {
+              slot: 2,
+              name: "Aggression Crest IV",
+              lvl: 9,
+              main: "DMG +8%",
+              sub: "HP +6%",
+            },
+            {
+              slot: 3,
+              name: "Aggression Reserve Band",
+              lvl: 9,
+              main: "ATK +8%",
+              sub: "Energy Regen +6%",
+            },
+            {
+              slot: 4,
+              name: "Aggression Crest III",
+              lvl: 12,
+              main: "Crit Rate +10%",
+              sub: "ATK +3%",
+            },
+            {
+              slot: 5,
+              name: "Aggression Crest IV",
+              lvl: 12,
+              main: "DMG +10%",
+              sub: "Crit DMG +10%",
+            },
+          ],
+          skins: [
+            {
+              id: "quiet",
+              name: "Quiet Guard",
+              owned: true,
+              desc: "Default combat attire. Clean and restrained silhouette.",
+              unlock: "Default",
+            },
+            {
+              id: "heroic",
+              name: "Heroic",
+              owned: false,
+              desc: "Ceremonial variant with gilded accents and higher contrast.",
+              unlock: "Affinity 10",
+            },
+            {
+              id: "noir",
+              name: "Noir Eclipse",
+              owned: false,
+              desc: "Rare skin with void-veil motifs.",
+              unlock: "Event reward",
+            },
+          ],
+          equippedSkin: "quiet",
+        },
+        {
+          id: "lumen",
+          name: "Lumen Cerys",
+          role: "Resonant Weaver",
+          tags: ["Ruína", "Status Amplifier"],
+          level: 44,
+          tier: { name: "Tier III", range: "41–60" },
+          xp: { now: 880, next: 1900 },
+          affinity: 3,
+          stats: { hp: 9000, atk: 880, crit: "28%", dot: "34%", energy: 100 },
+          themeA: "rgba(226,143,232,.14)",
+          themeB: "rgba(138,124,255,.10)",
+          weaponId: "ruinSpindle",
+          sigils: [
+            {
+              slot: 1,
+              name: "Ruin Crest I",
+              lvl: 8,
+              main: "DoT +12%",
+              sub: "ATK +4%",
+            },
+            {
+              slot: 2,
+              name: "Ruin Crest II",
+              lvl: 10,
+              main: "HP +8%",
+              sub: "DoT +6%",
+            },
+            {
+              slot: 3,
+              name: "Ruin Band",
+              lvl: 9,
+              main: "Energy +10",
+              sub: "ATK +3%",
+            },
+            {
+              slot: 4,
+              name: "Ruin Crest III",
+              lvl: 11,
+              main: "DoT +10%",
+              sub: "Crit +3%",
+            },
+            {
+              slot: 5,
+              name: "Ruin Crest IV",
+              lvl: 12,
+              main: "DMG +6%",
+              sub: "DoT +8%",
+            },
+          ],
+          skins: [
+            {
+              id: "resonant",
+              name: "Resonant",
+              owned: true,
+              desc: "Default resonance attire.",
+              unlock: "Default",
+            },
+            {
+              id: "nocturne",
+              name: "Nocturne",
+              owned: false,
+              desc: "Dark resonance with neon accents.",
+              unlock: "Simulation reward",
+            },
+          ],
+          equippedSkin: "resonant",
+        },
+      ];
+
+      const state = {
+        selectedId: "velvet",
+        tab: "details",
+        selectedSigilSlot: 1,
+        skinIndex: 0,
+        armorySelectedId: null,
+      };
+
+      const $ = (q) => document.querySelector(q);
+      const $$ = (q) => Array.from(document.querySelectorAll(q));
+      const getK = () =>
+        KAELIS.find((x) => x.id === state.selectedId) || KAELIS[0];
+
+      function setTheme() {
+        const k = getK();
+        const stage = $("#stage");
+        stage.style.setProperty("--themeA", k.themeA);
+        stage.style.setProperty("--themeB", k.themeB);
+      }
+
+      function renderRoster() {
+        const root = $("#rosterScroll");
+        root.innerHTML = "";
+        KAELIS.forEach((k) => {
+          const el = document.createElement("div");
+          el.className =
+            "portrait" + (k.id === state.selectedId ? " active" : "");
+          el.innerHTML = `<div class="lvl">${k.level}</div>`;
+          el.title = k.name;
+          el.onclick = () => {
+            state.selectedId = k.id;
+            state.selectedSigilSlot = 1;
+            state.skinIndex = 0;
+            renderAll(true);
+          };
+          root.appendChild(el);
+        });
+      }
+
+      function renderStage(animate) {
+        const k = getK();
+        $("#stageName").textContent = k.name;
+        $("#stageRole").textContent = k.role.toUpperCase();
+
+        const tags = $("#stageTags");
+        tags.innerHTML = "";
+        k.tags.forEach((t, i) => {
+          const span = document.createElement("span");
+          span.className = "tag" + (i === 0 ? " primary" : "");
+          span.textContent = t;
+          tags.appendChild(span);
+        });
+
+        const pose = $("#poseBox");
+        const sig = $("#sigilsStage");
+        const skins = $("#skinsStage");
+
+        const isSigils = state.tab === "sigils";
+        const isSkins = state.tab === "skins";
+
+        pose.style.display = isSigils || isSkins ? "none" : "block";
+        sig.classList.toggle("show", isSigils);
+        skins.classList.toggle("show", isSkins);
+
+        $("#stage").setAttribute("data-mode", isSkins ? "skins" : "pose");
+
+        if (isSigils) renderSigilsStage();
+        if (isSkins) renderSkinsStage();
+
+        if (animate) {
+          const target = isSigils ? sig : isSkins ? skins : pose;
+          target.style.opacity = "0";
+          target.style.transform = "translateY(10px) scale(.98)";
+          setTimeout(() => {
+            target.style.opacity = "1";
+            target.style.transform = "";
+          }, 90);
+        }
+      }
+
+      function renderHudHeader() {
+        const k = getK();
+        $("#hudKaelisName").textContent = k.name;
+        $("#hudKaelisSub").textContent = `${k.role} · ${k.tags[0] || ""}`;
+        $("#hudLv").textContent = `Lv ${k.level}`;
+        $("#hudTier").textContent = `${k.tier.name} · ${k.tier.range}`;
+        $("#xpNow").textContent = `EXP ${k.xp.now}`;
+        $("#xpNext").textContent = `/ ${k.xp.next}`;
+        const pct = Math.max(0, Math.min(1, k.xp.now / k.xp.next));
+        $("#xpBar").style.setProperty("--xp", `${Math.round(pct * 100)}%`);
+      }
+
+      function renderHud() {
+        const k = getK();
+        const body = $("#hudBody");
+
+        if (state.tab === "details") {
+          const weapon = WEAPONS.find((w) => w.id === k.weaponId);
+          const skin =
+            k.skins.find((s) => s.id === k.equippedSkin)?.name || "Default";
+
+          body.innerHTML = `
+            <div class="statlist">
+              <div class="statline"><span class="l">HP</span><span class="v">${k.stats.hp}</span></div>
+              <div class="statline"><span class="l">ATK</span><span class="v">${k.stats.atk}</span></div>
+              <div class="statline"><span class="l">CRIT</span><span class="v">${k.stats.crit}</span></div>
+              <div class="statline"><span class="l">DOT</span><span class="v">${k.stats.dot}</span></div>
+              <div class="statline"><span class="l">ENERGY</span><span class="v">${k.stats.energy}</span></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="affinity">
+              <div class="left">
+                <div class="heart">♥</div>
+                <div>
+                  <div class="t">Affinity</div>
+                  <div class="s">${k.affinity}/10</div>
+                </div>
+              </div>
+              <div class="v">Rank ${k.affinity}</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="loadout-lines">
+              <button class="linebtn" data-go="weapon">
+                <div class="left">
+                  <div class="ico">🗡️</div>
+                  <div class="txt">
+                    <div class="t">Weapon</div>
+                    <div class="s">${weapon?.name || "—"} · ${weapon?.tier || ""} · Lv ${weapon?.level ?? "—"}</div>
+                  </div>
+                </div>
+                <div class="chev">›</div>
+              </button>
+
+              <button class="linebtn" data-go="sigils">
+                <div class="left">
+                  <div class="ico">🜂</div>
+                  <div class="txt">
+                    <div class="t">Sigils</div>
+                    <div class="s">${SIGILS_SET.name} · ${SIGILS_SET.owned}</div>
+                  </div>
+                </div>
+                <div class="chev">›</div>
+              </button>
+
+              <button class="linebtn" data-go="skins">
+                <div class="left">
+                  <div class="ico">🎭</div>
+                  <div class="txt">
+                    <div class="t">Skin</div>
+                    <div class="s">${skin}</div>
+                  </div>
+                </div>
+                <div class="chev">›</div>
+              </button>
+            </div>
+          `;
+
+          body.querySelectorAll("[data-go]").forEach((el) => {
+            el.addEventListener("click", () =>
+              setTab(el.getAttribute("data-go"), true)
+            );
+          });
+        }
+
+        if (state.tab === "weapon") {
+          const w = WEAPONS.find((x) => x.id === k.weaponId);
+          body.innerHTML = `
+            <div class="equip-head">
+              <div class="equip-title">
+                <h3>${w?.name || "—"}</h3>
+                <div class="equip-sub">${w?.tier || ""} · ${w?.type || ""} · Lv ${w?.level ?? "—"}</div>
+              </div>
+              <button class="btn" id="btnArmory">Change</button>
+            </div>
+
+            <div class="equip-grid">
+              <div class="equip-kv"><span class="k">ATK</span><span class="v">${w?.stats?.atk || "—"}</span></div>
+              <div class="equip-kv"><span class="k">CRIT</span><span class="v">${w?.stats?.crit || "—"}</span></div>
+              <div class="equip-kv"><span class="k">CRIT DMG</span><span class="v">${w?.stats?.critDmg || "—"}</span></div>
+              <div class="equip-kv"><span class="k">DOT</span><span class="v">${w?.stats?.dot || "—"}</span></div>
+              <div class="equip-kv"><span class="k">ENERGY REGEN</span><span class="v">${w?.stats?.energyRegen || "—"}</span></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="panelbox">
+              <div class="head"><b>Passive</b><span>Trait</span></div>
+              <div class="note" style="margin-top:8px;">${w?.passive || "—"}</div>
+            </div>
+          `;
+
+          $("#btnArmory").addEventListener("click", () => openArmory());
+        }
+
+        if (state.tab === "sigils") {
+          const slot = k.sigils.find((s) => s.slot === state.selectedSigilSlot);
+          body.innerHTML = `
+            <div class="panelbox">
+              <div class="head"><b>${SIGILS_SET.name}</b><span>${SIGILS_SET.owned}</span></div>
+              <div class="note" style="margin-top:10px;">
+                <div style="display:grid; gap:8px;">
+                  ${SIGILS_SET.effects.map((e) => `<div><b style="color:rgba(255,255,255,.86)">${e.req}:</b> <span class="note">${e.text}</span></div>`).join("")}
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="equip-head">
+              <div class="equip-title">
+                <h3>Slot ${slot?.slot ?? "—"} · ${slot?.name ?? "—"}</h3>
+                <div class="equip-sub">Sigil Lv ${slot?.lvl ?? "—"}</div>
+              </div>
+              <button class="btn" id="btnChangeSigil">Change</button>
+            </div>
+
+            <div class="equip-grid">
+              <div class="equip-kv"><span class="k">MAIN</span><span class="v">${slot?.main ?? "—"}</span></div>
+              <div class="equip-kv"><span class="k">SUB</span><span class="v">${slot?.sub ?? "—"}</span></div>
+            </div>
+          `;
+
+          $("#btnChangeSigil").addEventListener("click", () => {
+            alert("Sigil picker (reference)");
+          });
+        }
+
+        if (state.tab === "skins") {
+          body.innerHTML = ``;
+        }
+      }
+
+      function renderSigilsStage() {
+        const k = getK();
+        const root = $("#sigilsNodes");
+        root.innerHTML = "";
+
+        const pts = [
+          { slot: 1, x: 0, y: -210 },
+          { slot: 2, x: 200, y: -70 },
+          { slot: 3, x: 125, y: 175 },
+          { slot: 4, x: -125, y: 175 },
+          { slot: 5, x: -200, y: -70 },
+        ];
+
+        pts.forEach((p) => {
+          const s = k.sigils.find((x) => x.slot === p.slot);
+          const el = document.createElement("div");
+          el.className = "sigil-node";
+          el.style.setProperty("--x", `${p.x}px`);
+          el.style.setProperty("--y", `${p.y}px`);
+          el.innerHTML = `
+            <button class="sigil-btn ${s.slot === state.selectedSigilSlot ? "active" : ""}" data-slot="${s.slot}">
+              <div class="sigil-ico">🜂</div>
+              <div class="sigil-txt">
+                <div class="t">Slot ${s.slot} · Lv ${s.lvl}</div>
+                <div class="s">${s.main}</div>
+              </div>
+            </button>
+          `;
+          el.querySelector("button").addEventListener("click", () => {
+            state.selectedSigilSlot = s.slot;
+            renderStage(false);
+            renderHud();
+          });
+          root.appendChild(el);
+        });
+      }
+
+      function renderSkinsStage() {
+        const k = getK();
+        state.skinIndex = Math.max(
+          0,
+          Math.min(state.skinIndex, k.skins.length - 1)
+        );
+        const s = k.skins[state.skinIndex];
+
+        $("#skinName").textContent = s.name;
+        $("#skinState").textContent = s.owned ? "Owned" : "Locked";
+        $("#skinDesc").textContent = s.desc;
+
+        const equipBtn = $("#skinEquip");
+        equipBtn.disabled = !s.owned;
+        equipBtn.style.opacity = s.owned ? "1" : ".55";
+        equipBtn.style.cursor = s.owned ? "pointer" : "not-allowed";
+      }
+
+      function setTab(tab, animate) {
+        state.tab = tab;
+        $$(".nav a").forEach((a) =>
+          a.classList.toggle("active", a.dataset.tab === tab)
+        );
+        const hud = $("#hud");
+        hud.style.display = tab === "skins" ? "none" : "grid";
+        if (tab === "skins") {
+          const main = document.querySelector(".main");
+          main.style.gridTemplateColumns = "200px 1fr";
+        } else {
+          const main = document.querySelector(".main");
+          main.style.gridTemplateColumns = "200px 1fr 420px";
+        }
+        renderStage(animate);
+        renderHudHeader();
+        renderHud();
+      }
+
+      function openArmory() {
+        const k = getK();
+        state.armorySelectedId = k.weaponId;
+        renderArmoryList();
+        renderArmoryDetails(state.armorySelectedId);
+        const modal = $("#armoryModal");
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeArmory() {
+        const modal = $("#armoryModal");
+        modal.classList.remove("show");
+        modal.setAttribute("aria-hidden", "true");
+      }
+
+      function renderArmoryList() {
+        const root = $("#armoryList");
+        root.innerHTML = "";
+        WEAPONS.forEach((w) => {
+          const el = document.createElement("div");
+          el.className =
+            "list-item" + (w.id === state.armorySelectedId ? " active" : "");
+          el.innerHTML = `<div class="t">${w.name}</div><div class="s">${w.tier} · ${w.type} · Lv ${w.level}</div>`;
+          el.onclick = () => {
+            state.armorySelectedId = w.id;
+            renderArmoryList();
+            renderArmoryDetails(w.id);
+          };
+          root.appendChild(el);
+        });
+      }
+
+      function renderArmoryDetails(id) {
+        const w = WEAPONS.find((x) => x.id === id);
+        $("#armoryDetails").innerHTML = `
+          <div class="equip-head">
+            <div class="equip-title">
+              <h3>${w?.name || "—"}</h3>
+              <div class="equip-sub">${w?.tier || ""} · ${w?.type || ""} · Lv ${w?.level ?? "—"}</div>
+            </div>
+          </div>
+
+          <div class="equip-grid">
+            ${Object.entries(w?.stats || {})
+              .map(
+                ([k, v]) => `
+              <div class="equip-kv"><span class="k">${k.replace(/([A-Z])/g, " $1").toUpperCase()}</span><span class="v">${v}</span></div>
+            `
+              )
+              .join("")}
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="panelbox">
+            <div class="head"><b>Passive</b><span>Trait</span></div>
+            <div class="note" style="margin-top:8px;">${w?.passive || "—"}</div>
+          </div>
+        `;
+      }
+
+      $("#armoryModal").addEventListener("click", (e) => {
+        const t = e.target;
+        if (t?.hasAttribute?.("data-close")) closeArmory();
+      });
+      $$("#armoryModal [data-close]").forEach((b) =>
+        b.addEventListener("click", closeArmory)
+      );
+      $("#btnEquipWeapon").addEventListener("click", () => {
+        const k = getK();
+        k.weaponId = state.armorySelectedId;
+        closeArmory();
+        renderHud();
+      });
+
+      $("#btnConfirm").addEventListener("click", () => {
+        const k = getK();
+        alert(`Confirm Kaelis\n${k.name}`);
+      });
+
+      $("#skinPrev").addEventListener("click", () => {
+        const k = getK();
+        state.skinIndex =
+          (state.skinIndex - 1 + k.skins.length) % k.skins.length;
+        renderSkinsStage();
+      });
+      $("#skinNext").addEventListener("click", () => {
+        const k = getK();
+        state.skinIndex = (state.skinIndex + 1) % k.skins.length;
+        renderSkinsStage();
+      });
+      $("#skinEquip").addEventListener("click", () => {
+        const k = getK();
+        const s = k.skins[state.skinIndex];
+        if (!s.owned) return;
+        k.equippedSkin = s.id;
+      });
+
+      $("#rosterLeft").addEventListener("click", () => {
+        $("#rosterScroll").scrollBy({ left: -260, behavior: "smooth" });
+      });
+      $("#rosterRight").addEventListener("click", () => {
+        $("#rosterScroll").scrollBy({ left: 260, behavior: "smooth" });
+      });
+
+      $$(".nav a").forEach((a) => {
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          setTab(a.dataset.tab, true);
+        });
+      });
+
+      function renderAll(animate) {
+        renderRoster();
+        setTheme();
+        renderHudHeader();
+        renderStage(animate);
+        renderHud();
+      }
+
+      renderAll(false);
+      setTab("details", false);
+    </script>
+  </body>
+</html>

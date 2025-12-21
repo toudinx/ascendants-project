@@ -125,11 +125,19 @@ export class GachaPageComponent implements OnInit {
   private rollSkin(): VelvetSkin {
     const roll = Math.random() * 100;
     if (roll < 2) {
-      return this.skinState.skins().find(s => s.id === 'ascendente-eterna')!;
+      return this.pickSkinByRarity('SSR');
     }
     if (roll < 10) {
-      return this.skinState.skins().find(s => s.id === 'carmesim')!;
+      return this.pickSkinByRarity('SR');
     }
-    return this.skinState.skins().find(s => s.id === 'default')!;
+    return this.pickSkinByRarity('R');
+  }
+
+  private pickSkinByRarity(rarity: VelvetSkin['rarity']): VelvetSkin {
+    const pool = this.skinState.skins().filter(skin => skin.rarity === rarity);
+    const fallback = this.skinState.skins();
+    const list = pool.length ? pool : fallback;
+    const index = Math.floor(Math.random() * Math.max(1, list.length));
+    return list[index];
   }
 }

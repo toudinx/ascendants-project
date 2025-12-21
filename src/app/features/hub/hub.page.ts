@@ -20,9 +20,9 @@ import { ProfileStateService } from "../../core/services/profile-state.service";
     AppTagComponent,
   ],
   template: `
-    <!-- VIEWPORT WRAPPER (SEM BG) -->
+    <!-- VIEWPORT WRAPPER (NO BG) -->
     <div class="min-h-[100svh] flex">
-      <!-- CONTEÚDO CENTRAL -->
+      <!-- CENTER CONTENT -->
       <div class="mx-auto w-full max-w-[1400px] px-4 py-8 flex flex-col">
         <!-- HEADER -->
         <div class="mb-6 flex items-center justify-between">
@@ -34,7 +34,7 @@ import { ProfileStateService } from "../../core/services/profile-state.service";
             class="rounded-full border border-white/10 bg-white/5
                    px-3 py-1 text-[10px] text-white/60"
           >
-            MINIMAL PREMIUM · DARK
+            MINIMAL PREMIUM - DARK
           </span>
         </div>
 
@@ -42,7 +42,7 @@ import { ProfileStateService } from "../../core/services/profile-state.service";
         <div class="grid flex-1 gap-6 md:grid-cols-[2fr,1fr]">
           <!-- LEFT COLUMN -->
           <div class="flex flex-col gap-6">
-            <!-- WAIFU LOBBY (ESTÉTICO) -->
+            <!-- FEATURED STAGE (STATIC) -->
             <div
               class="relative overflow-hidden rounded-[22px]
                      border border-white/10
@@ -63,29 +63,23 @@ import { ProfileStateService } from "../../core/services/profile-state.service";
                          bg-black/40 px-3 py-1
                          text-xs text-white/80"
                 >
-                  Active Kaelis · {{ profile.activeKaelis().name }}
+                  Active Kaelis - {{ profile.activeKaelis().name }}
                 </div>
               </div>
 
               <div class="mt-3 flex items-center justify-between">
                 <p class="text-sm text-[#A4A4B5]">
-                  {{ profile.activeKaelis().name }} · {{ profile.activeKaelis().routeType }} route
+                  {{ profile.activeKaelis().name }} - {{ profile.activeKaelis().routeType }} route
                   <br />
                   Equipped skin: {{ skinState.currentSkin().name }}
                 </p>
 
                 <div class="flex gap-2">
                   <app-button
-                    label="Manage Kaelis"
+                    label="Character Management"
                     variant="ghost"
                     size="sm"
-                    (click)="router.navigate(['/character-select'])"
-                  ></app-button>
-                  <app-button
-                    label="Adjust Loadout"
-                    variant="ghost"
-                    size="sm"
-                    (click)="router.navigate(['/loadout'])"
+                    (click)="router.navigate(['/character-management'])"
                   ></app-button>
                 </div>
               </div>
@@ -193,9 +187,9 @@ import { ProfileStateService } from "../../core/services/profile-state.service";
 
             <div class="grid grid-cols-2 gap-3">
               <app-button
-                label="Characters"
+                label="Kaelis"
                 variant="secondary"
-                (click)="router.navigate(['/character-select'])"
+                (click)="router.navigate(['/character-management'])"
               ></app-button>
 
               <app-button

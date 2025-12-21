@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { KAELIS_LIST } from '../../content/kaelis';
 import { WEAPON_LIST } from '../../content/equipment/weapons';
 import { SIGIL_LIST } from '../../content/equipment/sigils';
+import { DEFAULT_SKIN_BY_KAELIS, SKIN_LIST } from '../../content/equipment/skins';
 import { ProfilePersistedState, ProfileSettings, createDefaultProfileState } from '../models/profile.model';
 import { KaelisId } from '../models/kaelis.model';
 import { WeaponId } from '../models/weapon.model';
@@ -89,14 +90,26 @@ export class StorageService {
     };
 
     const rawCosmetics = raw.cosmetics;
-    const ownedSkinIds = Array.isArray(rawCosmetics?.ownedSkinIds)
-      ? Array.from(new Set(rawCosmetics.ownedSkinIds.concat('default')))
-      : [...defaults.cosmetics.ownedSkinIds];
+    const defaultSkinIds = Object.values(DEFAULT_SKIN_BY_KAELIS);
+    const rawOwned = Array.isArray(rawCosmetics?.ownedSkinIds) ? rawCosmetics?.ownedSkinIds : [];
+    const ownedSkinIds = Array.from(
+      new Set([
+        ...rawOwned.filter(id => this.isSkinId(id)),
+        ...defaultSkinIds,
+        ...defaults.cosmetics.ownedSkinIds
+      ])
+    );
 
     const activeSkinByKaelis = { ...defaults.cosmetics.activeSkinByKaelis };
     if (rawCosmetics?.activeSkinByKaelis && typeof rawCosmetics.activeSkinByKaelis === 'object') {
       Object.entries(rawCosmetics.activeSkinByKaelis).forEach(([key, value]) => {
-        if (this.isKaelisId(key) && typeof value === 'string' && value.trim().length > 0) {
+        if (!this.isKaelisId(key) || typeof value !== 'string') return;
+        if (value === 'default') {
+          activeSkinByKaelis[key as KaelisId] =
+            DEFAULT_SKIN_BY_KAELIS[key as KaelisId] ?? activeSkinByKaelis[key as KaelisId];
+          return;
+        }
+        if (this.isSkinForKaelis(value, key as KaelisId)) {
           activeSkinByKaelis[key as KaelisId] = value;
         }
       });
@@ -115,8 +128,8 @@ export class StorageService {
     const ringSlotsByKaelis = { ...defaults.equipment.ringSlotsByKaelis };
     if (rawEquipment?.ringSlotsByKaelis && typeof rawEquipment.ringSlotsByKaelis === 'object') {
       Object.entries(rawEquipment.ringSlotsByKaelis).forEach(([key, slots]) => {
-        if (!this.isKaelisId(key) || typeof slots !== 'object') return;
-        ringSlotsByKaelis[key as KaelisId] = this.normalizeRingSlots(slots as Record<string, unknown>);
+        if (!this.isKaelisId(key)) return;
+        ringSlotsByKaelis[key as KaelisId] = this.normalizeRingSlots(slots as Record<string, unknown> | unknown[]);
       });
     }
 
@@ -179,14 +192,31 @@ export class StorageService {
     return typeof value === 'string' && SIGIL_LIST.some(r => r.id === value);
   }
 
-  private normalizeRingSlots(input: Record<string, unknown>): Record<RingSlot, RingId | null> {
-    const slots = RING_SLOTS.reduce<Record<RingSlot, RingId | null>>((map, slot) => {
-      map[slot] = null;
-      return map;
-    }, {} as Record<RingSlot, RingId | null>);
+  private isSkinId(value: unknown): value is string {
+    return typeof value === 'string' && SKIN_LIST.some(skin => skin.id === value);
+  }
+
+  private isSkinForKaelis(id: string, kaelisId: KaelisId): boolean {
+    return SKIN_LIST.some(skin => skin.id === id && skin.kaelisId === kaelisId);
+  }
+
+  private normalizeRingSlots(input: Record<string, unknown> | unknown[]): Array<RingId | null> {
+    const slots = Array.from({ length: RING_SLOTS.length }, () => null as RingId | null);
+    if (Array.isArray(input)) {
+      input.slice(0, RING_SLOTS.length).forEach((value, index) => {
+        if (this.isRingId(value) || value === null) {
+          slots[index] = (value as RingId) ?? null;
+        }
+      });
+      return slots;
+    }
+    if (!input || typeof input !== 'object') {
+      return slots;
+    }
     Object.entries(input).forEach(([slotKey, value]) => {
-      if (RING_SLOTS.includes(slotKey as RingSlot) && (this.isRingId(value) || value === null)) {
-        slots[slotKey as RingSlot] = (value as RingId) ?? null;
+      const slotIndex = RING_SLOTS.indexOf(slotKey as RingSlot);
+      if (slotIndex >= 0 && (this.isRingId(value) || value === null)) {
+        slots[slotIndex] = (value as RingId) ?? null;
       }
     });
     return slots;

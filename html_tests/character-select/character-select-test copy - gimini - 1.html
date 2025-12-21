@@ -1,0 +1,1063 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KAEZAN: AWAKENING — Setup</title>
+    <style>
+      :root {
+        /* Paleta Premium Sci-Fi (Mais clara e legível) */
+        --bg: #0f0f18; /* Azul-acinzentado muito escuro, não preto puro */
+        --bg-grad-1: rgba(99, 102, 241, 0.12);
+        --bg-grad-2: rgba(168, 85, 247, 0.1);
+
+        --text: #f0f0f5;
+        --text-muted: #a0a0b0;
+
+        --primary: #6366f1; /* Indigo vibrante */
+        --primary-dim: rgba(99, 102, 241, 0.3);
+        --secondary: #d946ef; /* Fuchsia */
+
+        --panel: rgba(26, 26, 38, 0.85); /* Mais opacidade para contraste */
+        --panel-border: rgba(255, 255, 255, 0.15);
+        --panel-highlight: rgba(255, 255, 255, 0.08);
+
+        --good: #34d399;
+        --warn: #fbbf24;
+
+        --r: 12px; /* Raio de borda mais técnico */
+        --shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        --ease: cubic-bezier(0.25, 1, 0.5, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+        background: var(--bg);
+        background-image:
+          radial-gradient(circle at 10% 20%, var(--bg-grad-1), transparent 40%),
+          radial-gradient(circle at 90% 80%, var(--bg-grad-2), transparent 40%);
+        color: var(--text);
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      /* Layout Geral */
+      #app {
+        display: grid;
+        grid-template-rows: auto auto 1fr; /* Topbar, Roster, Main */
+        height: 100%;
+      }
+
+      /* Topbar */
+      .topbar {
+        padding: 15px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 14px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        font-weight: 800;
+        color: var(--primary);
+      }
+      .brand span {
+        font-size: 10px;
+        color: var(--text-muted);
+        letter-spacing: 0.3em;
+      }
+
+      /* Roster (Barra de Personagens) */
+      .roster-strip {
+        width: 100%;
+        padding: 10px 0;
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .roster-nav-btn {
+        width: 40px;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        z-index: 10;
+        font-size: 20px;
+        color: var(--primary);
+      }
+      #rosterLeft {
+        left: 0;
+      }
+      #rosterRight {
+        right: 0;
+      }
+
+      .roster-viewport {
+        width: 100%;
+        max-width: 1200px;
+        overflow: hidden;
+        display: flex;
+        gap: 12px;
+        padding: 0 50px; /* espaço para as setas */
+        scroll-behavior: smooth;
+      }
+      .char-thumb {
+        width: 64px;
+        height: 64px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        background: #2a2a35;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s var(--ease);
+        position: relative;
+        overflow: hidden;
+      }
+      .char-thumb.active {
+        border-color: var(--primary);
+        box-shadow: 0 0 15px var(--primary-dim);
+        transform: scale(1.05);
+      }
+      .char-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.7;
+      }
+      .char-thumb.active img {
+        opacity: 1;
+      }
+
+      /* Área Principal (Menu + Stage + Info) */
+      .main-stage {
+        padding: 20px 30px;
+        display: grid;
+        grid-template-columns: 220px 1fr 400px; /* Menu Esq, Centro Controlado, Painel Dir */
+        gap: 20px;
+        min-height: 0; /* Fix overflow issues */
+      }
+
+      /* Menu Lateral Esquerdo */
+      .side-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .nav-item {
+        padding: 14px 18px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+      }
+      .nav-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+      }
+      .nav-item.active {
+        background: linear-gradient(90deg, var(--primary-dim), transparent);
+        color: white;
+        border-left-color: var(--primary);
+      }
+
+      /* Centro (Visual) */
+      .center-preview {
+        position: relative;
+        border-radius: 20px;
+        background: radial-gradient(
+          circle at 50% 60%,
+          rgba(99, 102, 241, 0.08),
+          transparent 70%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+      }
+      /* Grid decorativo no fundo */
+      .grid-bg {
+        position: absolute;
+        inset: 0;
+        background-size: 40px 40px;
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          );
+        mask-image: radial-gradient(circle, black 40%, transparent 80%);
+        pointer-events: none;
+      }
+      .char-image {
+        height: 90%;
+        max-width: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+        transition: opacity 0.3s;
+        z-index: 2;
+      }
+
+      /* Painel Direito (Info) */
+      .info-panel {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        overflow-y: auto;
+        backdrop-filter: blur(10px);
+      }
+
+      /* Componentes de UI Genéricos */
+      h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        margin: 0;
+        font-size: 11px;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 8px;
+        font-weight: 700;
+      }
+      .sub-text {
+        color: var(--text-muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .full-width {
+        width: 100%;
+      }
+
+      /* Barras e Stats */
+      .xp-container {
+        width: 100%;
+        margin-top: 5px;
+      }
+      .xp-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+      .xp-track {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .xp-fill {
+        height: 100%;
+        background: var(--good);
+        width: 0%;
+        box-shadow: 0 0 10px var(--good);
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .stat-box {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .stat-label {
+        font-size: 10px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .stat-val {
+        font-size: 16px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .affinity-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: linear-gradient(
+          90deg,
+          rgba(217, 70, 239, 0.1),
+          transparent
+        );
+        border-radius: 8px;
+        border-left: 3px solid var(--secondary);
+      }
+      .heart-icon {
+        color: var(--secondary);
+        font-size: 18px;
+      }
+
+      /* Weapon Tab Specifics */
+      .weapon-preview-box {
+        width: 100%;
+        height: 200px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--panel-border);
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.2);
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        margin-bottom: 20px;
+      }
+      .btn-action {
+        width: 100%;
+        padding: 16px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        transition: transform 0.1s;
+        margin-top: auto; /* Push to bottom */
+      }
+      .btn-action:hover {
+        filter: brightness(1.1);
+      }
+      .btn-action:active {
+        transform: scale(0.98);
+      }
+      .btn-action:disabled {
+        background: #333;
+        color: #666;
+        cursor: not-allowed;
+      }
+
+      /* Sigils Tab Specifics */
+      #radarCanvas {
+        width: 300px;
+        height: 300px;
+        align-self: center;
+      }
+      .sigil-set-bonus {
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(52, 211, 153, 0.1);
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        border-radius: 8px;
+      }
+      .sigil-set-bonus h4 {
+        margin: 0 0 5px 0;
+        color: var(--good);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      /* Skins Tab Specifics */
+      .skin-overlay-nav {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        z-index: 10;
+        pointer-events: none;
+      }
+      .skin-arrow {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        pointer-events: auto;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.2s;
+      }
+      .skin-arrow:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+
+      .skin-info-dock {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        background: rgba(15, 15, 24, 0.95);
+        border: 1px solid var(--panel-border);
+        padding: 20px;
+        border-radius: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        z-index: 10;
+      }
+
+      /* Modal Armory */
+      dialog {
+        background: var(--bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        color: var(--text);
+        padding: 0;
+        width: 80vw;
+        max-width: 900px;
+        height: 70vh;
+        box-shadow: 0 50px 100px black;
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+      }
+      .armory-layout {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        height: 100%;
+      }
+      .armory-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--panel-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .armory-grid {
+        padding: 20px;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 15px;
+      }
+      .armory-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid transparent;
+        border-radius: 12px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .armory-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+      }
+      .armory-card.equipped {
+        border-color: var(--good);
+        background: rgba(52, 211, 153, 0.05);
+      }
+      .close-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 24px;
+        cursor: pointer;
+      }
+
+      /* Utility classes for layout shifts */
+      .skins-layout .center-preview {
+        grid-column: 2 / -1; /* Expand center to cover right panel on Skins tab */
+      }
+      .skins-layout .info-panel {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="topbar">
+        <div class="brand">
+          <h1>Kaezan: Awakening</h1>
+          <span>Setup Sequence</span>
+        </div>
+      </div>
+
+      <div class="roster-strip">
+        <div class="roster-nav-btn" id="rosterLeft">‹</div>
+        <div class="roster-viewport" id="rosterScroll"></div>
+        <div class="roster-nav-btn" id="rosterRight">›</div>
+      </div>
+
+      <div class="main-stage" id="mainStage">
+        <nav class="side-nav">
+          <div class="nav-item" data-tab="details">Details</div>
+          <div class="nav-item" data-tab="weapon">Weapon</div>
+          <div class="nav-item" data-tab="sigils">Sigils</div>
+          <div class="nav-item" data-tab="skins">Skins</div>
+        </nav>
+
+        <div class="center-preview" id="centerPreview">
+          <div class="grid-bg"></div>
+        </div>
+
+        <aside class="info-panel" id="infoPanel"></aside>
+      </div>
+    </div>
+
+    <dialog id="armoryModal">
+      <div class="armory-layout">
+        <div class="armory-header">
+          <h2>Armory</h2>
+          <button class="close-btn" id="closeArmory">×</button>
+        </div>
+        <div class="armory-grid" id="armoryGrid"></div>
+      </div>
+    </dialog>
+
+    <script>
+      // --- DATA ---
+      const kaelisData = [
+        {
+          id: "k1",
+          name: "Kaelis",
+          role: "Striker",
+          tier: "S-Rank",
+          lvl: 70,
+          xp: 8400,
+          maxXp: 12000,
+          affinity: 8,
+          stats: { atk: 2402, def: 894, spd: 134, crit: "22%" },
+          equippedWeapon: "w1",
+          equippedSigils: "s1",
+          equippedSkin: "sk1",
+          skins: [
+            {
+              id: "sk1",
+              name: "Default: Void Drifter",
+              owned: true,
+              desc: "Traje padrão de operações.",
+            },
+            {
+              id: "sk2",
+              name: "Neon Overdrive",
+              owned: true,
+              desc: "Edição limitada Cyber-City.",
+            },
+            {
+              id: "sk3",
+              name: "Abyssal Form",
+              owned: false,
+              desc: "Requer Completionist Achievement.",
+            },
+          ],
+        },
+        {
+          id: "k2",
+          name: "Vesper",
+          role: "Controller",
+          tier: "A-Rank",
+          lvl: 60,
+          xp: 2000,
+          maxXp: 9000,
+          affinity: 4,
+          stats: { atk: 1850, def: 1100, spd: 112, crit: "15%" },
+          equippedWeapon: "w3",
+          equippedSigils: "s2",
+          equippedSkin: "sk2_1",
+          skins: [
+            {
+              id: "sk2_1",
+              name: "Default: Operative",
+              owned: true,
+              desc: "Traje tático padrão.",
+            },
+          ],
+        },
+        {
+          id: "k3",
+          name: "Orion",
+          role: "Tank",
+          tier: "S-Rank",
+          lvl: 45,
+          xp: 1500,
+          maxXp: 5000,
+          affinity: 2,
+          stats: { atk: 1200, def: 2400, spd: 98, crit: "5%" },
+          equippedWeapon: "w4",
+          equippedSigils: "s3",
+          equippedSkin: "sk3_1",
+          skins: [
+            {
+              id: "sk3_1",
+              name: "Default: Heavy",
+              owned: true,
+              desc: "Armadura pesada de contenção.",
+            },
+          ],
+        },
+      ];
+
+      const weapons = [
+        {
+          id: "w1",
+          name: "Starshatter",
+          stars: 5,
+          atk: 540,
+          sub: "Crit DMG",
+          desc: "Forged in a dying star.",
+        },
+        {
+          id: "w2",
+          name: "Void Edge",
+          stars: 4,
+          atk: 420,
+          sub: "ATK%",
+          desc: "Standard issue blade.",
+        },
+        {
+          id: "w3",
+          name: "Ether Control",
+          stars: 4,
+          atk: 380,
+          sub: "Effect Hit",
+          desc: "Amplifies resonance.",
+        },
+        {
+          id: "w4",
+          name: "Titan Wall",
+          stars: 5,
+          atk: 300,
+          sub: "DEF%",
+          desc: "Unbreakable barrier projector.",
+        },
+      ];
+
+      const sigils = [
+        {
+          id: "s1",
+          name: "Gladiator",
+          stats: { main: "ATK +12%", sub1: "SPD +4", sub2: "CRIT +3%" },
+          set2: "ATK +15%",
+          set4: "When attacking, ignore 10% DEF.",
+        },
+        {
+          id: "s2",
+          name: "Scholar",
+          stats: { main: "HP +10%", sub1: "DEF +8%", sub2: "RES +5%" },
+          set2: "HP +12%",
+          set4: "Heals allies for 5% HP on turn start.",
+        },
+        {
+          id: "s3",
+          name: "Fortress",
+          stats: { main: "DEF +20%", sub1: "HP +500", sub2: "RES +10%" },
+          set2: "DEF +15%",
+          set4: "Creates a shield equal to 20% DEF.",
+        },
+      ];
+
+      // --- STATE ---
+      let state = {
+        charIndex: 0,
+        tab: "details",
+        skinIndex: 0,
+      };
+
+      const $ = (s) => document.querySelector(s);
+      const $$ = (s) => document.querySelectorAll(s);
+
+      // --- HELPERS ---
+      function getChar() {
+        return kaelisData[state.charIndex];
+      }
+      function getWeapon(id) {
+        return weapons.find((w) => w.id === id);
+      }
+      function getSigil(id) {
+        return sigils.find((s) => s.id === id);
+      }
+
+      // --- RENDERS ---
+
+      function init() {
+        renderRoster();
+        setupEvents();
+        renderMain();
+      }
+
+      function renderRoster() {
+        const list = $("#rosterScroll");
+        list.innerHTML = "";
+        kaelisData.forEach((k, idx) => {
+          const el = document.createElement("div");
+          el.className = `char-thumb ${idx === state.charIndex ? "active" : ""}`;
+          // Placeholder image logic based on role color
+          const hue = k.role === "Striker" ? 250 : k.role === "Tank" ? 40 : 290;
+          el.innerHTML = `<div style="width:100%;height:100%;background:hsl(${hue}, 50%, 20%);display:grid;place-items:center;font-size:10px;font-weight:bold;color:#fff">${k.name[0]}</div>`;
+          el.onclick = () => {
+            state.charIndex = idx;
+            state.skinIndex = 0; // Reset skin view on swap
+            renderRoster();
+            renderMain();
+          };
+          list.appendChild(el);
+        });
+      }
+
+      function renderMain() {
+        const k = getChar();
+        const mainStage = $("#mainStage");
+
+        // Handle Layout Shifts (Skins uses distinct layout)
+        if (state.tab === "skins") {
+          mainStage.classList.add("skins-layout");
+        } else {
+          mainStage.classList.remove("skins-layout");
+        }
+
+        // 1. Update Menu Active State
+        $$(".nav-item").forEach((el) => {
+          el.classList.toggle("active", el.dataset.tab === state.tab);
+        });
+
+        // 2. Clear Areas
+        const center = $("#centerPreview");
+        const panel = $("#infoPanel");
+        center.innerHTML = '<div class="grid-bg"></div>'; // Keep bg
+        panel.innerHTML = "";
+
+        // 3. Render Specific Tab Content
+        if (state.tab === "details") renderDetails(k, center, panel);
+        else if (state.tab === "weapon") renderWeapon(k, center, panel);
+        else if (state.tab === "sigils") renderSigils(k, center, panel);
+        else if (state.tab === "skins") renderSkins(k, center, panel);
+      }
+
+      // --- TAB LOGIC ---
+
+      function renderDetails(k, center, panel) {
+        // Center: Character Pose (CSS Shapes or Image)
+        center.innerHTML += `
+           <div class="pose" style="width:150px; height:300px; background:linear-gradient(to top, var(--primary), transparent); opacity:0.8; border-radius:100px;"></div>
+        `;
+
+        // Right: Details Panel
+        const w = getWeapon(k.equippedWeapon);
+        const s = getSigil(k.equippedSigils);
+        const xpPerc = (k.xp / k.maxXp) * 100;
+
+        panel.innerHTML = `
+          <div class="header">
+            <h2>${k.name}</h2>
+            <div class="sub-text" style="color:var(--primary)">${k.role} // ${k.tier}</div>
+          </div>
+
+          <div class="xp-container">
+            <div class="xp-meta">
+              <span>LVL ${k.lvl}</span>
+              <span>${k.xp} / ${k.maxXp} XP</span>
+            </div>
+            <div class="xp-track"><div class="xp-fill" style="width: ${xpPerc}%"></div></div>
+          </div>
+
+          <div class="affinity-box">
+             <div class="heart-icon">♥</div>
+             <div>
+               <div style="font-size:10px; font-weight:700; opacity:0.7">AFFINITY</div>
+               <div style="font-size:16px; font-weight:800">LEVEL ${k.affinity}</div>
+             </div>
+          </div>
+
+          <h3>Attributes</h3>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="stat-label">ATK</div><div class="stat-val">${k.stats.atk}</div></div>
+            <div class="stat-box"><div class="stat-label">DEF</div><div class="stat-val">${k.stats.def}</div></div>
+            <div class="stat-box"><div class="stat-label">SPD</div><div class="stat-val">${k.stats.spd}</div></div>
+            <div class="stat-box"><div class="stat-label">CRIT</div><div class="stat-val">${k.stats.crit}</div></div>
+          </div>
+
+          <h3>Loadout</h3>
+          <div class="stat-box row">
+            <span class="stat-label">WEAPON</span>
+            <span style="font-weight:700; font-size:12px">${w.name}</span>
+          </div>
+          <div class="stat-box row">
+            <span class="stat-label">SIGILS</span>
+            <span style="font-weight:700; font-size:12px">${s.name}</span>
+          </div>
+        `;
+      }
+
+      function renderWeapon(k, center, panel) {
+        const w = getWeapon(k.equippedWeapon);
+
+        // Exclusive Section: Center is Weapon Preview
+        center.innerHTML += `
+           <div style="font-size:100px; color:rgba(255,255,255,0.1);">⚔</div>
+        `;
+
+        // Right Panel
+        let starsStr = "★".repeat(w.stars);
+        panel.innerHTML = `
+          <div class="weapon-preview-box">WEAPON PREVIEW</div>
+          
+          <div>
+            <h2 style="color:var(--warn)">${w.name}</h2>
+            <div class="sub-text" style="color:var(--warn)">${starsStr}</div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-box"><div class="stat-label">BASE ATK</div><div class="stat-val">${w.atk}</div></div>
+            <div class="stat-box"><div class="stat-label">SUBSTAT</div><div class="stat-val">${w.sub}</div></div>
+          </div>
+
+          <div>
+            <h3>Lore / Effect</h3>
+            <p class="sub-text">${w.desc}</p>
+          </div>
+
+          <button id="btnArmory" class="btn-action">CHANGE WEAPON</button>
+        `;
+
+        $("#btnArmory").addEventListener("click", openArmory);
+      }
+
+      function renderSigils(k, center, panel) {
+        const s = getSigil(k.equippedSigils);
+
+        // Center: Canvas
+        const canvas = document.createElement("canvas");
+        canvas.id = "radarCanvas";
+        canvas.width = 300;
+        canvas.height = 300;
+        center.appendChild(canvas);
+        drawPentagon(canvas);
+
+        // Right Panel: Stats First, then Set Bonus
+        panel.innerHTML = `
+          <div class="header">
+            <h2>${s.name}</h2>
+            <div class="sub-text">Sigil Set Planar</div>
+          </div>
+
+          <h3>Main Stats</h3>
+          <div class="stat-box">
+             <div class="stat-val" style="color:var(--good)">${s.stats.main}</div>
+          </div>
+
+          <h3>Sub Stats</h3>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="stat-val" style="font-size:13px">${s.stats.sub1}</div></div>
+            <div class="stat-box"><div class="stat-val" style="font-size:13px">${s.stats.sub2}</div></div>
+          </div>
+
+          <div class="sigil-set-bonus">
+            <h4>Set Bonus (2pc)</h4>
+            <div class="sub-text">${s.set2}</div>
+            <div style="height:10px"></div>
+            <h4>Set Bonus (4pc)</h4>
+            <div class="sub-text">${s.set4}</div>
+          </div>
+        `;
+      }
+
+      function renderSkins(k, center, panel) {
+        // Layout: Center expands, Right hidden.
+        // We handle UI entirely in Center.
+
+        const skin = k.skins[state.skinIndex];
+        const isOwned = skin.owned;
+        const isEquipped = k.equippedSkin === skin.id;
+
+        // Arrows Overlay
+        const overlay = document.createElement("div");
+        overlay.className = "skin-overlay-nav";
+        overlay.innerHTML = `
+          <div class="skin-arrow" id="skinPrev">‹</div>
+          <div class="skin-arrow" id="skinNext">›</div>
+        `;
+        center.appendChild(overlay);
+
+        // Character Visual
+        const charVis = document.createElement("div");
+        charVis.style.cssText =
+          "height:80%; width:200px; background:linear-gradient(to top, #d946ef, transparent); border-radius:100px; opacity:0.8";
+        center.appendChild(charVis);
+
+        // Bottom Info Dock
+        const dock = document.createElement("div");
+        dock.className = "skin-info-dock";
+
+        let btnText = isEquipped ? "EQUIPPED" : isOwned ? "EQUIP" : "LOCKED";
+        let btnDisabled = isEquipped || !isOwned ? "disabled" : "";
+
+        dock.innerHTML = `
+          <div>
+            <h2 style="font-size:20px">${skin.name}</h2>
+            <div class="sub-text">${skin.desc}</div>
+          </div>
+          <button class="btn-action" style="width:auto; padding: 12px 30px;" id="btnEquipSkin" ${btnDisabled}>${btnText}</button>
+        `;
+        center.appendChild(dock);
+
+        // Listeners
+        $("#skinPrev").onclick = () => {
+          state.skinIndex =
+            (state.skinIndex - 1 + k.skins.length) % k.skins.length;
+          renderMain();
+        };
+        $("#skinNext").onclick = () => {
+          state.skinIndex = (state.skinIndex + 1) % k.skins.length;
+          renderMain();
+        };
+        $("#btnEquipSkin").onclick = () => {
+          if (!isOwned) return;
+          k.equippedSkin = skin.id;
+          renderMain();
+        };
+      }
+
+      // --- CANVAS DRAWING ---
+      function drawPentagon(canvas) {
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width;
+        const h = canvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        const r = 100;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Draw Web
+        ctx.strokeStyle = "rgba(255,255,255,0.1)";
+        ctx.lineWidth = 1;
+        for (let i = 1; i <= 4; i++) {
+          ctx.beginPath();
+          for (let j = 0; j < 5; j++) {
+            const angle = (j * 2 * Math.PI) / 5 - Math.PI / 2;
+            const x = cx + Math.cos(angle) * ((r * i) / 4);
+            const y = cy + Math.sin(angle) * ((r * i) / 4);
+            j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+
+        // Draw Data Shape (Randomized for effect based on Char Role)
+        const k = getChar();
+        const vals =
+          k.role === "Striker"
+            ? [1, 0.6, 1, 0.5, 0.8]
+            : [0.6, 1, 0.5, 0.9, 0.7];
+
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(99, 102, 241, 0.5)";
+        ctx.strokeStyle = "#6366f1";
+        ctx.lineWidth = 2;
+
+        for (let j = 0; j < 5; j++) {
+          const angle = (j * 2 * Math.PI) / 5 - Math.PI / 2;
+          const val = vals[j];
+          const x = cx + Math.cos(angle) * (r * val);
+          const y = cy + Math.sin(angle) * (r * val);
+          j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // --- EVENTS ---
+      function setupEvents() {
+        $$(".nav-item").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            state.tab = btn.dataset.tab;
+            renderMain();
+          });
+        });
+
+        $("#rosterLeft").onclick = () =>
+          $("#rosterScroll").scrollBy({ left: -200, behavior: "smooth" });
+        $("#rosterRight").onclick = () =>
+          $("#rosterScroll").scrollBy({ left: 200, behavior: "smooth" });
+        $("#closeArmory").onclick = closeArmory;
+      }
+
+      function openArmory() {
+        const modal = $("#armoryModal");
+        const grid = $("#armoryGrid");
+        const currentK = getChar();
+
+        grid.innerHTML = "";
+        weapons.forEach((w) => {
+          const isEquipped = currentK.equippedWeapon === w.id;
+          const card = document.createElement("div");
+          card.className = `armory-card ${isEquipped ? "equipped" : ""}`;
+          card.innerHTML = `
+            <div style="font-size:30px; margin-bottom:10px; color:${isEquipped ? "var(--good)" : "#fff"}">⚔</div>
+            <div style="font-size:12px; font-weight:700; margin-bottom:4px">${w.name}</div>
+            <div style="font-size:10px; color:var(--text-muted)">${"★".repeat(w.stars)}</div>
+            ${isEquipped ? '<div style="font-size:10px; color:var(--good); margin-top:5px">EQUIPPED</div>' : ""}
+          `;
+          card.onclick = () => {
+            currentK.equippedWeapon = w.id;
+            renderMain(); // Refresh UI behind modal
+            closeArmory(); // Close immediately
+          };
+          grid.appendChild(card);
+        });
+
+        modal.showModal();
+      }
+
+      function closeArmory() {
+        $("#armoryModal").close();
+      }
+
+      // Start
+      init();
+    </script>
+  </body>
+</html>

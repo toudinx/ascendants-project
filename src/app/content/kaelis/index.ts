@@ -38,9 +38,11 @@ function mapKaelisDef(def: KaelisDef): KaelisDefinition {
     routeType: def.routeType,
     portrait: def.portrait,
     sprite: def.sprite,
+    imageUrl: def.imageUrl,
     role: def.role,
     baseStats,
-    kit
+    kit,
+    profile: { ...def.profile }
   };
 }
 
@@ -53,6 +55,7 @@ export function mapDefinitionToContent(def: KaelisDefinition): KaelisDef {
     routeType: def.routeType,
     portrait: def.portrait,
     sprite: def.sprite,
+    imageUrl: def.imageUrl ?? def.portrait,
     role: def.role,
     base: {
       hp: def.baseStats.hpBase,
@@ -70,7 +73,13 @@ export function mapDefinitionToContent(def: KaelisDefinition): KaelisDef {
       penetration: def.baseStats.penetrationBase,
       energyRegenPercent: def.baseStats.energyRegenBase
     },
-    kit: { ...def.kit }
+    kit: { ...def.kit },
+    profile: def.profile ?? {
+      level: 1,
+      xpCurrent: 0,
+      xpMax: 100,
+      affinity: 1
+    }
   };
 }
 

@@ -2,8 +2,9 @@ import { SigilDef } from '../sigil.types';
 
 export const AGGRESSION_CREST_V_DEF: SigilDef = {
   id: 'agressao-slot5',
-  name: 'Agressão Crest V',
+  name: 'Aggression Crest V',
   description: 'Final emblem of the assault doctrine.',
+  imageUrl: 'assets/battle/fx/shadow_ground.png',
   level: 95,
   slot: 'slot5',
   setKey: 'agressao',
@@ -15,3 +16,4 @@ export const AGGRESSION_CREST_V_DEF: SigilDef = {
     { type: 'damage_percent', value: 6 }
   ]
 };
+

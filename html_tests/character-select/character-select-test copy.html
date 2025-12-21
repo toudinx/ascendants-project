@@ -1,0 +1,2172 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KAEZAN: AWAKENING — Kaelis</title>
+    <style>
+      :root {
+        --bg0: #050511;
+        --bg1: #0b0b1b;
+        --panel: rgba(18, 18, 34, 0.62);
+        --panel2: rgba(14, 14, 28, 0.58);
+        --stroke: rgba(255, 255, 255, 0.09);
+        --stroke2: rgba(255, 255, 255, 0.12);
+        --text: rgba(245, 245, 250, 0.96);
+        --muted: rgba(164, 164, 181, 0.88);
+        --muted2: rgba(164, 164, 181, 0.68);
+        --primary: #8a7cff;
+        --secondary: #e28fe8;
+        --good: #2de3c8;
+        --warn: #ffd344;
+        --danger: #ff5a78;
+        --shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+        --radius: 18px;
+        --radius-lg: 26px;
+        --blur: blur(18px);
+        --font:
+          ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--font);
+        color: var(--text);
+        background:
+          radial-gradient(
+            1200px 900px at 30% 30%,
+            rgba(138, 124, 255, 0.22),
+            transparent 55%
+          ),
+          radial-gradient(
+            900px 700px at 75% 30%,
+            rgba(226, 143, 232, 0.16),
+            transparent 55%
+          ),
+          radial-gradient(
+            1000px 800px at 50% 85%,
+            rgba(45, 227, 200, 0.08),
+            transparent 60%
+          ),
+          linear-gradient(180deg, var(--bg1), var(--bg0));
+        overflow: hidden;
+      }
+
+      .bg-video {
+        position: fixed;
+        inset: 0;
+        z-index: -3;
+        opacity: 0.42;
+        pointer-events: none;
+        filter: saturate(0.95) contrast(1.05);
+      }
+      .bg-video video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .vignette {
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            900px 600px at 50% 40%,
+            transparent 30%,
+            rgba(0, 0, 0, 0.55) 78%
+          ),
+          linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.5));
+      }
+
+      .grain {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        opacity: 0.18;
+        mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+      }
+
+      .app {
+        height: 100%;
+        display: grid;
+        grid-template-rows: 64px 1fr;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .brand .game {
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(245, 245, 250, 0.7);
+      }
+      .brand .section {
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .icon-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+        border: 1px solid var(--stroke);
+        background: rgba(10, 10, 20, 0.32);
+        backdrop-filter: var(--blur);
+        color: rgba(245, 245, 250, 0.88);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .icon-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.35);
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: 86px 1fr 360px;
+        gap: 14px;
+        padding: 0 14px 14px 14px;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .nav {
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-lg);
+        background: rgba(10, 10, 20, 0.28);
+        backdrop-filter: var(--blur);
+        box-shadow: var(--shadow);
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 0;
+      }
+
+      .nav .tab {
+        height: 54px;
+        border-radius: 16px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: rgba(245, 245, 250, 0.86);
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        gap: 10px;
+        align-items: center;
+        padding: 0 12px;
+        cursor: pointer;
+        transition:
+          background 0.18s ease,
+          border-color 0.18s ease,
+          transform 0.15s ease;
+        font-weight: 750;
+        letter-spacing: 0.01em;
+      }
+      .nav .tab:hover {
+        background: rgba(255, 255, 255, 0.04);
+        transform: translateY(-1px);
+      }
+      .nav .tab.active {
+        background: linear-gradient(
+          90deg,
+          rgba(138, 124, 255, 0.18),
+          rgba(226, 143, 232, 0.08)
+        );
+        border-color: rgba(138, 124, 255, 0.35);
+      }
+      .nav .glyph {
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        opacity: 0.92;
+      }
+
+      .stage {
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-lg);
+        background: rgba(10, 10, 20, 0.22);
+        backdrop-filter: var(--blur);
+        box-shadow: var(--shadow);
+        padding: 12px;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: 86px 1fr;
+        gap: 12px;
+        position: relative;
+      }
+
+      .rosterbar {
+        border-radius: 22px;
+        background: rgba(10, 10, 20, 0.24);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        backdrop-filter: var(--blur);
+        display: grid;
+        grid-template-columns: 64px 1fr 64px;
+        align-items: center;
+        padding: 10px 12px;
+        gap: 12px;
+      }
+
+      .roster-arrow {
+        width: 48px;
+        height: 48px;
+        border-radius: 18px;
+        border: 1px solid var(--stroke);
+        background: rgba(0, 0, 0, 0.18);
+        color: rgba(245, 245, 250, 0.9);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 22px;
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .roster-arrow:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.35);
+      }
+
+      .roster-track {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        overflow: hidden;
+        min-width: 0;
+      }
+
+      .kaelis-chip {
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        background:
+          radial-gradient(
+            120px 80px at 30% 30%,
+            rgba(138, 124, 255, 0.35),
+            transparent 60%
+          ),
+          rgba(255, 255, 255, 0.03);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        position: relative;
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease,
+          box-shadow 0.15s ease;
+        user-select: none;
+      }
+      .kaelis-chip:hover {
+        transform: translateY(-2px);
+        border-color: rgba(226, 143, 232, 0.35);
+      }
+      .kaelis-chip.active {
+        border-color: rgba(138, 124, 255, 0.6);
+        box-shadow: 0 0 0 4px rgba(138, 124, 255, 0.15);
+      }
+      .kaelis-chip span {
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        color: rgba(245, 245, 250, 0.92);
+      }
+
+      .stage-body {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 1fr;
+        place-items: center;
+        position: relative;
+      }
+
+      .center-view {
+        width: min(980px, 92%);
+        height: min(520px, 74vh);
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0.01)
+        );
+        box-shadow: 0 28px 78px rgba(0, 0, 0, 0.55);
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+      }
+
+      .center-view .art-glow {
+        position: absolute;
+        inset: -20%;
+        background:
+          radial-gradient(
+            closest-side at 55% 45%,
+            rgba(138, 124, 255, 0.38),
+            transparent 55%
+          ),
+          radial-gradient(
+            closest-side at 35% 60%,
+            rgba(226, 143, 232, 0.26),
+            transparent 55%
+          ),
+          radial-gradient(
+            closest-side at 60% 85%,
+            rgba(45, 227, 200, 0.12),
+            transparent 55%
+          );
+        filter: blur(22px);
+        opacity: 0.85;
+        pointer-events: none;
+      }
+
+      .nameplate {
+        position: absolute;
+        left: 18px;
+        bottom: 14px;
+        padding: 12px 14px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 10, 20, 0.35);
+        backdrop-filter: var(--blur);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .nameplate .name {
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.01em;
+      }
+      .nameplate .sub {
+        font-size: 12px;
+        color: rgba(245, 245, 250, 0.72);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .badge-row {
+        position: absolute;
+        right: 18px;
+        bottom: 16px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .pill {
+        height: 28px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(10, 10, 20, 0.22);
+        backdrop-filter: var(--blur);
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(245, 245, 250, 0.78);
+      }
+
+      .sigil-canvas {
+        width: min(760px, 92%);
+        height: min(520px, 74vh);
+        display: grid;
+        place-items: center;
+      }
+
+      .sigil-panel {
+        width: min(760px, 92%);
+        height: min(520px, 74vh);
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        background: linear-gradient(
+          180deg,
+          rgba(138, 124, 255, 0.1),
+          rgba(10, 10, 20, 0.1)
+        );
+        backdrop-filter: var(--blur);
+        box-shadow: 0 28px 78px rgba(0, 0, 0, 0.55);
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+      }
+
+      .sigil-panel svg {
+        width: 92%;
+        height: 92%;
+      }
+
+      .sigil-node {
+        cursor: pointer;
+      }
+
+      .sigil-node rect {
+        fill: rgba(10, 10, 20, 0.35);
+        stroke: rgba(255, 255, 255, 0.13);
+        stroke-width: 1;
+      }
+
+      .sigil-node.active rect {
+        stroke: rgba(138, 124, 255, 0.65);
+        filter: drop-shadow(0 0 10px rgba(138, 124, 255, 0.35));
+      }
+
+      .side {
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-lg);
+        background: rgba(10, 10, 20, 0.26);
+        backdrop-filter: var(--blur);
+        box-shadow: var(--shadow);
+        padding: 12px;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: 1fr;
+        gap: 12px;
+        overflow: hidden;
+      }
+
+      .panel {
+        min-height: 0;
+        overflow: auto;
+        padding-right: 6px;
+      }
+
+      .panel::-webkit-scrollbar {
+        width: 10px;
+      }
+      .panel::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        border: 2px solid rgba(0, 0, 0, 0);
+        background-clip: padding-box;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .section-title h3 {
+        margin: 0;
+        font-size: 13px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(245, 245, 250, 0.72);
+      }
+
+      .hero-meta {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 10, 20, 0.22);
+        margin-bottom: 12px;
+      }
+
+      .hero-meta .row1 {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .hero-meta .name {
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: 0.01em;
+      }
+      .hero-meta .sub {
+        font-size: 12px;
+        color: rgba(245, 245, 250, 0.7);
+        letter-spacing: 0.06em;
+      }
+
+      .level-chip {
+        padding: 10px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.18);
+        min-width: 160px;
+      }
+      .level-chip .top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 12px;
+        color: rgba(245, 245, 250, 0.78);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 850;
+      }
+      .xpbar {
+        margin-top: 10px;
+        width: 100%;
+        height: 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        overflow: hidden;
+      }
+      .xpbar > div {
+        height: 100%;
+        width: 40%;
+        border-radius: 999px;
+        background: linear-gradient(
+          90deg,
+          rgba(138, 124, 255, 0.85),
+          rgba(226, 143, 232, 0.75)
+        );
+      }
+      .xptext {
+        margin-top: 8px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 11px;
+        color: rgba(245, 245, 250, 0.68);
+        letter-spacing: 0.06em;
+      }
+
+      .statlist {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 10, 20, 0.2);
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+      .statrow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      .statrow:last-child {
+        border-bottom: none;
+      }
+      .statrow .k {
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(245, 245, 250, 0.66);
+        font-weight: 850;
+      }
+      .statrow .v {
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .linebtn {
+        width: 100%;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 10, 20, 0.22);
+        padding: 12px 12px;
+        display: grid;
+        grid-template-columns: 34px 1fr 22px;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease,
+          background 0.15s ease;
+        margin-bottom: 10px;
+      }
+      .linebtn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.35);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .linebtn .ico {
+        width: 34px;
+        height: 34px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.03);
+        display: grid;
+        place-items: center;
+      }
+      .linebtn .main {
+        display: grid;
+        gap: 2px;
+      }
+      .linebtn .main .t {
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-size: 12px;
+      }
+      .linebtn .main .d {
+        font-size: 12px;
+        color: rgba(245, 245, 250, 0.72);
+      }
+      .linebtn .go {
+        opacity: 0.7;
+        font-weight: 900;
+      }
+
+      .weapon-card {
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 10, 20, 0.22);
+        overflow: hidden;
+      }
+      .weapon-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 12px;
+      }
+      .weapon-head .left {
+        display: grid;
+        gap: 4px;
+      }
+      .weapon-head .name {
+        font-size: 16px;
+        font-weight: 950;
+      }
+      .weapon-head .meta {
+        font-size: 12px;
+        color: rgba(245, 245, 250, 0.7);
+        letter-spacing: 0.06em;
+      }
+      .btn {
+        height: 38px;
+        padding: 0 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(138, 124, 255, 0.35);
+        background: rgba(138, 124, 255, 0.12);
+        color: rgba(245, 245, 250, 0.92);
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-size: 11px;
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(226, 143, 232, 0.45);
+      }
+
+      .weapon-preview {
+        height: 160px;
+        margin: 0 12px 12px 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background:
+          radial-gradient(
+            260px 200px at 30% 35%,
+            rgba(138, 124, 255, 0.25),
+            transparent 55%
+          ),
+          radial-gradient(
+            260px 200px at 70% 50%,
+            rgba(226, 143, 232, 0.18),
+            transparent 60%
+          ),
+          rgba(255, 255, 255, 0.02);
+        display: grid;
+        place-items: center;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(245, 245, 250, 0.65);
+      }
+
+      .trait {
+        margin: 0 12px 12px 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.02);
+        padding: 12px;
+      }
+      .trait .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .trait .top .t {
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 12px;
+      }
+      .trait .top .tag {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(245, 245, 250, 0.6);
+        font-weight: 900;
+      }
+      .trait .desc {
+        margin-top: 8px;
+        color: rgba(245, 245, 250, 0.78);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .sigil-side {
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 10, 20, 0.22);
+        overflow: hidden;
+      }
+      .sigil-side .pad {
+        padding: 12px;
+      }
+      .sigil-side .setline {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      .sigil-side .setline .name {
+        font-weight: 950;
+      }
+      .sigil-side .setline .count {
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(245, 245, 250, 0.66);
+        font-weight: 900;
+      }
+      .subgrid {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+      }
+      .kv {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 10px 0;
+      }
+      .kv:last-child {
+        border-bottom: none;
+      }
+      .kv .k {
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(245, 245, 250, 0.62);
+        font-weight: 850;
+      }
+      .kv .v {
+        font-weight: 950;
+      }
+      .setbonus {
+        margin-top: 10px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.02);
+        padding: 12px;
+      }
+      .setbonus .t {
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+      .setbonus ul {
+        margin: 0;
+        padding-left: 16px;
+        color: rgba(245, 245, 250, 0.78);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .skin-view {
+        width: min(820px, 92%);
+        height: min(520px, 74vh);
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(10, 10, 20, 0.22);
+        backdrop-filter: var(--blur);
+        box-shadow: 0 28px 78px rgba(0, 0, 0, 0.55);
+        overflow: hidden;
+        position: relative;
+        display: grid;
+        place-items: center;
+      }
+
+      .skin-stage {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            420px 340px at 35% 40%,
+            rgba(138, 124, 255, 0.22),
+            transparent 58%
+          ),
+          radial-gradient(
+            420px 340px at 70% 55%,
+            rgba(226, 143, 232, 0.16),
+            transparent 62%
+          ),
+          rgba(255, 255, 255, 0.02);
+      }
+
+      .skin-nav {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: 70px 1fr 70px;
+        align-items: center;
+        pointer-events: none;
+      }
+      .skin-nav button {
+        pointer-events: all;
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.18);
+        color: rgba(245, 245, 250, 0.92);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 22px;
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .skin-nav button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.35);
+      }
+      .skin-nav .left {
+        display: grid;
+        place-items: center;
+      }
+      .skin-nav .right {
+        display: grid;
+        place-items: center;
+      }
+
+      .skin-card {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 16px;
+        padding: 14px 14px;
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(10, 10, 20, 0.42);
+        backdrop-filter: var(--blur);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .skin-card .info {
+        display: grid;
+        gap: 4px;
+      }
+      .skin-card .name {
+        font-size: 14px;
+        font-weight: 950;
+        letter-spacing: 0.02em;
+      }
+      .skin-card .state {
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(245, 245, 250, 0.66);
+        font-weight: 900;
+      }
+      .skin-card .desc {
+        margin-top: 2px;
+        font-size: 13px;
+        color: rgba(245, 245, 250, 0.78);
+        line-height: 1.35;
+        max-width: 520px;
+      }
+
+      .equip {
+        height: 40px;
+        padding: 0 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(138, 124, 255, 0.35);
+        background: rgba(138, 124, 255, 0.12);
+        color: rgba(245, 245, 250, 0.92);
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .equip[disabled] {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .confirm {
+        position: absolute;
+        right: 16px;
+        bottom: 14px;
+        height: 46px;
+        padding: 0 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(138, 124, 255, 0.55);
+        background: linear-gradient(
+          90deg,
+          rgba(138, 124, 255, 0.22),
+          rgba(226, 143, 232, 0.14)
+        );
+        color: rgba(245, 245, 250, 0.95);
+        font-weight: 950;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-size: 11px;
+        cursor: pointer;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .confirm:hover {
+        transform: translateY(-1px);
+        border-color: rgba(226, 143, 232, 0.55);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: none;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(6px);
+      }
+      .modal.open {
+        display: grid;
+      }
+
+      .modal-card {
+        width: min(980px, 92vw);
+        height: min(620px, 86vh);
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(10, 10, 20, 0.42);
+        backdrop-filter: var(--blur);
+        box-shadow: 0 40px 110px rgba(0, 0, 0, 0.7);
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        position: relative;
+      }
+
+      .modal-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 44px;
+        height: 44px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.18);
+        color: rgba(245, 245, 250, 0.92);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+      }
+
+      .armory-list {
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 14px;
+        overflow: auto;
+      }
+      .armory-list h4 {
+        margin: 0 0 10px 0;
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(245, 245, 250, 0.7);
+      }
+      .w-item {
+        width: 100%;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.02);
+        padding: 12px;
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease,
+          background 0.15s ease;
+        display: grid;
+        gap: 4px;
+        margin-bottom: 10px;
+        text-align: left;
+      }
+      .w-item:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.35);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .w-item.active {
+        border-color: rgba(138, 124, 255, 0.6);
+        box-shadow: 0 0 0 4px rgba(138, 124, 255, 0.15);
+      }
+      .w-item .n {
+        font-weight: 950;
+      }
+      .w-item .m {
+        font-size: 12px;
+        color: rgba(245, 245, 250, 0.7);
+        letter-spacing: 0.06em;
+      }
+
+      .armory-preview {
+        padding: 18px;
+        display: grid;
+        grid-template-rows: 220px auto 1fr;
+        gap: 12px;
+        overflow: auto;
+      }
+      .armory-art {
+        border-radius: 26px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background:
+          radial-gradient(
+            320px 240px at 30% 35%,
+            rgba(138, 124, 255, 0.26),
+            transparent 58%
+          ),
+          radial-gradient(
+            320px 240px at 70% 55%,
+            rgba(226, 143, 232, 0.18),
+            transparent 62%
+          ),
+          rgba(255, 255, 255, 0.02);
+        display: grid;
+        place-items: center;
+        color: rgba(245, 245, 250, 0.66);
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 22px;
+        transform: translateX(-50%);
+        z-index: 80;
+        padding: 12px 14px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(10, 10, 20, 0.48);
+        backdrop-filter: var(--blur);
+        color: rgba(245, 245, 250, 0.92);
+        font-weight: 850;
+        letter-spacing: 0.06em;
+        display: none;
+      }
+      .toast.show {
+        display: block;
+        animation: toastIn 0.2s ease-out;
+      }
+      @keyframes toastIn {
+        from {
+          transform: translateX(-50%) translateY(8px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(-50%) translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @media (max-width: 1180px) {
+        .content {
+          grid-template-columns: 86px 1fr;
+        }
+        .side {
+          display: none;
+        }
+      }
+
+      @media (max-width: 860px) {
+        .content {
+          grid-template-columns: 1fr;
+        }
+        .nav {
+          display: none;
+        }
+        .stage {
+          grid-template-rows: 86px 1fr;
+        }
+        .confirm {
+          left: 16px;
+          right: 16px;
+          width: auto;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="bg-video" aria-hidden="true">
+      <video autoplay muted loop playsinline>
+        <source src="assets/video/kaezan-loop.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="game">KAEZAN: AWAKENING</div>
+          <div class="section">Kaelis</div>
+        </div>
+        <div class="actions">
+          <button class="icon-btn" type="button" title="Back">⟵</button>
+          <button class="icon-btn" type="button" title="Mail">✉</button>
+          <button class="icon-btn" type="button" title="Settings">⚙</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <aside class="nav">
+          <button class="tab active" type="button" data-tab="details">
+            <div class="glyph">✦</div>
+            <div>Details</div>
+          </button>
+          <button class="tab" type="button" data-tab="weapon">
+            <div class="glyph">🗡</div>
+            <div>Weapon</div>
+          </button>
+          <button class="tab" type="button" data-tab="sigils">
+            <div class="glyph">△</div>
+            <div>Sigils</div>
+          </button>
+          <button class="tab" type="button" data-tab="skins">
+            <div class="glyph">🎭</div>
+            <div>Skins</div>
+          </button>
+        </aside>
+
+        <section class="stage">
+          <div class="rosterbar">
+            <button
+              class="roster-arrow"
+              id="prevKaelis"
+              type="button"
+              aria-label="Previous Kaelis"
+            >
+              ‹
+            </button>
+            <div class="roster-track" id="rosterTrack"></div>
+            <button
+              class="roster-arrow"
+              id="nextKaelis"
+              type="button"
+              aria-label="Next Kaelis"
+            >
+              ›
+            </button>
+          </div>
+
+          <div class="stage-body">
+            <div class="center-view" id="centerArt">
+              <div class="art-glow" aria-hidden="true"></div>
+              <div class="nameplate">
+                <div class="name" id="kaelisName">Velvet Arclight</div>
+                <div class="sub" id="kaelisRole">Echo Duelist · Sentinela</div>
+              </div>
+              <div class="badge-row">
+                <div class="pill" id="kaelisRoute">Sentinela</div>
+                <div class="pill" id="kaelisStyle">Adaptive Skirmisher</div>
+              </div>
+            </div>
+
+            <div class="sigil-canvas hidden" id="centerSigils">
+              <div class="sigil-panel">
+                <svg viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <radialGradient id="g1" cx="50%" cy="40%" r="70%">
+                      <stop offset="0%" stop-color="rgba(138,124,255,0.22)" />
+                      <stop offset="55%" stop-color="rgba(226,143,232,0.10)" />
+                      <stop offset="100%" stop-color="rgba(0,0,0,0)" />
+                    </radialGradient>
+                  </defs>
+
+                  <rect
+                    x="0"
+                    y="0"
+                    width="1000"
+                    height="700"
+                    fill="url(#g1)"
+                    opacity="0.95"
+                  ></rect>
+
+                  <g opacity="0.52">
+                    <circle
+                      cx="500"
+                      cy="350"
+                      r="128"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.10)"
+                      stroke-width="2"
+                    />
+                    <circle
+                      cx="500"
+                      cy="350"
+                      r="210"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.08)"
+                      stroke-width="2"
+                    />
+                    <circle
+                      cx="500"
+                      cy="350"
+                      r="286"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.06)"
+                      stroke-width="2"
+                    />
+                  </g>
+
+                  <g id="sigilLines" opacity="0.9">
+                    <polygon
+                      points="500,120 760,270 670,565 330,565 240,270"
+                      fill="none"
+                      stroke="rgba(138,124,255,0.45)"
+                      stroke-width="4"
+                    />
+                    <line
+                      x1="500"
+                      y1="350"
+                      x2="500"
+                      y2="120"
+                      stroke="rgba(255,255,255,0.08)"
+                      stroke-width="2"
+                    />
+                    <line
+                      x1="500"
+                      y1="350"
+                      x2="760"
+                      y2="270"
+                      stroke="rgba(255,255,255,0.08)"
+                      stroke-width="2"
+                    />
+                    <line
+                      x1="500"
+                      y1="350"
+                      x2="670"
+                      y2="565"
+                      stroke="rgba(255,255,255,0.08)"
+                      stroke-width="2"
+                    />
+                    <line
+                      x1="500"
+                      y1="350"
+                      x2="330"
+                      y2="565"
+                      stroke="rgba(255,255,255,0.08)"
+                      stroke-width="2"
+                    />
+                    <line
+                      x1="500"
+                      y1="350"
+                      x2="240"
+                      y2="270"
+                      stroke="rgba(255,255,255,0.08)"
+                      stroke-width="2"
+                    />
+                  </g>
+
+                  <g opacity="0.9">
+                    <text
+                      x="500"
+                      y="360"
+                      text-anchor="middle"
+                      fill="rgba(245,245,250,0.78)"
+                      font-size="16"
+                      font-weight="800"
+                      letter-spacing="6"
+                    >
+                      SIGILS
+                    </text>
+                    <text
+                      x="500"
+                      y="385"
+                      text-anchor="middle"
+                      fill="rgba(245,245,250,0.55)"
+                      font-size="11"
+                      font-weight="700"
+                      letter-spacing="3"
+                    >
+                      SET + SLOTS
+                    </text>
+                  </g>
+
+                  <g id="sigilNodes"></g>
+                </svg>
+              </div>
+            </div>
+
+            <div class="skin-view hidden" id="centerSkins">
+              <div class="skin-stage" aria-hidden="true"></div>
+              <div class="skin-nav">
+                <div class="left">
+                  <button
+                    type="button"
+                    id="skinPrev"
+                    aria-label="Previous Skin"
+                  >
+                    ‹
+                  </button>
+                </div>
+                <div></div>
+                <div class="right">
+                  <button type="button" id="skinNext" aria-label="Next Skin">
+                    ›
+                  </button>
+                </div>
+              </div>
+
+              <div class="skin-card">
+                <div class="info">
+                  <div class="name" id="skinName">Quiet Guard</div>
+                  <div class="state" id="skinState">OWNED</div>
+                  <div class="desc" id="skinDesc">
+                    Default combat attire. Clean and restrained silhouette.
+                  </div>
+                </div>
+                <button class="equip" id="skinEquip" type="button">
+                  Equip
+                </button>
+              </div>
+            </div>
+
+            <button class="confirm" id="confirmKaelis" type="button">
+              Confirm Kaelis
+            </button>
+          </div>
+        </section>
+
+        <aside class="side">
+          <div class="panel" id="sidePanel">
+            <div id="panelDetails">
+              <div class="hero-meta">
+                <div class="row1">
+                  <div>
+                    <div class="name" id="pName">Velvet Arclight</div>
+                    <div class="sub" id="pRole">Echo Duelist · Sentinela</div>
+                  </div>
+                  <div class="level-chip">
+                    <div class="top">
+                      <span id="pLv">Lv 52</span>
+                      <span id="pTier">Tier III · 41–60</span>
+                    </div>
+                    <div class="xpbar"><div id="xpFill"></div></div>
+                    <div class="xptext">
+                      <span id="xpNow">EXP 1240</span>
+                      <span id="xpMax">/ 2700</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="statlist" id="statsList"></div>
+
+              <button class="linebtn" type="button" id="goAffinity">
+                <div class="ico">♥</div>
+                <div class="main">
+                  <div class="t">Affinity</div>
+                  <div class="d" id="affinityLine">7/10 · Rank 7</div>
+                </div>
+                <div class="go">›</div>
+              </button>
+
+              <button class="linebtn" type="button" id="goWeapon">
+                <div class="ico">🗡</div>
+                <div class="main">
+                  <div class="t">Weapon</div>
+                  <div class="d" id="weaponLine">
+                    Ascendant Blade · SR · Lv 40
+                  </div>
+                </div>
+                <div class="go">›</div>
+              </button>
+
+              <button class="linebtn" type="button" id="goSigils">
+                <div class="ico">△</div>
+                <div class="main">
+                  <div class="t">Sigils</div>
+                  <div class="d" id="sigilsLine">Aggression · 5/5</div>
+                </div>
+                <div class="go">›</div>
+              </button>
+
+              <button class="linebtn" type="button" id="goSkins">
+                <div class="ico">🎭</div>
+                <div class="main">
+                  <div class="t">Skin</div>
+                  <div class="d" id="skinLine">Quiet Guard</div>
+                </div>
+                <div class="go">›</div>
+              </button>
+            </div>
+
+            <div id="panelWeapon" class="hidden">
+              <div class="weapon-card">
+                <div class="weapon-head">
+                  <div class="left">
+                    <div class="name" id="wName">Ascendant Blade</div>
+                    <div class="meta" id="wMeta">SR · Blade · Lv 40</div>
+                  </div>
+                  <button class="btn" id="openArmory" type="button">
+                    Change
+                  </button>
+                </div>
+
+                <div class="weapon-preview" id="wPreview">Weapon Preview</div>
+
+                <div class="statlist" id="wStats"></div>
+
+                <div class="trait">
+                  <div class="top">
+                    <div class="t">Passive</div>
+                    <div class="tag">Trait</div>
+                  </div>
+                  <div class="desc" id="wTrait">
+                    After Basic ATK, gain Tempo for 1 turn.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="panelSigils" class="hidden">
+              <div class="sigil-side">
+                <div class="setline">
+                  <div class="name" id="setName">Aggression</div>
+                  <div class="count" id="setCount">5/5</div>
+                </div>
+
+                <div class="subgrid">
+                  <div>
+                    <div
+                      style="font-weight: 950; margin-bottom: 6px"
+                      id="slotTitle"
+                    >
+                      Slot 1
+                    </div>
+                    <div class="kv">
+                      <div class="k">Main</div>
+                      <div class="v" id="slotMain">ATK +15%</div>
+                    </div>
+                    <div class="kv">
+                      <div class="k">Sub</div>
+                      <div class="v" id="slotSub">Crit +6%</div>
+                    </div>
+                  </div>
+
+                  <div class="setbonus">
+                    <div class="t">Set Bonus</div>
+                    <ul id="setBonusList">
+                      <li>2-PC: ATK increases by 10%.</li>
+                      <li>4-PC: Basic ATK and Skill damage increase by 10%.</li>
+                      <li>
+                        5-PC: After a Crit, next hit deals +12% damage (once per
+                        turn).
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="panelSkins" class="hidden">
+              <div class="hero-meta">
+                <div class="row1">
+                  <div>
+                    <div class="name" id="sTitle">Skins</div>
+                    <div class="sub" id="sHint">
+                      Use < and > on the preview.
+                    </div>
+                  </div>
+                  <div class="level-chip">
+                    <div class="top">
+                      <span id="sOwned">Owned</span>
+                      <span id="sTotal">2 total</span>
+                    </div>
+                    <div class="xpbar"><div style="width: 70%"></div></div>
+                    <div class="xptext">
+                      <span>Collection</span>
+                      <span id="sRatio">1 / 2</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="statlist">
+                <div class="statrow">
+                  <div class="k">Selected</div>
+                  <div class="v" id="skinSelected">Quiet Guard</div>
+                </div>
+                <div class="statrow">
+                  <div class="k">Status</div>
+                  <div class="v" id="skinLock">Owned</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div
+      class="modal"
+      id="armoryModal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Armory"
+    >
+      <div class="modal-card">
+        <button
+          class="modal-close"
+          id="closeArmory"
+          type="button"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+        <div class="armory-list">
+          <h4>Armory</h4>
+          <div id="armoryList"></div>
+        </div>
+        <div class="armory-preview">
+          <div class="armory-art" id="armoryArt">Weapon Preview</div>
+          <div>
+            <div style="font-size: 18px; font-weight: 950" id="armoryName">
+              Ascendant Blade
+            </div>
+            <div
+              style="
+                color: rgba(245, 245, 250, 0.72);
+                font-size: 12px;
+                letter-spacing: 0.06em;
+              "
+              id="armoryMeta"
+            >
+              SR · Blade · Lv 40
+            </div>
+          </div>
+          <div class="statlist" id="armoryStats"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">Equipped.</div>
+
+    <script>
+      const DATA = {
+        kaelis: [
+          {
+            id: "velvet",
+            initials: "52",
+            name: "Velvet Arclight",
+            role: "Echo Duelist",
+            route: "Sentinela",
+            style: "Adaptive Skirmisher",
+            level: 52,
+            tier: "Tier III · 41–60",
+            expNow: 1240,
+            expMax: 2700,
+            stats: { HP: 9000, ATK: 920, CRIT: "34%", DOT: "20%", ENERGY: 110 },
+            affinity: { value: "7/10", rank: 7 },
+            weapon: {
+              name: "Ascendant Blade",
+              rarity: "SR",
+              type: "Blade",
+              level: 40,
+              stats: {
+                ATK: "+140",
+                CRIT: "+20%",
+                "CRIT DMG": "—",
+                DOT: "—",
+                "ENERGY REGEN": "—",
+              },
+              trait: "After Basic ATK, gain Tempo for 1 turn.",
+            },
+            armory: [
+              {
+                name: "Ascendant Blade",
+                rarity: "SR",
+                type: "Blade",
+                level: 40,
+                stats: { ATK: "+140", CRIT: "+20%" },
+              },
+              {
+                name: "Nightpiercer",
+                rarity: "SSR",
+                type: "Blade",
+                level: 20,
+                stats: { ATK: "+190", CRIT: "+8%" },
+              },
+              {
+                name: "Astra Coil",
+                rarity: "SR",
+                type: "Catalyst",
+                level: 30,
+                stats: { ATK: "+120", DOT: "+18%" },
+              },
+              {
+                name: "Ruin Spindle",
+                rarity: "SR",
+                type: "Catalyst",
+                level: 35,
+                stats: { ATK: "+130", "ENERGY REGEN": "+10%" },
+              },
+            ],
+            sigils: {
+              set: "Aggression",
+              count: "5/5",
+              bonus: [
+                "2-PC: ATK increases by 10%.",
+                "4-PC: Basic ATK and Skill damage increase by 10%.",
+                "5-PC: After a Crit, next hit deals +12% damage (once per turn).",
+              ],
+              slots: [
+                { slot: 1, main: "ATK +15%", sub: "Crit +6%" },
+                { slot: 2, main: "DMG +8%", sub: "HP +6%" },
+                { slot: 3, main: "ATK +8%", sub: "Crit DMG +10%" },
+                { slot: 4, main: "Crit Rate +10%", sub: "ATK +6%" },
+                { slot: 5, main: "DMG +10%", sub: "Energy Regen +6%" },
+              ],
+            },
+            skins: [
+              {
+                name: "Quiet Guard",
+                owned: true,
+                desc: "Default combat attire. Clean and restrained silhouette.",
+              },
+              {
+                name: "Heroic",
+                owned: false,
+                desc: "Ceremonial variant with gilded accents and higher contrast.",
+              },
+            ],
+          },
+          {
+            id: "lumen",
+            initials: "44",
+            name: "Lumen Cerys",
+            role: "Resonant Weaver",
+            route: "Ruína",
+            style: "Status Amplifier",
+            level: 44,
+            tier: "Tier II · 21–40",
+            expNow: 980,
+            expMax: 1900,
+            stats: { HP: 8200, ATK: 880, CRIT: "28%", DOT: "34%", ENERGY: 100 },
+            affinity: { value: "4/10", rank: 4 },
+            weapon: {
+              name: "Ruin Spindle",
+              rarity: "SR",
+              type: "Catalyst",
+              level: 35,
+              stats: { ATK: "+130", DOT: "+12%", "ENERGY REGEN": "+10%" },
+              trait: "After Skill, amplify DoT damage by 8% for 1 turn.",
+            },
+            armory: [
+              {
+                name: "Ruin Spindle",
+                rarity: "SR",
+                type: "Catalyst",
+                level: 35,
+                stats: { ATK: "+130", DOT: "+12%" },
+              },
+              {
+                name: "Astra Coil",
+                rarity: "SR",
+                type: "Catalyst",
+                level: 30,
+                stats: { ATK: "+120", DOT: "+18%" },
+              },
+            ],
+            sigils: {
+              set: "Ruin Weave",
+              count: "3/5",
+              bonus: [
+                "2-PC: DOT increases by 10%.",
+                "4-PC: After applying DOT, gain +6 Energy.",
+                "5-PC: DOT ticks once extra every 3 turns.",
+              ],
+              slots: [
+                { slot: 1, main: "DOT +12%", sub: "HP +6%" },
+                { slot: 2, main: "ATK +8%", sub: "Energy Regen +6%" },
+                { slot: 3, main: "HP +10%", sub: "DOT +6%" },
+                { slot: 4, main: "—", sub: "—" },
+                { slot: 5, main: "—", sub: "—" },
+              ],
+            },
+            skins: [
+              {
+                name: "Default",
+                owned: true,
+                desc: "Standard fieldwear for Ruin weavers.",
+              },
+              {
+                name: "Nebula Drift",
+                owned: false,
+                desc: "Unlocked by Affinity Rank 8.",
+              },
+            ],
+          },
+        ],
+      };
+
+      const els = {
+        rosterTrack: document.getElementById("rosterTrack"),
+        prevKaelis: document.getElementById("prevKaelis"),
+        nextKaelis: document.getElementById("nextKaelis"),
+        tabs: Array.from(document.querySelectorAll(".nav .tab")),
+        centerArt: document.getElementById("centerArt"),
+        centerSigils: document.getElementById("centerSigils"),
+        centerSkins: document.getElementById("centerSkins"),
+        kaelisName: document.getElementById("kaelisName"),
+        kaelisRole: document.getElementById("kaelisRole"),
+        kaelisRoute: document.getElementById("kaelisRoute"),
+        kaelisStyle: document.getElementById("kaelisStyle"),
+        pName: document.getElementById("pName"),
+        pRole: document.getElementById("pRole"),
+        pLv: document.getElementById("pLv"),
+        pTier: document.getElementById("pTier"),
+        xpNow: document.getElementById("xpNow"),
+        xpMax: document.getElementById("xpMax"),
+        xpFill: document.getElementById("xpFill"),
+        statsList: document.getElementById("statsList"),
+        affinityLine: document.getElementById("affinityLine"),
+        weaponLine: document.getElementById("weaponLine"),
+        sigilsLine: document.getElementById("sigilsLine"),
+        skinLine: document.getElementById("skinLine"),
+        panelDetails: document.getElementById("panelDetails"),
+        panelWeapon: document.getElementById("panelWeapon"),
+        panelSigils: document.getElementById("panelSigils"),
+        panelSkins: document.getElementById("panelSkins"),
+        goWeapon: document.getElementById("goWeapon"),
+        goSigils: document.getElementById("goSigils"),
+        goSkins: document.getElementById("goSkins"),
+        wName: document.getElementById("wName"),
+        wMeta: document.getElementById("wMeta"),
+        wStats: document.getElementById("wStats"),
+        wTrait: document.getElementById("wTrait"),
+        openArmory: document.getElementById("openArmory"),
+        armoryModal: document.getElementById("armoryModal"),
+        closeArmory: document.getElementById("closeArmory"),
+        armoryList: document.getElementById("armoryList"),
+        armoryName: document.getElementById("armoryName"),
+        armoryMeta: document.getElementById("armoryMeta"),
+        armoryStats: document.getElementById("armoryStats"),
+        setName: document.getElementById("setName"),
+        setCount: document.getElementById("setCount"),
+        slotTitle: document.getElementById("slotTitle"),
+        slotMain: document.getElementById("slotMain"),
+        slotSub: document.getElementById("slotSub"),
+        setBonusList: document.getElementById("setBonusList"),
+        sigilNodes: document.getElementById("sigilNodes"),
+        skinPrev: document.getElementById("skinPrev"),
+        skinNext: document.getElementById("skinNext"),
+        skinName: document.getElementById("skinName"),
+        skinState: document.getElementById("skinState"),
+        skinDesc: document.getElementById("skinDesc"),
+        skinEquip: document.getElementById("skinEquip"),
+        skinSelected: document.getElementById("skinSelected"),
+        skinLock: document.getElementById("skinLock"),
+        sOwned: document.getElementById("sOwned"),
+        sTotal: document.getElementById("sTotal"),
+        sRatio: document.getElementById("sRatio"),
+        toast: document.getElementById("toast"),
+        confirmKaelis: document.getElementById("confirmKaelis"),
+      };
+
+      let selectedKaelisIndex = 0;
+      let activeTab = "details";
+      let selectedSlot = 1;
+      let selectedSkinIndex = 0;
+      let tempArmorySelection = null;
+
+      function showToast(text) {
+        els.toast.textContent = text;
+        els.toast.classList.add("show");
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(
+          () => els.toast.classList.remove("show"),
+          1200
+        );
+      }
+
+      function setTab(tab) {
+        activeTab = tab;
+        els.tabs.forEach((b) =>
+          b.classList.toggle("active", b.dataset.tab === tab)
+        );
+
+        els.panelDetails.classList.toggle("hidden", tab !== "details");
+        els.panelWeapon.classList.toggle("hidden", tab !== "weapon");
+        els.panelSigils.classList.toggle("hidden", tab !== "sigils");
+        els.panelSkins.classList.toggle("hidden", tab !== "skins");
+
+        els.centerArt.classList.toggle(
+          "hidden",
+          tab === "sigils" || tab === "skins"
+        );
+        els.centerSigils.classList.toggle("hidden", tab !== "sigils");
+        els.centerSkins.classList.toggle("hidden", tab !== "skins");
+      }
+
+      function renderRoster() {
+        els.rosterTrack.innerHTML = "";
+        DATA.kaelis.forEach((k, idx) => {
+          const btn = document.createElement("button");
+          btn.className =
+            "kaelis-chip" + (idx === selectedKaelisIndex ? " active" : "");
+          btn.type = "button";
+          btn.setAttribute("aria-label", k.name);
+          btn.innerHTML = `<span>${k.initials}</span>`;
+          btn.addEventListener("click", () => {
+            selectedKaelisIndex = idx;
+            selectedSkinIndex = 0;
+            selectedSlot = 1;
+            renderAll();
+          });
+          els.rosterTrack.appendChild(btn);
+        });
+      }
+
+      function fillStatList(container, statsObj) {
+        container.innerHTML = "";
+        Object.entries(statsObj).forEach(([k, v]) => {
+          const row = document.createElement("div");
+          row.className = "statrow";
+          row.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div>`;
+          container.appendChild(row);
+        });
+      }
+
+      function renderSigilNodes(k) {
+        const nodes = [
+          { slot: 1, x: 500, y: 120 },
+          { slot: 2, x: 760, y: 270 },
+          { slot: 3, x: 670, y: 565 },
+          { slot: 4, x: 330, y: 565 },
+          { slot: 5, x: 240, y: 270 },
+        ];
+
+        els.sigilNodes.innerHTML = "";
+
+        nodes.forEach((n) => {
+          const slotData = k.sigils.slots.find((s) => s.slot === n.slot);
+          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          g.setAttribute(
+            "class",
+            "sigil-node" + (n.slot === selectedSlot ? " active" : "")
+          );
+          g.addEventListener("click", () => {
+            selectedSlot = n.slot;
+            renderAll();
+          });
+
+          const w = 210;
+          const h = 92;
+          const rx = 18;
+
+          const rect = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "rect"
+          );
+          rect.setAttribute("x", n.x - w / 2);
+          rect.setAttribute("y", n.y - h / 2);
+          rect.setAttribute("width", w);
+          rect.setAttribute("height", h);
+          rect.setAttribute("rx", rx);
+
+          const title = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text"
+          );
+          title.setAttribute("x", n.x);
+          title.setAttribute("y", n.y - 10);
+          title.setAttribute("text-anchor", "middle");
+          title.setAttribute("fill", "rgba(245,245,250,0.86)");
+          title.setAttribute("font-size", "12");
+          title.setAttribute("font-weight", "900");
+          title.setAttribute("letter-spacing", "3");
+          title.textContent = `SLOT ${n.slot}`;
+
+          const main = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text"
+          );
+          main.setAttribute("x", n.x);
+          main.setAttribute("y", n.y + 18);
+          main.setAttribute("text-anchor", "middle");
+          main.setAttribute("fill", "rgba(245,245,250,0.72)");
+          main.setAttribute("font-size", "12");
+          main.setAttribute("font-weight", "800");
+          main.textContent = slotData ? slotData.main : "—";
+
+          g.appendChild(rect);
+          g.appendChild(title);
+          g.appendChild(main);
+          els.sigilNodes.appendChild(g);
+        });
+      }
+
+      function renderSetBonus(k) {
+        els.setName.textContent = k.sigils.set;
+        els.setCount.textContent = k.sigils.count;
+        els.setBonusList.innerHTML = "";
+        k.sigils.bonus.forEach((b) => {
+          const li = document.createElement("li");
+          li.textContent = b;
+          els.setBonusList.appendChild(li);
+        });
+
+        const slotData =
+          k.sigils.slots.find((s) => s.slot === selectedSlot) ||
+          k.sigils.slots[0];
+        els.slotTitle.textContent = `Slot ${slotData.slot}`;
+        els.slotMain.textContent = slotData.main;
+        els.slotSub.textContent = slotData.sub;
+      }
+
+      function renderWeapon(k) {
+        const w = k.weapon;
+        els.wName.textContent = w.name;
+        els.wMeta.textContent = `${w.rarity} · ${w.type} · Lv ${w.level}`;
+        fillStatList(els.wStats, w.stats);
+        els.wTrait.textContent = w.trait;
+
+        els.weaponLine.textContent = `${w.name} · ${w.rarity} · Lv ${w.level}`;
+      }
+
+      function renderDetails(k) {
+        els.kaelisName.textContent = k.name;
+        els.kaelisRole.textContent = `${k.role} · ${k.route}`;
+        els.kaelisRoute.textContent = k.route;
+        els.kaelisStyle.textContent = k.style;
+
+        els.pName.textContent = k.name;
+        els.pRole.textContent = `${k.role} · ${k.route}`;
+        els.pLv.textContent = `Lv ${k.level}`;
+        els.pTier.textContent = k.tier;
+
+        els.xpNow.textContent = `EXP ${k.expNow}`;
+        els.xpMax.textContent = `/ ${k.expMax}`;
+        els.xpFill.style.width = `${Math.max(4, Math.min(100, (k.expNow / k.expMax) * 100))}%`;
+
+        fillStatList(els.statsList, k.stats);
+
+        els.affinityLine.textContent = `${k.affinity.value} · Rank ${k.affinity.rank}`;
+        els.sigilsLine.textContent = `${k.sigils.set} · ${k.sigils.count}`;
+        els.skinLine.textContent =
+          k.skins[selectedSkinIndex]?.name || k.skins[0]?.name || "—";
+      }
+
+      function renderSkins(k) {
+        const skin = k.skins[selectedSkinIndex] || k.skins[0];
+        els.skinName.textContent = skin.name;
+        els.skinDesc.textContent = skin.desc;
+        els.skinState.textContent = skin.owned ? "OWNED" : "LOCKED";
+        els.skinEquip.disabled = !skin.owned;
+
+        els.skinSelected.textContent = skin.name;
+        els.skinLock.textContent = skin.owned ? "Owned" : "Locked";
+
+        const ownedCount = k.skins.filter((s) => s.owned).length;
+        els.sOwned.textContent = `${ownedCount} owned`;
+        els.sTotal.textContent = `${k.skins.length} total`;
+        els.sRatio.textContent = `${ownedCount} / ${k.skins.length}`;
+      }
+
+      function openArmory() {
+        const k = DATA.kaelis[selectedKaelisIndex];
+        els.armoryList.innerHTML = "";
+        tempArmorySelection = k.armory[0];
+
+        k.armory.forEach((w, idx) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className =
+            "w-item" + (w.name === k.weapon.name ? " active" : "");
+          btn.innerHTML = `<div class="n">${w.name}</div><div class="m">${w.rarity} · ${w.type} · Lv ${w.level}</div>`;
+          btn.addEventListener("click", () => {
+            tempArmorySelection = w;
+            Array.from(els.armoryList.children).forEach((c) =>
+              c.classList.remove("active")
+            );
+            btn.classList.add("active");
+            renderArmoryPreview(w);
+
+            const kaelis = DATA.kaelis[selectedKaelisIndex];
+            kaelis.weapon = {
+              ...kaelis.weapon,
+              name: w.name,
+              rarity: w.rarity,
+              type: w.type,
+              level: w.level,
+              stats: Object.assign(
+                {
+                  ATK: "—",
+                  CRIT: "—",
+                  "CRIT DMG": "—",
+                  DOT: "—",
+                  "ENERGY REGEN": "—",
+                },
+                w.stats
+              ),
+            };
+            renderAll();
+            showToast("Weapon equipped.");
+            closeArmory();
+          });
+          els.armoryList.appendChild(btn);
+
+          if (idx === 0) {
+            renderArmoryPreview(w);
+          }
+        });
+
+        els.armoryModal.classList.add("open");
+      }
+
+      function closeArmory() {
+        els.armoryModal.classList.remove("open");
+      }
+
+      function renderArmoryPreview(w) {
+        els.armoryName.textContent = w.name;
+        els.armoryMeta.textContent = `${w.rarity} · ${w.type} · Lv ${w.level}`;
+        fillStatList(els.armoryStats, w.stats);
+      }
+
+      function renderAll() {
+        const k = DATA.kaelis[selectedKaelisIndex];
+        renderRoster();
+        renderDetails(k);
+        renderWeapon(k);
+        renderSigilNodes(k);
+        renderSetBonus(k);
+        renderSkins(k);
+      }
+
+      els.tabs.forEach((b) =>
+        b.addEventListener("click", () => {
+          setTab(b.dataset.tab);
+        })
+      );
+
+      els.goWeapon.addEventListener("click", () => setTab("weapon"));
+      els.goSigils.addEventListener("click", () => setTab("sigils"));
+      els.goSkins.addEventListener("click", () => setTab("skins"));
+
+      els.prevKaelis.addEventListener("click", () => {
+        selectedKaelisIndex =
+          (selectedKaelisIndex - 1 + DATA.kaelis.length) % DATA.kaelis.length;
+        selectedSkinIndex = 0;
+        selectedSlot = 1;
+        renderAll();
+      });
+      els.nextKaelis.addEventListener("click", () => {
+        selectedKaelisIndex = (selectedKaelisIndex + 1) % DATA.kaelis.length;
+        selectedSkinIndex = 0;
+        selectedSlot = 1;
+        renderAll();
+      });
+
+      els.openArmory.addEventListener("click", openArmory);
+      els.closeArmory.addEventListener("click", closeArmory);
+      els.armoryModal.addEventListener("click", (e) => {
+        if (e.target === els.armoryModal) closeArmory();
+      });
+
+      els.skinPrev.addEventListener("click", () => {
+        const k = DATA.kaelis[selectedKaelisIndex];
+        selectedSkinIndex =
+          (selectedSkinIndex - 1 + k.skins.length) % k.skins.length;
+        renderAll();
+      });
+      els.skinNext.addEventListener("click", () => {
+        const k = DATA.kaelis[selectedKaelisIndex];
+        selectedSkinIndex = (selectedSkinIndex + 1) % k.skins.length;
+        renderAll();
+      });
+
+      els.skinEquip.addEventListener("click", () => {
+        const k = DATA.kaelis[selectedKaelisIndex];
+        const skin = k.skins[selectedSkinIndex];
+        if (!skin.owned) return;
+        showToast("Skin equipped.");
+      });
+
+      els.confirmKaelis.addEventListener("click", () => {
+        const k = DATA.kaelis[selectedKaelisIndex];
+        showToast(`Confirmed: ${k.name}`);
+      });
+
+      setTab("details");
+      renderAll();
+    </script>
+  </body>
+</html>

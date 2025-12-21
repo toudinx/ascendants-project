@@ -1,15 +1,22 @@
-import { KaelisDef } from '../kaelis.types';
+import { KaelisDef } from "../kaelis.types";
 
 export const LUMEN_DEF: KaelisDef = {
-  id: 'lumen',
-  name: 'Lumen Cerys',
-  title: 'Resonant Weaver',
-  description: 'Ruína Kaelis who amplifies DoT pressure and attrition tempo.',
-  routeType: 'Ruína',
-  portrait: 'assets/battle/characters/velvet_battle_idle.png',
-  sprite: 'assets/battle/characters/velvet_battle_idle.png',
-  role: 'Status amplifier',
-  tags: ['dot', 'tempo'],
+  id: "lumen",
+  name: "Lumen Cerys",
+  title: "Resonant Weaver",
+  description: "Ruin Kaelis who amplifies DoT pressure and attrition tempo.",
+  routeType: "Ruin",
+  portrait: "assets/battle/characters/lumen/lumen_skin_default.png",
+  sprite: "assets/battle/characters/lumen/lumen_skin_default.png",
+  imageUrl: "assets/battle/characters/lumen/lumen_skin_default.png",
+  role: "Status amplifier",
+  tags: ["dot", "tempo"],
+  profile: {
+    level: 64,
+    xpCurrent: 5320,
+    xpMax: 9000,
+    affinity: 5,
+  },
   base: {
     hp: 9000,
     atk: 880,
@@ -24,7 +31,7 @@ export const LUMEN_DEF: KaelisDef = {
     multiHitChance: 0.24,
     dotChance: 0.34,
     penetration: 0.18,
-    energyRegenPercent: 125
+    energyRegenPercent: 125,
   },
   kit: {
     autoMultiplier: 0.85,
@@ -33,6 +40,8 @@ export const LUMEN_DEF: KaelisDef = {
     skillCooldownTurns: 3,
     skillEnergyCost: 45,
     dotStacksPerSkill: 1,
-    tags: ['ruina', 'dot-booster']
-  }
+    tags: ["ruin", "dot-booster"],
+  },
 };
+
+

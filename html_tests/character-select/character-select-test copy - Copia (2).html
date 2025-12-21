@@ -1,0 +1,2343 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KAEZAN: AWAKENING — Kaelis HUD (Reference)</title>
+    <style>
+      :root {
+        --bg0: #0b0d1c;
+        --bg1: #0f1330;
+        --panel: #141837;
+        --panel2: #11142f;
+        --stroke: rgba(255, 255, 255, 0.1);
+        --stroke2: rgba(255, 255, 255, 0.14);
+        --text: #f3f5ff;
+        --muted: #b8bce3;
+        --dim: #8d92c4;
+
+        --accent: #7f74ff;
+        --accent2: #e28fe8;
+        --good: #2de3c8;
+        --warn: #ffd344;
+
+        --shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+        --radius: 16px;
+        --radius2: 22px;
+        --glow:
+          0 0 0 1px rgba(127, 116, 255, 0.22),
+          0 0 28px rgba(127, 116, 255, 0.14);
+        --glow2:
+          0 0 0 1px rgba(226, 143, 232, 0.2), 0 0 34px rgba(226, 143, 232, 0.12);
+
+        --ui: 15px;
+        --ui2: 13px;
+        --h1: 20px;
+        --h2: 16px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          "Apple Color Emoji",
+          "Segoe UI Emoji";
+        color: var(--text);
+        background:
+          radial-gradient(
+            1200px 700px at 20% 30%,
+            rgba(127, 116, 255, 0.2),
+            transparent 55%
+          ),
+          radial-gradient(
+            900px 600px at 70% 25%,
+            rgba(226, 143, 232, 0.18),
+            transparent 55%
+          ),
+          radial-gradient(
+            1200px 900px at 60% 80%,
+            rgba(45, 227, 200, 0.1),
+            transparent 60%
+          ),
+          linear-gradient(180deg, var(--bg1), var(--bg0));
+        overflow: hidden;
+      }
+
+      .stars {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.55;
+        background:
+          radial-gradient(
+            1px 1px at 12% 30%,
+            rgba(255, 255, 255, 0.25),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 22% 70%,
+            rgba(255, 255, 255, 0.18),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 63% 22%,
+            rgba(255, 255, 255, 0.22),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 76% 58%,
+            rgba(255, 255, 255, 0.18),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 88% 35%,
+            rgba(255, 255, 255, 0.15),
+            transparent 60%
+          );
+        filter: blur(0.2px);
+        mix-blend-mode: screen;
+      }
+
+      .topbar {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+      }
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .brand .t {
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        font-size: 11px;
+        color: rgba(243, 245, 255, 0.78);
+      }
+      .brand .s {
+        font-weight: 800;
+        font-size: 18px;
+        letter-spacing: 0.03em;
+      }
+      .icons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .iconbtn {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(20, 24, 55, 0.55);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        color: rgba(243, 245, 255, 0.85);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition:
+          transform 0.12s ease,
+          border-color 0.12s ease,
+          background 0.12s ease;
+      }
+      .iconbtn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(127, 116, 255, 0.35);
+        background: rgba(20, 24, 55, 0.68);
+      }
+      .iconbtn:active {
+        transform: translateY(0px) scale(0.98);
+      }
+
+      .rosterbar {
+        height: 74px;
+        padding: 8px 16px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+      }
+      .roster-inner {
+        width: min(1180px, calc(100% - 30px));
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(11, 13, 28, 0.3);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+      }
+      .roster-arrow {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: rgba(20, 24, 55, 0.55);
+        color: rgba(243, 245, 255, 0.9);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition:
+          transform 0.12s ease,
+          border-color 0.12s ease,
+          background 0.12s ease;
+        flex: 0 0 auto;
+      }
+      .roster-arrow:hover {
+        transform: translateY(-1px);
+        border-color: rgba(127, 116, 255, 0.35);
+      }
+      .roster-list {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        align-items: center;
+        flex: 1 1 auto;
+        overflow: hidden;
+      }
+      .roster-pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(20, 24, 55, 0.36);
+        cursor: pointer;
+        transition:
+          transform 0.12s ease,
+          border-color 0.12s ease,
+          background 0.12s ease;
+      }
+      .roster-pill:hover {
+        transform: translateY(-1px);
+        border-color: rgba(127, 116, 255, 0.32);
+        background: rgba(20, 24, 55, 0.5);
+      }
+      .roster-pill.active {
+        border-color: rgba(127, 116, 255, 0.5);
+        box-shadow: var(--glow);
+        background: rgba(20, 24, 55, 0.62);
+      }
+      .pfp {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background:
+          radial-gradient(
+            120% 100% at 40% 30%,
+            rgba(127, 116, 255, 0.35),
+            rgba(20, 24, 55, 0.6)
+          ),
+          radial-gradient(
+            80% 80% at 70% 70%,
+            rgba(226, 143, 232, 0.2),
+            transparent 55%
+          );
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: rgba(243, 245, 255, 0.92);
+      }
+      .roster-meta {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+      }
+      .roster-meta .name {
+        font-weight: 800;
+        font-size: 13px;
+      }
+      .roster-meta .lv {
+        font-weight: 700;
+        font-size: 11px;
+        color: rgba(184, 188, 227, 0.9);
+      }
+
+      .frame {
+        height: calc(100vh - 64px - 74px);
+        padding: 10px 16px 16px;
+        display: flex;
+        justify-content: center;
+      }
+
+      .layout {
+        width: min(1320px, 100%);
+        height: 100%;
+        display: grid;
+        grid-template-columns: 200px minmax(520px, 1fr) 460px;
+        gap: 14px;
+        align-items: stretch;
+      }
+
+      .nav {
+        border-radius: var(--radius2);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(20, 24, 55, 0.34);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+        padding: 14px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 0;
+      }
+      .nav a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        text-decoration: none;
+        color: rgba(243, 245, 255, 0.88);
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: 0.01em;
+        border: 1px solid transparent;
+        background: transparent;
+        cursor: pointer;
+        transition:
+          transform 0.12s ease,
+          background 0.12s ease,
+          border-color 0.12s ease;
+      }
+      .nav a:hover {
+        transform: translateY(-1px);
+        background: rgba(20, 24, 55, 0.52);
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+      .nav a.active {
+        background: rgba(127, 116, 255, 0.12);
+        border-color: rgba(127, 116, 255, 0.3);
+        box-shadow: var(--glow);
+      }
+      .nav .ico {
+        width: 18px;
+        height: 18px;
+        display: grid;
+        place-items: center;
+        color: rgba(243, 245, 255, 0.92);
+        opacity: 0.9;
+      }
+      .nav .spacer {
+        flex: 1 1 auto;
+      }
+
+      .stage {
+        border-radius: var(--radius2);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(20, 24, 55, 0.28);
+        backdrop-filter: blur(12px);
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .stage::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        background:
+          radial-gradient(
+            900px 700px at 45% 55%,
+            rgba(127, 116, 255, 0.22),
+            transparent 60%
+          ),
+          radial-gradient(
+            700px 560px at 70% 35%,
+            rgba(226, 143, 232, 0.18),
+            transparent 58%
+          ),
+          radial-gradient(
+            900px 620px at 30% 20%,
+            rgba(255, 255, 255, 0.1),
+            transparent 55%
+          );
+        filter: blur(2px);
+        opacity: 0.95;
+      }
+
+      .stage-inner {
+        position: relative;
+        width: min(820px, 92%);
+        height: min(520px, 82%);
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background:
+          radial-gradient(
+            120% 100% at 55% 35%,
+            rgba(127, 116, 255, 0.3),
+            rgba(20, 24, 55, 0.48)
+          ),
+          radial-gradient(
+            90% 90% at 20% 70%,
+            rgba(226, 143, 232, 0.18),
+            transparent 55%
+          );
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.26);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .silhouette {
+        width: 56%;
+        height: 82%;
+        border-radius: 26px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background:
+          radial-gradient(
+            120% 120% at 50% 20%,
+            rgba(255, 255, 255, 0.1),
+            transparent 55%
+          ),
+          radial-gradient(
+            120% 120% at 55% 60%,
+            rgba(127, 116, 255, 0.22),
+            rgba(20, 24, 55, 0.08)
+          ),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.1));
+        filter: saturate(1.05);
+        position: relative;
+        display: grid;
+        place-items: center;
+      }
+      .silhouette span {
+        font-weight: 900;
+        letter-spacing: 0.22em;
+        font-size: 12px;
+        color: rgba(243, 245, 255, 0.55);
+      }
+
+      .stage-caption {
+        position: absolute;
+        left: 18px;
+        bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.35);
+        backdrop-filter: blur(10px);
+      }
+      .stage-caption .n {
+        font-weight: 900;
+        font-size: 13px;
+      }
+      .stage-caption .d {
+        color: rgba(184, 188, 227, 0.92);
+        font-weight: 800;
+        font-size: 11px;
+        letter-spacing: 0.02em;
+      }
+
+      .tags {
+        position: absolute;
+        right: 18px;
+        bottom: 14px;
+        display: flex;
+        gap: 8px;
+      }
+      .tag {
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.32);
+        backdrop-filter: blur(10px);
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        font-size: 10px;
+        color: rgba(243, 245, 255, 0.88);
+        text-transform: uppercase;
+      }
+      .tag.accent {
+        border-color: rgba(127, 116, 255, 0.3);
+        box-shadow: var(--glow);
+      }
+
+      .panel {
+        border-radius: var(--radius2);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(20, 24, 55, 0.34);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
+        padding: 14px 14px 12px;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .panel-scroll {
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .panel-scroll::-webkit-scrollbar {
+        width: 10px;
+      }
+      .panel-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        border: 2px solid rgba(0, 0, 0, 0.22);
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .k-title {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+      .k-title .name {
+        font-size: var(--h1);
+        font-weight: 900;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .k-title .sub {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: rgba(184, 188, 227, 0.92);
+      }
+
+      .levelbox {
+        flex: 0 0 auto;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.28);
+        padding: 10px 10px 8px;
+        min-width: 160px;
+      }
+      .levelbox .top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        font-weight: 900;
+      }
+      .levelbox .top .lv {
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(243, 245, 255, 0.85);
+      }
+      .levelbox .top .tier {
+        font-size: 11px;
+        font-weight: 900;
+        color: rgba(184, 188, 227, 0.95);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .expbar {
+        margin-top: 8px;
+        width: 100%;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+      }
+      .expbar > i {
+        display: block;
+        height: 100%;
+        width: 46%;
+        background: linear-gradient(
+          90deg,
+          rgba(127, 116, 255, 0.95),
+          rgba(226, 143, 232, 0.8)
+        );
+        box-shadow: 0 0 22px rgba(127, 116, 255, 0.25);
+      }
+      .expmeta {
+        margin-top: 6px;
+        display: flex;
+        justify-content: space-between;
+        font-weight: 800;
+        font-size: 11px;
+        color: rgba(184, 188, 227, 0.95);
+      }
+
+      .stats {
+        margin-top: 10px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(11, 13, 28, 0.22);
+        overflow: hidden;
+      }
+      .statrow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        font-weight: 900;
+      }
+      .statrow:first-child {
+        border-top: none;
+      }
+      .statrow .k {
+        letter-spacing: 0.18em;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: rgba(184, 188, 227, 0.92);
+      }
+      .statrow .v {
+        font-size: 14px;
+        color: rgba(243, 245, 255, 0.94);
+      }
+
+      .rows {
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .rowbtn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 12px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.22);
+        cursor: pointer;
+        transition:
+          transform 0.12s ease,
+          border-color 0.12s ease,
+          background 0.12s ease;
+      }
+      .rowbtn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(127, 116, 255, 0.3);
+        background: rgba(11, 13, 28, 0.3);
+      }
+
+      .rowbtn .l {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .rowbtn .badge {
+        width: 34px;
+        height: 34px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(20, 24, 55, 0.5);
+        display: grid;
+        place-items: center;
+        box-shadow: 0 18px 30px rgba(0, 0, 0, 0.16);
+        flex: 0 0 auto;
+      }
+      .rowbtn .txt {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .rowbtn .txt .t {
+        font-weight: 950;
+        letter-spacing: 0.16em;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: rgba(243, 245, 255, 0.92);
+      }
+      .rowbtn .txt .d {
+        font-weight: 800;
+        font-size: 12px;
+        color: rgba(184, 188, 227, 0.95);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .rowbtn .r {
+        color: rgba(243, 245, 255, 0.72);
+        font-weight: 950;
+        letter-spacing: 0.06em;
+      }
+
+      .affinity {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+      .affinity .rank {
+        font-weight: 900;
+        color: rgba(243, 245, 255, 0.92);
+      }
+
+      .weapon-block {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(11, 13, 28, 0.22);
+        overflow: hidden;
+      }
+      .weapon-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .weapon-head .wname {
+        font-weight: 950;
+        font-size: 15px;
+      }
+      .weapon-head .wsub {
+        margin-top: 2px;
+        font-weight: 800;
+        font-size: 12px;
+        color: rgba(184, 188, 227, 0.95);
+      }
+      .pillbtn {
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(127, 116, 255, 0.3);
+        background: rgba(127, 116, 255, 0.12);
+        box-shadow: var(--glow);
+        color: rgba(243, 245, 255, 0.92);
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 11px;
+        cursor: pointer;
+        transition: transform 0.12s ease;
+      }
+      .pillbtn:hover {
+        transform: translateY(-1px);
+      }
+      .wp-preview {
+        height: 160px;
+        display: grid;
+        place-items: center;
+        color: rgba(243, 245, 255, 0.68);
+        font-weight: 950;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-size: 12px;
+        background:
+          radial-gradient(
+            120% 100% at 50% 30%,
+            rgba(255, 255, 255, 0.1),
+            transparent 60%
+          ),
+          radial-gradient(
+            120% 120% at 55% 65%,
+            rgba(127, 116, 255, 0.22),
+            rgba(0, 0, 0, 0.05)
+          );
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .wp-rows .statrow {
+        padding: 11px 12px;
+      }
+      .trait {
+        margin: 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(20, 24, 55, 0.4);
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .trait .tt {
+        font-weight: 950;
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(184, 188, 227, 0.95);
+        margin-bottom: 6px;
+      }
+      .trait .desc {
+        font-weight: 800;
+        font-size: 12px;
+        color: rgba(243, 245, 255, 0.9);
+      }
+
+      .sigils-wrap {
+        width: min(860px, 94%);
+        height: min(560px, 84%);
+        display: grid;
+        place-items: center;
+      }
+      .sigils-board {
+        width: 92%;
+        height: 86%;
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background:
+          radial-gradient(
+            120% 120% at 50% 40%,
+            rgba(127, 116, 255, 0.2),
+            rgba(11, 13, 28, 0.18)
+          ),
+          radial-gradient(
+            120% 120% at 70% 70%,
+            rgba(226, 143, 232, 0.14),
+            transparent 60%
+          );
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
+      }
+      .sigils-board .center {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 250px;
+        height: 250px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background:
+          radial-gradient(
+            closest-side,
+            rgba(255, 255, 255, 0.08),
+            transparent 70%
+          ),
+          radial-gradient(
+            closest-side,
+            rgba(127, 116, 255, 0.18),
+            transparent 68%
+          );
+        display: grid;
+        place-items: center;
+        color: rgba(243, 245, 255, 0.65);
+        font-weight: 950;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-size: 12px;
+      }
+      .poly {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 420px;
+        height: 420px;
+        opacity: 0.9;
+      }
+      .slot {
+        position: absolute;
+        width: 170px;
+        padding: 10px 10px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.28);
+        backdrop-filter: blur(10px);
+        cursor: pointer;
+        transition:
+          transform 0.12s ease,
+          border-color 0.12s ease,
+          background 0.12s ease;
+      }
+      .slot:hover {
+        transform: translateY(-1px);
+        border-color: rgba(127, 116, 255, 0.3);
+        background: rgba(11, 13, 28, 0.36);
+      }
+      .slot.active {
+        border-color: rgba(127, 116, 255, 0.55);
+        box-shadow: var(--glow);
+        background: rgba(11, 13, 28, 0.42);
+      }
+      .slot .k {
+        font-weight: 950;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        font-size: 10px;
+        color: rgba(184, 188, 227, 0.95);
+      }
+      .slot .v {
+        margin-top: 4px;
+        font-weight: 900;
+        font-size: 12px;
+        color: rgba(243, 245, 255, 0.92);
+      }
+
+      .slot.s1 {
+        left: 50%;
+        top: 7%;
+        transform: translateX(-50%);
+      }
+      .slot.s2 {
+        left: 78%;
+        top: 28%;
+        transform: translateX(-50%);
+      }
+      .slot.s3 {
+        left: 68%;
+        top: 70%;
+        transform: translateX(-50%);
+      }
+      .slot.s4 {
+        left: 32%;
+        top: 70%;
+        transform: translateX(-50%);
+      }
+      .slot.s5 {
+        left: 22%;
+        top: 28%;
+        transform: translateX(-50%);
+      }
+
+      .setblock {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(11, 13, 28, 0.22);
+        overflow: hidden;
+        margin-top: 10px;
+      }
+      .setblock .top {
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .setblock .top .setname {
+        font-weight: 950;
+        font-size: 14px;
+      }
+      .setblock .top .cnt {
+        font-weight: 950;
+        font-size: 12px;
+        color: rgba(184, 188, 227, 0.95);
+        letter-spacing: 0.08em;
+      }
+      .setblock ul {
+        list-style: none;
+        padding: 10px 12px 12px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .setblock li {
+        font-weight: 850;
+        font-size: 12px;
+        color: rgba(243, 245, 255, 0.9);
+      }
+      .setblock li span {
+        color: rgba(184, 188, 227, 0.95);
+        font-weight: 850;
+      }
+
+      .slotdetail {
+        margin-top: 10px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(11, 13, 28, 0.22);
+        overflow: hidden;
+      }
+      .slotdetail .hdr {
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .slotdetail .hdr .sn {
+        font-weight: 950;
+        font-size: 14px;
+      }
+      .slotdetail .lines {
+        padding: 10px 12px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .line2 {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-weight: 900;
+        font-size: 12px;
+      }
+      .line2 .k {
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(184, 188, 227, 0.92);
+        font-size: 10px;
+      }
+      .line2 .v {
+        color: rgba(243, 245, 255, 0.92);
+      }
+
+      .skins-wrap {
+        width: min(860px, 94%);
+        height: min(560px, 84%);
+        display: grid;
+        place-items: center;
+      }
+      .skin-view {
+        width: 92%;
+        height: 86%;
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background:
+          radial-gradient(
+            120% 100% at 55% 35%,
+            rgba(127, 116, 255, 0.28),
+            rgba(11, 13, 28, 0.16)
+          ),
+          radial-gradient(
+            110% 110% at 20% 80%,
+            rgba(226, 143, 232, 0.16),
+            transparent 60%
+          );
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .skin-card {
+        width: 64%;
+        height: 82%;
+        border-radius: 26px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background:
+          radial-gradient(
+            120% 110% at 45% 30%,
+            rgba(255, 255, 255, 0.1),
+            transparent 55%
+          ),
+          radial-gradient(
+            120% 120% at 55% 65%,
+            rgba(127, 116, 255, 0.22),
+            rgba(0, 0, 0, 0.05)
+          );
+        position: relative;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      .skin-card span {
+        font-weight: 950;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        font-size: 12px;
+        color: rgba(243, 245, 255, 0.58);
+      }
+      .skin-nav {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        justify-content: space-between;
+        pointer-events: none;
+      }
+      .skin-btn {
+        pointer-events: auto;
+        width: 46px;
+        height: 46px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.28);
+        backdrop-filter: blur(10px);
+        color: rgba(243, 245, 255, 0.92);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition:
+          transform 0.12s ease,
+          border-color 0.12s ease;
+      }
+      .skin-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(127, 116, 255, 0.32);
+      }
+      .skin-foot {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 14px;
+        padding: 12px 12px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.34);
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .skin-foot .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+      .skin-foot .meta .nm {
+        font-weight: 950;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .skin-foot .meta .st {
+        font-weight: 850;
+        font-size: 12px;
+        color: rgba(184, 188, 227, 0.95);
+      }
+      .skin-foot .equip {
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(127, 116, 255, 0.3);
+        background: rgba(127, 116, 255, 0.12);
+        box-shadow: var(--glow);
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: rgba(243, 245, 255, 0.92);
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+      .skin-foot .equip[disabled] {
+        opacity: 0.45;
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.22);
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+
+      .tab {
+        display: none;
+      }
+      .tab.active {
+        display: block;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(6px);
+        z-index: 50;
+      }
+      .modal.open {
+        display: flex;
+      }
+      .modal-card {
+        width: min(1040px, calc(100% - 40px));
+        height: min(640px, calc(100% - 70px));
+        border-radius: 26px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(20, 24, 55, 0.7);
+        box-shadow: 0 26px 90px rgba(0, 0, 0, 0.55);
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 360px 1fr;
+      }
+      .modal-left {
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .modal-right {
+        padding: 14px;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .modal-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .modal-top .ttl {
+        font-weight: 950;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-size: 12px;
+        color: rgba(243, 245, 255, 0.85);
+      }
+      .closex {
+        width: 38px;
+        height: 38px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.26);
+        color: rgba(243, 245, 255, 0.92);
+        cursor: pointer;
+      }
+      .wlist {
+        overflow: auto;
+        padding-right: 4px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .wlist::-webkit-scrollbar {
+        width: 10px;
+      }
+      .wlist::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        border: 2px solid rgba(0, 0, 0, 0.22);
+      }
+      .witem {
+        padding: 12px 12px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.22);
+        cursor: pointer;
+        transition:
+          transform 0.12s ease,
+          border-color 0.12s ease,
+          background 0.12s ease;
+      }
+      .witem:hover {
+        transform: translateY(-1px);
+        border-color: rgba(127, 116, 255, 0.3);
+        background: rgba(11, 13, 28, 0.3);
+      }
+      .witem.active {
+        border-color: rgba(127, 116, 255, 0.55);
+        box-shadow: var(--glow);
+        background: rgba(11, 13, 28, 0.4);
+      }
+      .witem .n {
+        font-weight: 950;
+        font-size: 14px;
+      }
+      .witem .s {
+        margin-top: 3px;
+        font-weight: 850;
+        font-size: 12px;
+        color: rgba(184, 188, 227, 0.95);
+      }
+
+      .mpreview {
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 13, 28, 0.2);
+        overflow: hidden;
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .mpp {
+        height: 220px;
+        display: grid;
+        place-items: center;
+        color: rgba(243, 245, 255, 0.7);
+        font-weight: 950;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-size: 12px;
+        background:
+          radial-gradient(
+            120% 100% at 50% 30%,
+            rgba(255, 255, 255, 0.1),
+            transparent 60%
+          ),
+          radial-gradient(
+            120% 120% at 55% 65%,
+            rgba(127, 116, 255, 0.22),
+            rgba(0, 0, 0, 0.05)
+          );
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .mmeta {
+        padding: 12px;
+      }
+      .mmeta .n {
+        font-weight: 950;
+        font-size: 16px;
+      }
+      .mmeta .s {
+        margin-top: 3px;
+        font-weight: 850;
+        font-size: 12px;
+        color: rgba(184, 188, 227, 0.95);
+      }
+
+      .grid-tight {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      @media (max-width: 1180px) {
+        .layout {
+          grid-template-columns: 190px 1fr 420px;
+        }
+      }
+      @media (max-width: 1040px) {
+        body {
+          overflow: auto;
+        }
+        .frame {
+          height: auto;
+        }
+        .layout {
+          height: auto;
+          grid-template-columns: 1fr;
+        }
+        .stage {
+          min-height: 520px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="stars"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="t">KAEZAN: AWAKENING</div>
+        <div class="s">Kaelis</div>
+      </div>
+      <div class="icons">
+        <button class="iconbtn" aria-label="Back">←</button>
+        <button class="iconbtn" aria-label="Home">⌂</button>
+        <button class="iconbtn" aria-label="Settings">⚙</button>
+      </div>
+    </header>
+
+    <section class="rosterbar">
+      <div class="roster-inner">
+        <button
+          class="roster-arrow"
+          id="rosterPrev"
+          aria-label="Previous Kaelis"
+        >
+          ‹
+        </button>
+
+        <div class="roster-list" id="rosterList"></div>
+
+        <button class="roster-arrow" id="rosterNext" aria-label="Next Kaelis">
+          ›
+        </button>
+      </div>
+    </section>
+
+    <main class="frame">
+      <div class="layout">
+        <aside class="nav">
+          <a class="navlink active" data-tab="details"
+            ><span class="ico">✦</span>Details</a
+          >
+          <a class="navlink" data-tab="weapon"
+            ><span class="ico">⚔</span>Weapon</a
+          >
+          <a class="navlink" data-tab="sigils"
+            ><span class="ico">△</span>Sigils</a
+          >
+          <a class="navlink" data-tab="skins"
+            ><span class="ico">🎭</span>Skins</a
+          >
+          <div class="spacer"></div>
+        </aside>
+
+        <section class="stage" id="stage">
+          <div class="stage-inner" id="stageInner">
+            <div class="silhouette" id="stageSilhouette">
+              <span>KAELIS VISUAL</span>
+            </div>
+            <div class="stage-caption">
+              <div>
+                <div class="n" id="stageName">Velvet Arclight</div>
+                <div class="d" id="stageDesc">Echo Duelist · Sentinela</div>
+              </div>
+            </div>
+            <div class="tags">
+              <div class="tag accent" id="tagRoute">SENTINELA</div>
+              <div class="tag" id="tagRole">ADAPTIVE SKIRMISHER</div>
+            </div>
+          </div>
+
+          <div class="sigils-wrap" id="sigilsStage" style="display: none">
+            <div class="sigils-board">
+              <svg class="poly" viewBox="0 0 100 100" fill="none">
+                <path
+                  d="M50 5 L90 32 L75 82 L25 82 L10 32 Z"
+                  stroke="rgba(127,116,255,.55)"
+                  stroke-width="1.2"
+                />
+                <path
+                  d="M50 18 L78 37 L68 72 L32 72 L22 37 Z"
+                  stroke="rgba(255,255,255,.10)"
+                  stroke-width="1"
+                />
+                <path d="M50 5 L50 95" stroke="rgba(255,255,255,.06)" />
+                <path d="M10 32 L90 32" stroke="rgba(255,255,255,.06)" />
+                <path d="M25 82 L75 82" stroke="rgba(255,255,255,.06)" />
+              </svg>
+
+              <div class="center">SIGILS</div>
+
+              <div class="slot s1 active" data-slot="1">
+                <div class="k">Slot 1</div>
+                <div class="v">ATK +15%</div>
+              </div>
+              <div class="slot s2" data-slot="2">
+                <div class="k">Slot 2</div>
+                <div class="v">DMG +8%</div>
+              </div>
+              <div class="slot s3" data-slot="3">
+                <div class="k">Slot 3</div>
+                <div class="v">ATK +8%</div>
+              </div>
+              <div class="slot s4" data-slot="4">
+                <div class="k">Slot 4</div>
+                <div class="v">CRIT Rate +10%</div>
+              </div>
+              <div class="slot s5" data-slot="5">
+                <div class="k">Slot 5</div>
+                <div class="v">DMG +10%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="skins-wrap" id="skinsStage" style="display: none">
+            <div class="skin-view">
+              <div class="skin-card">
+                <span id="skinCardText">SKIN PREVIEW</span>
+              </div>
+
+              <div class="skin-nav">
+                <button
+                  class="skin-btn"
+                  id="skinPrev"
+                  aria-label="Previous skin"
+                >
+                  ‹
+                </button>
+                <button class="skin-btn" id="skinNext" aria-label="Next skin">
+                  ›
+                </button>
+              </div>
+
+              <div class="skin-foot">
+                <div class="meta">
+                  <div class="nm" id="skinName">Quiet Guard</div>
+                  <div class="st" id="skinStatus">Owned · Default unlock</div>
+                  <div class="st" id="skinDesc">
+                    Default combat attire. Clean and restrained silhouette.
+                  </div>
+                </div>
+                <button class="equip" id="skinEquip">Equip</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel" id="rightPanel">
+          <div class="panel-scroll" id="panelScroll">
+            <div class="tab active" id="tab-details">
+              <div class="header">
+                <div class="k-title">
+                  <div class="name" id="dName">Velvet Arclight</div>
+                  <div class="sub" id="dSub">Echo Duelist · Sentinela</div>
+                </div>
+
+                <div class="levelbox">
+                  <div class="top">
+                    <div class="lv" id="dLv">LV 52</div>
+                    <div class="tier" id="dTier">TIER III · 41–60</div>
+                  </div>
+                  <div class="expbar"><i id="expFill"></i></div>
+                  <div class="expmeta">
+                    <span id="expLeft">EXP 1240</span>
+                    <span id="expRight">/ 2700</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="stats">
+                <div class="statrow">
+                  <div class="k">HP</div>
+                  <div class="v" id="stHP">9000</div>
+                </div>
+                <div class="statrow">
+                  <div class="k">ATK</div>
+                  <div class="v" id="stATK">920</div>
+                </div>
+                <div class="statrow">
+                  <div class="k">CRIT</div>
+                  <div class="v" id="stCRIT">34%</div>
+                </div>
+                <div class="statrow">
+                  <div class="k">DOT</div>
+                  <div class="v" id="stDOT">20%</div>
+                </div>
+                <div class="statrow">
+                  <div class="k">ENERGY</div>
+                  <div class="v" id="stENER">110</div>
+                </div>
+              </div>
+
+              <div class="rows">
+                <div class="rowbtn" id="goAffinity" data-tabjump="details">
+                  <div class="l">
+                    <div class="badge">♡</div>
+                    <div class="txt">
+                      <div class="t">Affinity</div>
+                      <div class="d" id="dAff">7/10</div>
+                    </div>
+                  </div>
+                  <div class="affinity">
+                    <div></div>
+                    <div class="rank" id="dAffRank">Rank 7</div>
+                  </div>
+                </div>
+
+                <button class="rowbtn" id="goWeapon" data-tabjump="weapon">
+                  <div class="l">
+                    <div class="badge">⚔</div>
+                    <div class="txt">
+                      <div class="t">Weapon</div>
+                      <div class="d" id="dWeaponLine">
+                        Ascendant Blade · SR · Lv 40
+                      </div>
+                    </div>
+                  </div>
+                  <div class="r">›</div>
+                </button>
+
+                <button class="rowbtn" id="goSigils" data-tabjump="sigils">
+                  <div class="l">
+                    <div class="badge">△</div>
+                    <div class="txt">
+                      <div class="t">Sigils</div>
+                      <div class="d" id="dSigilsLine">
+                        Aggression 5/5 · +10% ATK, +10% Basic/Skill
+                      </div>
+                    </div>
+                  </div>
+                  <div class="r">›</div>
+                </button>
+
+                <button class="rowbtn" id="goSkins" data-tabjump="skins">
+                  <div class="l">
+                    <div class="badge">🎭</div>
+                    <div class="txt">
+                      <div class="t">Skin</div>
+                      <div class="d" id="dSkinLine">Quiet Guard</div>
+                    </div>
+                  </div>
+                  <div class="r">›</div>
+                </button>
+              </div>
+            </div>
+
+            <div class="tab" id="tab-weapon">
+              <div class="weapon-block">
+                <div class="weapon-head">
+                  <div>
+                    <div class="wname" id="wName">Ascendant Blade</div>
+                    <div class="wsub" id="wSub">SR · Blade · Lv 40</div>
+                  </div>
+                  <button class="pillbtn" id="openArmory">Change</button>
+                </div>
+
+                <div class="wp-preview" id="wpPreview">WEAPON PREVIEW</div>
+
+                <div class="wp-rows">
+                  <div class="statrow">
+                    <div class="k">ATK</div>
+                    <div class="v" id="wATK">+140</div>
+                  </div>
+                  <div class="statrow">
+                    <div class="k">CRIT</div>
+                    <div class="v" id="wCRIT">+20%</div>
+                  </div>
+                  <div class="statrow">
+                    <div class="k">CRIT DMG</div>
+                    <div class="v" id="wCDMG">—</div>
+                  </div>
+                  <div class="statrow">
+                    <div class="k">DOT</div>
+                    <div class="v" id="wDOT">—</div>
+                  </div>
+                  <div class="statrow">
+                    <div class="k">ENERGY REGEN</div>
+                    <div class="v" id="wERG">—</div>
+                  </div>
+                </div>
+
+                <div class="trait">
+                  <div style="min-width: 0">
+                    <div class="tt">Passive</div>
+                    <div class="desc" id="wTrait">
+                      After Basic ATK, gain Tempo for 1 turn.
+                    </div>
+                  </div>
+                  <div class="tt" style="margin: 0; align-self: flex-start">
+                    Trait
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab" id="tab-sigils">
+              <div class="stats">
+                <div class="statrow">
+                  <div class="k">MAIN</div>
+                  <div class="v" id="sgMain">ATK +15%</div>
+                </div>
+                <div class="statrow">
+                  <div class="k">SUB</div>
+                  <div class="v" id="sgSub1">CRIT +6%</div>
+                </div>
+                <div class="statrow">
+                  <div class="k">SUB</div>
+                  <div class="v" id="sgSub2">HP +6%</div>
+                </div>
+              </div>
+
+              <div class="setblock">
+                <div class="top">
+                  <div class="setname" id="setName">Aggression</div>
+                  <div class="cnt" id="setCount">5/5</div>
+                </div>
+                <ul id="setList">
+                  <li><span>2-PC:</span> ATK increases by 10%.</li>
+                  <li>
+                    <span>4-PC:</span> Basic ATK and Skill damage increase by
+                    10%.
+                  </li>
+                  <li>
+                    <span>5-PC:</span> After a Crit, next hit deals +12% damage
+                    (once per turn).
+                  </li>
+                </ul>
+              </div>
+
+              <div class="slotdetail">
+                <div class="hdr">
+                  <div class="sn" id="slotTitle">Slot 1</div>
+                  <button class="pillbtn" id="changeSlot">Change</button>
+                </div>
+                <div class="lines">
+                  <div class="line2">
+                    <div>
+                      <div class="k">Sigil</div>
+                      <div class="v" id="sigilName">Aggression Crest</div>
+                    </div>
+                    <div style="text-align: right">
+                      <div class="k">Type</div>
+                      <div class="v" id="sigilType">Offense</div>
+                    </div>
+                  </div>
+                  <div class="line2">
+                    <div>
+                      <div class="k">Primary</div>
+                      <div class="v" id="sigilPrimary">ATK +15%</div>
+                    </div>
+                    <div style="text-align: right">
+                      <div class="k">Secondary</div>
+                      <div class="v" id="sigilSecondary">CRIT +6%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab" id="tab-skins">
+              <div class="grid-tight">
+                <div class="weapon-block">
+                  <div class="weapon-head">
+                    <div>
+                      <div class="wname" id="skHdr">Skins</div>
+                      <div class="wsub" id="skMeta">Owned 1 · Total 2</div>
+                    </div>
+                    <div style="min-width: 160px">
+                      <div class="expbar"><i style="width: 50%"></i></div>
+                      <div class="expmeta">
+                        <span>Collection</span><span id="skProg">1 / 2</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      padding: 12px;
+                      color: rgba(184, 188, 227, 0.95);
+                      font-weight: 850;
+                      font-size: 12px;
+                    "
+                  >
+                    Use the arrows on the preview to browse skins. Locked skins
+                    can be previewed but not equipped.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <div
+      class="modal"
+      id="armoryModal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Armory"
+    >
+      <div class="modal-card">
+        <div class="modal-left">
+          <div class="modal-top">
+            <div class="ttl">Armory</div>
+            <button class="closex" id="closeArmory" aria-label="Close">
+              ✕
+            </button>
+          </div>
+          <div class="wlist" id="weaponList"></div>
+        </div>
+
+        <div class="modal-right">
+          <div class="modal-top">
+            <div class="ttl">Preview</div>
+            <div></div>
+          </div>
+
+          <div class="mpreview">
+            <div class="mpp" id="mpp">WEAPON PREVIEW</div>
+            <div class="mmeta">
+              <div class="n" id="mpName">Ascendant Blade</div>
+              <div class="s" id="mpSub">SR · Blade · Lv 40</div>
+              <div class="stats" style="margin-top: 12px">
+                <div class="statrow">
+                  <div class="k">ATK</div>
+                  <div class="v" id="mpATK">+140</div>
+                </div>
+                <div class="statrow">
+                  <div class="k">CRIT</div>
+                  <div class="v" id="mpCRIT">+20%</div>
+                </div>
+              </div>
+              <div class="trait" style="margin: 12px 0 0">
+                <div style="min-width: 0">
+                  <div class="tt">Passive</div>
+                  <div class="desc" id="mpTrait">
+                    After Basic ATK, gain Tempo for 1 turn.
+                  </div>
+                </div>
+                <div class="tt" style="margin: 0; align-self: flex-start">
+                  Trait
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const data = {
+        kaelis: [
+          {
+            id: "velvet",
+            initials: "V",
+            name: "Velvet Arclight",
+            sub: "Echo Duelist · Sentinela",
+            route: "SENTINELA",
+            role: "ADAPTIVE SKIRMISHER",
+            level: 52,
+            tier: "TIER III · 41–60",
+            exp: { cur: 1240, max: 2700 },
+            stats: { hp: 9000, atk: 920, crit: "34%", dot: "20%", energy: 110 },
+            affinity: { cur: 7, max: 10, rank: 7 },
+            weaponEquipped: "ascendant",
+            sigils: {
+              set: "Aggression",
+              count: "5/5",
+              effects: [
+                { k: "2-PC", v: "ATK increases by 10%." },
+                { k: "4-PC", v: "Basic ATK and Skill damage increase by 10%." },
+                {
+                  k: "5-PC",
+                  v: "After a Crit, next hit deals +12% damage (once per turn).",
+                },
+              ],
+              slots: [
+                {
+                  slot: 1,
+                  main: "ATK +15%",
+                  sub1: "CRIT +6%",
+                  sub2: "HP +6%",
+                  name: "Aggression Crest",
+                  type: "Offense",
+                },
+                {
+                  slot: 2,
+                  main: "DMG +8%",
+                  sub1: "HP +6%",
+                  sub2: "—",
+                  name: "Aggression Crest",
+                  type: "Offense",
+                },
+                {
+                  slot: 3,
+                  main: "ATK +8%",
+                  sub1: "—",
+                  sub2: "—",
+                  name: "Aggression Crest",
+                  type: "Offense",
+                },
+                {
+                  slot: 4,
+                  main: "CRIT Rate +10%",
+                  sub1: "—",
+                  sub2: "—",
+                  name: "Aggression Crest",
+                  type: "Offense",
+                },
+                {
+                  slot: 5,
+                  main: "DMG +10%",
+                  sub1: "—",
+                  sub2: "—",
+                  name: "Aggression Crest",
+                  type: "Offense",
+                },
+              ],
+            },
+            skins: [
+              {
+                id: "quiet",
+                name: "Quiet Guard",
+                owned: true,
+                status: "Owned · Default unlock",
+                desc: "Default combat attire. Clean and restrained silhouette.",
+              },
+              {
+                id: "heroic",
+                name: "Heroic",
+                owned: false,
+                status: "Locked · Affinity Rank 10",
+                desc: "Ceremonial variant with gilded accents and higher contrast.",
+              },
+            ],
+            skinEquipped: "quiet",
+          },
+          {
+            id: "lumen",
+            initials: "L",
+            name: "Lumen Cerys",
+            sub: "Resonant Weaver · Ruína",
+            route: "RUÍNA",
+            role: "STATUS AMPLIFIER",
+            level: 44,
+            tier: "TIER II · 21–40",
+            exp: { cur: 820, max: 1800 },
+            stats: { hp: 8200, atk: 860, crit: "28%", dot: "34%", energy: 100 },
+            affinity: { cur: 3, max: 10, rank: 3 },
+            weaponEquipped: "ruinspindle",
+            sigils: {
+              set: "Ruinwake",
+              count: "3/5",
+              effects: [
+                { k: "2-PC", v: "DoT damage increases by 10%." },
+                { k: "4-PC", v: "Targets with DoT take +8% damage." },
+                {
+                  k: "5-PC",
+                  v: "When DoT triggers, gain +5 Energy (once per turn).",
+                },
+              ],
+              slots: [
+                {
+                  slot: 1,
+                  main: "DOT +10%",
+                  sub1: "ATK +6%",
+                  sub2: "—",
+                  name: "Ruinwake Crest",
+                  type: "Pressure",
+                },
+                {
+                  slot: 2,
+                  main: "ATK +8%",
+                  sub1: "DOT +6%",
+                  sub2: "—",
+                  name: "Ruinwake Crest",
+                  type: "Pressure",
+                },
+                {
+                  slot: 3,
+                  main: "HP +10%",
+                  sub1: "DOT +6%",
+                  sub2: "—",
+                  name: "Ruinwake Crest",
+                  type: "Pressure",
+                },
+                {
+                  slot: 4,
+                  main: "—",
+                  sub1: "—",
+                  sub2: "—",
+                  name: "Empty",
+                  type: "—",
+                },
+                {
+                  slot: 5,
+                  main: "—",
+                  sub1: "—",
+                  sub2: "—",
+                  name: "Empty",
+                  type: "—",
+                },
+              ],
+            },
+            skins: [
+              {
+                id: "default",
+                name: "Default",
+                owned: true,
+                status: "Owned · Default unlock",
+                desc: "Standard field attire.",
+              },
+            ],
+            skinEquipped: "default",
+          },
+        ],
+        weapons: [
+          {
+            id: "ascendant",
+            name: "Ascendant Blade",
+            rarity: "SR",
+            type: "Blade",
+            level: 40,
+            stats: { atk: "+140", crit: "+20%", cdmg: "—", dot: "—", er: "—" },
+            trait: "After Basic ATK, gain Tempo for 1 turn.",
+          },
+          {
+            id: "nightpiercer",
+            name: "Nightpiercer",
+            rarity: "SSR",
+            type: "Blade",
+            level: 20,
+            stats: {
+              atk: "+190",
+              crit: "+12%",
+              cdmg: "+20%",
+              dot: "—",
+              er: "—",
+            },
+            trait: "On Crit, apply Vulnerable for 1 turn.",
+          },
+          {
+            id: "astracoil",
+            name: "Astra Coil",
+            rarity: "SR",
+            type: "Catalyst",
+            level: 30,
+            stats: {
+              atk: "+120",
+              crit: "—",
+              cdmg: "—",
+              dot: "+12%",
+              er: "+6%",
+            },
+            trait: "DoT ticks deal +8% damage.",
+          },
+          {
+            id: "ruinspindle",
+            name: "Ruin Spindle",
+            rarity: "SR",
+            type: "Catalyst",
+            level: 35,
+            stats: {
+              atk: "+130",
+              crit: "—",
+              cdmg: "—",
+              dot: "+18%",
+              er: "+4%",
+            },
+            trait: "After DoT triggers, gain +5 Energy (once/turn).",
+          },
+        ],
+      };
+
+      const state = {
+        tab: "details",
+        kaelisIndex: 0,
+        sigilSlot: 1,
+        armoryOpen: false,
+        armorySelected: null,
+      };
+
+      const el = (id) => document.getElementById(id);
+
+      function clamp(n, a, b) {
+        return Math.max(a, Math.min(b, n));
+      }
+
+      function renderRoster() {
+        const host = el("rosterList");
+        host.innerHTML = "";
+        data.kaelis.forEach((k, idx) => {
+          const b = document.createElement("button");
+          b.className =
+            "roster-pill" + (idx === state.kaelisIndex ? " active" : "");
+          b.type = "button";
+          b.setAttribute("aria-label", "Select " + k.name);
+          b.addEventListener("click", () => {
+            state.kaelisIndex = idx;
+            state.sigilSlot = 1;
+            renderAll();
+          });
+
+          const p = document.createElement("div");
+          p.className = "pfp";
+          p.textContent = k.initials;
+
+          const m = document.createElement("div");
+          m.className = "roster-meta";
+          const n = document.createElement("div");
+          n.className = "name";
+          n.textContent = k.name.split(" ")[0];
+          const lv = document.createElement("div");
+          lv.className = "lv";
+          lv.textContent = "Lv " + k.level;
+          m.appendChild(n);
+          m.appendChild(lv);
+
+          b.appendChild(p);
+          b.appendChild(m);
+
+          host.appendChild(b);
+        });
+      }
+
+      function setTab(tab) {
+        state.tab = tab;
+        document.querySelectorAll(".navlink").forEach((a) => {
+          a.classList.toggle("active", a.dataset.tab === tab);
+        });
+
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.remove("active"));
+        el("tab-" + tab).classList.add("active");
+
+        el("stageInner").style.display =
+          tab === "sigils" || tab === "skins" ? "none" : "flex";
+        el("sigilsStage").style.display = tab === "sigils" ? "grid" : "none";
+        el("skinsStage").style.display = tab === "skins" ? "grid" : "none";
+
+        if (tab === "skins") {
+          el("rightPanel").style.display = "block";
+        } else {
+          el("rightPanel").style.display = "block";
+        }
+
+        renderAll();
+      }
+
+      function renderDetails(k) {
+        el("stageName").textContent = k.name;
+        el("stageDesc").textContent = k.sub;
+        el("tagRoute").textContent = k.route;
+        el("tagRole").textContent = k.role;
+
+        el("dName").textContent = k.name;
+        el("dSub").textContent = k.sub;
+
+        el("dLv").textContent = "LV " + k.level;
+        el("dTier").textContent = k.tier;
+
+        const pct = clamp((k.exp.cur / k.exp.max) * 100, 0, 100);
+        el("expFill").style.width = pct.toFixed(1) + "%";
+        el("expLeft").textContent = "EXP " + k.exp.cur;
+        el("expRight").textContent = "/ " + k.exp.max;
+
+        el("stHP").textContent = k.stats.hp;
+        el("stATK").textContent = k.stats.atk;
+        el("stCRIT").textContent = k.stats.crit;
+        el("stDOT").textContent = k.stats.dot;
+        el("stENER").textContent = k.stats.energy;
+
+        el("dAff").textContent = k.affinity.cur + "/" + k.affinity.max;
+        el("dAffRank").textContent = "Rank " + k.affinity.rank;
+
+        const we =
+          data.weapons.find((w) => w.id === k.weaponEquipped) ||
+          data.weapons[0];
+        el("dWeaponLine").textContent =
+          `${we.name} · ${we.rarity} · Lv ${we.level}`;
+
+        const setSummary =
+          k.sigils.set === "Aggression"
+            ? "Aggression 5/5 · +10% ATK, +10% Basic/Skill"
+            : `${k.sigils.set} ${k.sigils.count} · See effects`;
+        el("dSigilsLine").textContent = setSummary;
+
+        const sk = k.skins.find((s) => s.id === k.skinEquipped) || k.skins[0];
+        el("dSkinLine").textContent = sk ? sk.name : "—";
+      }
+
+      function renderWeapon(k) {
+        const we =
+          data.weapons.find((w) => w.id === k.weaponEquipped) ||
+          data.weapons[0];
+        el("wName").textContent = we.name;
+        el("wSub").textContent = `${we.rarity} · ${we.type} · Lv ${we.level}`;
+        el("wATK").textContent = we.stats.atk;
+        el("wCRIT").textContent = we.stats.crit;
+        el("wCDMG").textContent = we.stats.cdmg;
+        el("wDOT").textContent = we.stats.dot;
+        el("wERG").textContent = we.stats.er;
+        el("wTrait").textContent = we.trait;
+      }
+
+      function renderSigils(k) {
+        const s = k.sigils;
+        el("setName").textContent = s.set;
+        el("setCount").textContent = s.count;
+        el("setList").innerHTML = s.effects
+          .map((x) => `<li><span>${x.k}:</span> ${x.v}</li>`)
+          .join("");
+
+        document.querySelectorAll(".slot").forEach((slotEl) => {
+          const n = Number(slotEl.dataset.slot);
+          const sd = s.slots[n - 1];
+          slotEl.classList.toggle("active", n === state.sigilSlot);
+          slotEl.querySelector(".v").textContent =
+            sd?.main && sd.main !== "—" ? sd.main : "Empty";
+        });
+
+        const cur = s.slots[state.sigilSlot - 1];
+        el("slotTitle").textContent = "Slot " + state.sigilSlot;
+        el("sigilName").textContent = cur?.name || "—";
+        el("sigilType").textContent = cur?.type || "—";
+        el("sigilPrimary").textContent = cur?.main || "—";
+        el("sigilSecondary").textContent = cur?.sub1 || "—";
+        el("sgMain").textContent = cur?.main || "—";
+        el("sgSub1").textContent = cur?.sub1 || "—";
+        el("sgSub2").textContent = cur?.sub2 || "—";
+      }
+
+      function renderSkins(k) {
+        const skins = k.skins || [];
+        let idx = skins.findIndex((s) => s.id === k.skinEquipped);
+        if (idx < 0) idx = 0;
+
+        const current = skins[idx] || {
+          name: "—",
+          owned: false,
+          status: "—",
+          desc: "—",
+        };
+        el("skinName").textContent = current.name;
+        el("skinStatus").textContent = current.status;
+        el("skinDesc").textContent = current.desc;
+
+        el("skMeta").textContent =
+          `Owned ${skins.filter((s) => s.owned).length} · Total ${skins.length}`;
+        el("skProg").textContent =
+          `${skins.filter((s) => s.owned).length} / ${skins.length}`;
+
+        el("skinEquip").disabled = !current.owned;
+      }
+
+      function renderAll() {
+        const k = data.kaelis[state.kaelisIndex];
+        renderRoster();
+
+        if (state.tab === "details") renderDetails(k);
+        if (state.tab === "weapon") {
+          renderDetails(k);
+          renderWeapon(k);
+        }
+        if (state.tab === "sigils") {
+          renderDetails(k);
+          renderSigils(k);
+        }
+        if (state.tab === "skins") {
+          renderDetails(k);
+          renderSkins(k);
+        }
+
+        const stageText = el("stageSilhouette");
+        if (stageText)
+          stageText.querySelector("span").textContent =
+            state.tab === "weapon" ? "KAELIS VISUAL" : "KAELIS VISUAL";
+      }
+
+      function openArmory() {
+        const k = data.kaelis[state.kaelisIndex];
+        state.armoryOpen = true;
+        state.armorySelected = k.weaponEquipped;
+        el("armoryModal").classList.add("open");
+        renderArmory();
+      }
+
+      function closeArmory() {
+        state.armoryOpen = false;
+        el("armoryModal").classList.remove("open");
+      }
+
+      function renderArmory() {
+        const k = data.kaelis[state.kaelisIndex];
+        const list = el("weaponList");
+        list.innerHTML = "";
+
+        data.weapons.forEach((w) => {
+          const it = document.createElement("div");
+          it.className =
+            "witem" + (w.id === state.armorySelected ? " active" : "");
+          it.addEventListener("click", () => {
+            k.weaponEquipped = w.id;
+            state.armorySelected = w.id;
+            renderWeapon(k);
+            renderDetails(k);
+            closeArmory();
+            if (state.tab !== "weapon") setTab("weapon");
+          });
+
+          const n = document.createElement("div");
+          n.className = "n";
+          n.textContent = w.name;
+
+          const s = document.createElement("div");
+          s.className = "s";
+          s.textContent = `${w.rarity} · ${w.type} · Lv ${w.level}`;
+
+          it.appendChild(n);
+          it.appendChild(s);
+          list.appendChild(it);
+        });
+
+        const w =
+          data.weapons.find((x) => x.id === state.armorySelected) ||
+          data.weapons[0];
+        el("mpName").textContent = w.name;
+        el("mpSub").textContent = `${w.rarity} · ${w.type} · Lv ${w.level}`;
+        el("mpATK").textContent = w.stats.atk;
+        el("mpCRIT").textContent = w.stats.crit;
+        el("mpTrait").textContent = w.trait;
+      }
+
+      function init() {
+        renderRoster();
+
+        document.querySelectorAll(".navlink").forEach((a) => {
+          a.addEventListener("click", () => setTab(a.dataset.tab));
+        });
+
+        el("rosterPrev").addEventListener("click", () => {
+          state.kaelisIndex =
+            (state.kaelisIndex - 1 + data.kaelis.length) % data.kaelis.length;
+          state.sigilSlot = 1;
+          renderAll();
+        });
+
+        el("rosterNext").addEventListener("click", () => {
+          state.kaelisIndex = (state.kaelisIndex + 1) % data.kaelis.length;
+          state.sigilSlot = 1;
+          renderAll();
+        });
+
+        el("openArmory").addEventListener("click", openArmory);
+        el("closeArmory").addEventListener("click", closeArmory);
+        el("armoryModal").addEventListener("click", (e) => {
+          if (e.target === el("armoryModal")) closeArmory();
+        });
+
+        document.querySelectorAll("[data-tabjump]").forEach((b) => {
+          b.addEventListener("click", () => setTab(b.dataset.tabjump));
+        });
+
+        document.querySelectorAll(".slot").forEach((s) => {
+          s.addEventListener("click", () => {
+            state.sigilSlot = Number(s.dataset.slot);
+            renderSigils(data.kaelis[state.kaelisIndex]);
+          });
+        });
+
+        el("changeSlot").addEventListener("click", () => {
+          state.sigilSlot = (state.sigilSlot % 5) + 1;
+          renderSigils(data.kaelis[state.kaelisIndex]);
+        });
+
+        el("skinPrev").addEventListener("click", () => {
+          const k = data.kaelis[state.kaelisIndex];
+          const skins = k.skins || [];
+          let idx = skins.findIndex((s) => s.id === k.skinEquipped);
+          idx = (idx - 1 + skins.length) % skins.length;
+          k.skinEquipped = skins[idx].id;
+          renderSkins(k);
+        });
+        el("skinNext").addEventListener("click", () => {
+          const k = data.kaelis[state.kaelisIndex];
+          const skins = k.skins || [];
+          let idx = skins.findIndex((s) => s.id === k.skinEquipped);
+          idx = (idx + 1) % skins.length;
+          k.skinEquipped = skins[idx].id;
+          renderSkins(k);
+        });
+        el("skinEquip").addEventListener("click", () => {
+          const k = data.kaelis[state.kaelisIndex];
+          const s = (k.skins || []).find((x) => x.id === k.skinEquipped);
+          if (!s || !s.owned) return;
+          renderSkins(k);
+        });
+
+        renderAll();
+      }
+
+      init();
+    </script>
+  </body>
+</html>

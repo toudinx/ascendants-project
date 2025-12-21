@@ -17,6 +17,8 @@ function mapWeapon(def: WeaponDef): WeaponDefinition {
     id: def.id,
     name: def.name,
     description: def.description,
+    passive: def.passive,
+    imageUrl: def.imageUrl,
     rarity: def.rarity,
     flatStat: { type: def.flat.type, value: def.flat.value },
     secondaryStat: { type: def.secondary.type, value: def.secondary.value }

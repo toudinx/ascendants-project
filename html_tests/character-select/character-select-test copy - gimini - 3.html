@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KAEZAN: AWAKENING — Velvet Setup</title>
+    <style>
+      :root {
+        /* Paleta Premium Sci-Fi */
+        --bg: #0f0f18;
+        --bg-grad-1: rgba(99, 102, 241, 0.08);
+        --bg-grad-2: rgba(168, 85, 247, 0.06);
+
+        --text: #f0f0f5;
+        --text-muted: #9494a8;
+
+        --primary: #6366f1; /* Indigo */
+        --primary-glow: rgba(99, 102, 241, 0.4);
+        --secondary: #d946ef; /* Fuchsia */
+
+        --panel: rgba(22, 22, 30, 0.9);
+        --panel-border: rgba(255, 255, 255, 0.1);
+        --item-bg: rgba(255, 255, 255, 0.03);
+
+        --good: #34d399;
+        --warn: #fbbf24;
+
+        --ease: cubic-bezier(0.25, 1, 0.5, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+        background: var(--bg);
+        background-image:
+          radial-gradient(circle at 10% 20%, var(--bg-grad-1), transparent 40%),
+          radial-gradient(circle at 90% 80%, var(--bg-grad-2), transparent 40%);
+        color: var(--text);
+        font-family: "Segoe UI", Roboto, sans-serif;
+      }
+
+      /* Layout Principal */
+      #app {
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        height: 100%;
+      }
+
+      /* Topbar */
+      .topbar {
+        padding: 15px 24px;
+        border-bottom: 1px solid var(--panel-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.2);
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 14px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--primary);
+      }
+
+      /* Roster (Centralizado) */
+      .roster-strip {
+        width: 100%;
+        height: 90px;
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid var(--panel-border);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .roster-container {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .roster-nav-btn {
+        width: 40px;
+        height: 100%;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        color: var(--primary);
+        font-size: 24px;
+        z-index: 2;
+        position: absolute;
+      }
+      #rosterLeft {
+        left: 0;
+      }
+      #rosterRight {
+        right: 0;
+      }
+
+      .roster-viewport {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 0 20px;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+      }
+      .roster-viewport::-webkit-scrollbar {
+        display: none;
+      }
+
+      .char-thumb {
+        width: 60px;
+        height: 60px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        background: #2a2a35;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s var(--ease);
+        display: grid;
+        place-items: center;
+        font-weight: bold;
+        color: #666;
+      }
+      .char-thumb.active {
+        border-color: var(--primary);
+        box-shadow: 0 0 15px var(--primary-glow);
+        transform: scale(1.1);
+        color: white;
+        background: var(--primary);
+      }
+
+      /* Stage Area */
+      .main-stage {
+        padding: 20px 40px;
+        display: grid;
+        grid-template-columns: 200px 1fr 380px; /* Menu | Preview | Info */
+        gap: 30px;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Menu Esquerdo */
+      .side-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .nav-item {
+        padding: 12px 16px;
+        border-radius: 6px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        transition: 0.2s;
+        border-left: 2px solid transparent;
+      }
+      .nav-item:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .nav-item.active {
+        background: linear-gradient(
+          90deg,
+          rgba(99, 102, 241, 0.15),
+          transparent
+        );
+        color: white;
+        border-left-color: var(--primary);
+      }
+
+      /* Centro (Visual) */
+      .center-preview {
+        position: relative;
+        border-radius: 20px;
+        background: radial-gradient(
+          circle at 50% 60%,
+          rgba(99, 102, 241, 0.05),
+          transparent 70%
+        );
+        border: 1px solid var(--panel-border);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+      }
+      .char-img-placeholder {
+        width: 200px;
+        height: 400px;
+        background: linear-gradient(to top, var(--primary), transparent);
+        border-radius: 100px;
+        opacity: 0.8;
+        filter: blur(2px);
+      }
+
+      /* Pentágono Sigils Ajustado */
+      .sigil-pentagon {
+        position: relative;
+        width: 400px;
+        height: 400px; /* Aumentado */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .pentagon-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .sigil-slot-btn {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--panel);
+        border: 2px solid var(--text-muted);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition: 0.2s;
+        z-index: 10;
+        font-size: 10px;
+        font-weight: bold;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      }
+      .sigil-slot-btn:hover {
+        border-color: white;
+        transform: translate(-50%, -50%) scale(1.15);
+      }
+      .sigil-slot-btn.filled {
+        border-color: var(--secondary);
+        background: rgba(217, 70, 239, 0.15);
+        color: var(--secondary);
+      }
+      .sigil-slot-btn.selected {
+        box-shadow: 0 0 20px var(--secondary);
+        border-color: white;
+        background: var(--secondary);
+        color: #fff;
+      }
+
+      /* Painel Direito */
+      .info-panel {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        overflow-y: auto;
+      }
+
+      /* Tipografia do Painel */
+      h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .sub-title {
+        font-size: 11px;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      h3 {
+        margin: 15px 0 8px 0;
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 4px;
+      }
+
+      /* XP Bar */
+      .xp-container {
+        margin: 5px 0 15px 0;
+      }
+      .xp-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        color: var(--text-muted);
+      }
+      .xp-track {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .xp-fill {
+        height: 100%;
+        background: var(--good);
+        box-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
+      }
+
+      /* Affinity Badge */
+      .affinity-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: rgba(217, 70, 239, 0.1);
+        border: 1px solid rgba(217, 70, 239, 0.3);
+        border-radius: 20px;
+        color: var(--secondary);
+        font-weight: 700;
+        font-size: 12px;
+        width: fit-content;
+      }
+
+      /* Stat Rows */
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: var(--item-bg);
+        border-radius: 6px;
+        margin-bottom: 6px;
+      }
+      .stat-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      .stat-val {
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      /* Loadout Box */
+      .loadout-box {
+        margin-top: auto;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+      }
+      .loadout-item {
+        margin-bottom: 8px;
+      }
+      .loadout-item:last-child {
+        margin-bottom: 0;
+      }
+      .loadout-label {
+        font-size: 10px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        display: block;
+      }
+      .loadout-val {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      /* Generic Button */
+      .btn-primary {
+        margin-top: auto;
+        width: 100%;
+        padding: 14px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+      }
+      .btn-primary:hover {
+        filter: brightness(1.1);
+      }
+
+      /* Skins Overlay */
+      .skins-nav {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        pointer-events: none;
+      }
+      .skin-arr {
+        pointer-events: auto;
+        width: 40px;
+        height: 40px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        color: white;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .skin-dock {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(10, 10, 15, 0.95);
+        padding: 15px 25px;
+        border-radius: 12px;
+        border: 1px solid var(--panel-border);
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        backdrop-filter: blur(10px);
+      }
+
+      /* MODAL (Selection) */
+      dialog {
+        background: #14141b;
+        color: var(--text);
+        border: 1px solid var(--panel-border);
+        border-radius: 12px;
+        width: 80vw;
+        max-width: 900px;
+        height: 70vh;
+        padding: 0;
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8);
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+      }
+
+      .modal-layout {
+        display: grid;
+        grid-template-rows: 60px 1fr;
+        height: 100%;
+      }
+      .modal-header {
+        padding: 0 20px;
+        border-bottom: 1px solid var(--panel-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .modal-body {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .modal-list {
+        overflow-y: auto;
+        border-right: 1px solid var(--panel-border);
+        background: rgba(0, 0, 0, 0.1);
+      }
+      .list-item {
+        padding: 15px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .list-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .list-item.selected {
+        background: rgba(99, 102, 241, 0.1);
+        border-left: 3px solid var(--primary);
+      }
+      .item-icon {
+        width: 32px;
+        height: 32px;
+        background: #333;
+        border-radius: 4px;
+        display: grid;
+        place-items: center;
+        font-size: 10px;
+      }
+
+      .modal-details {
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        overflow-y: auto;
+      }
+      .modal-preview-large {
+        width: 100%;
+        height: 120px;
+        background: linear-gradient(45deg, rgba(0, 0, 0, 0.3), transparent);
+        border: 1px solid var(--panel-border);
+        display: grid;
+        place-items: center;
+        color: var(--text-muted);
+        letter-spacing: 0.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="topbar">
+        <div class="brand">
+          <h1>Kaezan: Awakening</h1>
+        </div>
+      </div>
+
+      <div class="roster-strip">
+        <div class="roster-container">
+          <div class="roster-nav-btn" id="rosterLeft">‹</div>
+          <div class="roster-viewport" id="rosterScroll"></div>
+          <div class="roster-nav-btn" id="rosterRight">›</div>
+        </div>
+      </div>
+
+      <div class="main-stage">
+        <nav class="side-nav">
+          <div class="nav-item active" data-tab="details">Details</div>
+          <div class="nav-item" data-tab="weapon">Weapon</div>
+          <div class="nav-item" data-tab="sigils">Sigils</div>
+          <div class="nav-item" data-tab="skins">Skins</div>
+        </nav>
+
+        <div class="center-preview" id="centerArea"></div>
+
+        <aside class="info-panel" id="infoPanel"></aside>
+      </div>
+    </div>
+
+    <dialog id="selectionModal">
+      <div class="modal-layout">
+        <div class="modal-header">
+          <h2 id="modalTitle">Armory</h2>
+          <button
+            style="
+              background: none;
+              border: none;
+              color: #fff;
+              font-size: 20px;
+              cursor: pointer;
+            "
+            onclick="closeModal()"
+          >
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-list" id="modalList"></div>
+          <div class="modal-details" id="modalDetails"></div>
+        </div>
+      </div>
+    </dialog>
+
+    <script>
+      // --- DATA ---
+      const characters = [
+        {
+          id: "c1",
+          name: "Velvet Arclight",
+          title: "Echo Duelist · Sentinela",
+          affinity: 8,
+          stats: {
+            hp: 4500,
+            atk: 2800,
+            crit: "15.5%",
+            dot: "120%",
+            energy: "140",
+          },
+          xp: { curr: 8450, max: 10000, lvl: 70 },
+          weaponId: "w1",
+          sigilSlots: [null, null, null, null, null], // 5 slots
+          skinId: "skin1",
+        },
+        {
+          id: "c2",
+          name: "Vesper",
+          title: "Shadow Walker",
+          affinity: 4,
+          stats: { hp: 3200, atk: 2100, crit: "25%", dot: "0%", energy: "100" },
+          xp: { curr: 200, max: 5000, lvl: 40 },
+          weaponId: "w2",
+          sigilSlots: [null, null, null, null, null],
+          skinId: "skin2",
+        },
+      ];
+
+      const weapons = [
+        {
+          id: "w1",
+          name: "Starshatter",
+          type: "Blade",
+          stats: { atk: 540, crit: "20%" },
+          passive: "Increases Critical Damage by 30% after casting a Skill.",
+          desc: "A blade forged from the remnants of a dying star.",
+        },
+        {
+          id: "w2",
+          name: "Void Edge",
+          type: "Dagger",
+          stats: { atk: 420, crit: "10%" },
+          passive: "Attacks ignore 15% of target DEF.",
+          desc: "Standard issue assassin weaponry.",
+        },
+        {
+          id: "w3",
+          name: "Ether Conduit",
+          type: "Staff",
+          stats: { atk: 380, crit: "5%" },
+          passive: "Energy Regeneration increased by 15%.",
+          desc: "Channels raw ether from the environment.",
+        },
+      ];
+
+      const sigils = [
+        {
+          id: "s1",
+          name: "Gladiator Helm",
+          slotType: "Head",
+          set: "Gladiator",
+          main: "HP +1200",
+          sub1: "ATK +5%",
+          sub2: "CRIT +2%",
+        },
+        {
+          id: "s2",
+          name: "Gladiator Chest",
+          slotType: "Body",
+          set: "Gladiator",
+          main: "DEF +15%",
+          sub1: "HP +5%",
+          sub2: "RES +4%",
+        },
+        {
+          id: "s3",
+          name: "Scholar Lens",
+          slotType: "Eye",
+          set: "Scholar",
+          main: "CRIT +8%",
+          sub1: "SPD +4",
+          sub2: "ATK +3%",
+        },
+        {
+          id: "s4",
+          name: "Void Prism",
+          slotType: "Core",
+          set: "Void",
+          main: "DOT +20%",
+          sub1: "ATK +8%",
+          sub2: "HP +200",
+        },
+      ];
+
+      const skins = [
+        { id: "skin1", name: "Velvet: Default", owned: true },
+        { id: "skin2", name: "Velvet: Neon City", owned: true },
+        { id: "skin3", name: "Velvet: Abyssal", owned: false },
+      ];
+
+      // --- STATE ---
+      let state = {
+        charIdx: 0,
+        tab: "details",
+        selectedSigilSlot: null,
+        tempSelectionId: null,
+      };
+
+      // --- HELPERS ---
+      const $ = (s) => document.querySelector(s);
+      const $$ = (s) => document.querySelectorAll(s);
+      const getChar = () => characters[state.charIdx];
+      const getWeapon = (id) => weapons.find((w) => w.id === id);
+      const getSigil = (id) => sigils.find((s) => s.id === id);
+
+      // --- INITIALIZATION ---
+      function init() {
+        renderRoster();
+        renderStage();
+        setupEvents();
+      }
+
+      // --- ROSTER ---
+      function renderRoster() {
+        const viewport = $("#rosterScroll");
+        viewport.innerHTML = "";
+        characters.forEach((c, idx) => {
+          const el = document.createElement("div");
+          el.className = `char-thumb ${idx === state.charIdx ? "active" : ""}`;
+          el.innerText = c.name[0];
+          el.onclick = () => {
+            state.charIdx = idx;
+            renderRoster();
+            renderStage();
+          };
+          viewport.appendChild(el);
+        });
+      }
+
+      // --- MAIN STAGE RENDERER ---
+      function renderStage() {
+        const c = getChar();
+        const center = $("#centerArea");
+        const panel = $("#infoPanel");
+
+        // Reset Styles
+        center.innerHTML = "";
+        panel.innerHTML = "";
+        $$(".nav-item").forEach((n) =>
+          n.classList.toggle("active", n.dataset.tab === state.tab)
+        );
+
+        if (state.tab === "details") renderDetails(c, center, panel);
+        else if (state.tab === "weapon") renderWeapon(c, center, panel);
+        else if (state.tab === "sigils") renderSigils(c, center, panel);
+        else if (state.tab === "skins") renderSkins(c, center, panel);
+      }
+
+      // --- TAB: DETAILS ---
+      function renderDetails(c, center, panel) {
+        // Center: Character Image
+        center.innerHTML = `<div class="char-img-placeholder"></div>`;
+
+        // Calculate Data
+        const w = getWeapon(c.weaponId);
+        const xpPerc = (c.xp.curr / c.xp.max) * 100;
+
+        // Find main set
+        const setCounts = {};
+        c.sigilSlots.forEach((sid) => {
+          if (sid) {
+            const s = getSigil(sid);
+            if (s) setCounts[s.set] = (setCounts[s.set] || 0) + 1;
+          }
+        });
+        let activeSet = "None";
+        for (const [set, count] of Object.entries(setCounts)) {
+          if (count >= 2) activeSet = `${set} (${count >= 4 ? "4pc" : "2pc"})`;
+        }
+
+        // Right: Stats with XP, Affinity, Loadout
+        panel.innerHTML = `
+          <div>
+            <div class="sub-title">${c.title}</div>
+            <h2>${c.name}</h2>
+          </div>
+          
+          <div class="xp-container">
+            <div class="xp-meta">
+               <span>LVL ${c.xp.lvl}</span>
+               <span>${c.xp.curr} / ${c.xp.max}</span>
+            </div>
+            <div class="xp-track"><div class="xp-fill" style="width:${xpPerc}%"></div></div>
+          </div>
+
+          <div class="affinity-badge">
+             <span style="font-size:14px">♥</span> Affinity Lv. ${c.affinity}
+          </div>
+
+          <h3>Attributes</h3>
+          <div class="stat-row">
+            <span class="stat-label">HP</span> <span class="stat-val">${c.stats.hp}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">ATK</span> <span class="stat-val">${c.stats.atk}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">CRIT</span> <span class="stat-val">${c.stats.crit}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">DOT</span> <span class="stat-val">${c.stats.dot}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">ENERGY</span> <span class="stat-val">${c.stats.energy}</span>
+          </div>
+
+          <div class="loadout-box">
+             <div class="loadout-item">
+               <span class="loadout-label">Equipped Weapon</span>
+               <span class="loadout-val">${w.name}</span>
+             </div>
+             <div class="loadout-item">
+               <span class="loadout-label">Active Set</span>
+               <span class="loadout-val" style="color:var(--good)">${activeSet}</span>
+             </div>
+          </div>
+        `;
+      }
+
+      // --- TAB: WEAPON ---
+      function renderWeapon(c, center, panel) {
+        const w = getWeapon(c.weaponId);
+
+        center.innerHTML = `<div style="font-size:80px; color:rgba(255,255,255,0.1)">⚔</div>`;
+
+        panel.innerHTML = `
+          <div>
+            <div class="sub-title">Equipped Weapon</div>
+            <h2 style="color:var(--warn)">${w.name}</h2>
+          </div>
+
+          <h3>Base Stats</h3>
+          <div class="stat-row">
+            <span class="stat-label">ATK</span>
+            <span class="stat-val">${w.stats.atk}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">CRIT</span>
+            <span class="stat-val">${w.stats.crit}</span>
+          </div>
+
+          <h3>Passive</h3>
+          <div style="font-size:13px; color:var(--text-muted); line-height:1.4;">
+            ${w.passive}
+          </div>
+          
+          <button class="btn-primary" onclick="openSelectionModal('weapon')">Change Weapon</button>
+        `;
+      }
+
+      // --- TAB: SIGILS ---
+      function renderSigils(c, center, panel) {
+        // Center: 5 Interactive Slots in Pentagon (Better Distributed)
+        const wrapper = document.createElement("div");
+        wrapper.className = "sigil-pentagon";
+
+        // Geometry
+        const radius = 150; // Increased radius for better spread
+        const centerX = 200; // Half of 400
+        const centerY = 200;
+
+        // Create SVG lines
+        let points = [];
+        for (let i = 0; i < 5; i++) {
+          const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+          points.push({
+            x: centerX + radius * Math.cos(angle),
+            y: centerY + radius * Math.sin(angle),
+          });
+        }
+
+        const svg = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "svg"
+        );
+        svg.setAttribute("class", "pentagon-svg");
+        const polyPoints = points.map((p) => `${p.x},${p.y}`).join(" ");
+        svg.innerHTML = `
+            <polygon points="${polyPoints}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2" />
+            <line x1="${centerX}" y1="${centerY}" x2="${points[0].x}" y2="${points[0].y}" stroke="rgba(255,255,255,0.05)" />
+            <line x1="${centerX}" y1="${centerY}" x2="${points[1].x}" y2="${points[1].y}" stroke="rgba(255,255,255,0.05)" />
+            <line x1="${centerX}" y1="${centerY}" x2="${points[2].x}" y2="${points[2].y}" stroke="rgba(255,255,255,0.05)" />
+            <line x1="${centerX}" y1="${centerY}" x2="${points[3].x}" y2="${points[3].y}" stroke="rgba(255,255,255,0.05)" />
+            <line x1="${centerX}" y1="${centerY}" x2="${points[4].x}" y2="${points[4].y}" stroke="rgba(255,255,255,0.05)" />
+        `;
+        wrapper.appendChild(svg);
+
+        // Create Buttons
+        points.forEach((p, i) => {
+          const sigilId = c.sigilSlots[i];
+          const btn = document.createElement("div");
+          btn.className = `sigil-slot-btn ${sigilId ? "filled" : ""} ${state.selectedSigilSlot === i ? "selected" : ""}`;
+          btn.innerHTML = sigilId ? "✦" : "+";
+          btn.style.left = p.x + "px";
+          btn.style.top = p.y + "px";
+
+          btn.onclick = () => {
+            state.selectedSigilSlot = i;
+            openSelectionModal("sigil");
+          };
+          wrapper.appendChild(btn);
+        });
+        center.appendChild(wrapper);
+
+        // Right Panel: Set Bonuses
+        const counts = {};
+        c.sigilSlots.forEach((sid) => {
+          if (!sid) return;
+          const s = getSigil(sid);
+          if (s) counts[s.set] = (counts[s.set] || 0) + 1;
+        });
+
+        let setHtml = "";
+        Object.keys(counts).forEach((set) => {
+          const count = counts[set];
+          if (count >= 2)
+            setHtml += `<div class="stat-row"><span class="stat-label">${set} (2pc)</span><span class="stat-val" style="color:var(--good)">Active</span></div>`;
+          if (count >= 4)
+            setHtml += `<div class="stat-row"><span class="stat-label">${set} (4pc)</span><span class="stat-val" style="color:var(--good)">Active</span></div>`;
+        });
+        if (setHtml === "")
+          setHtml = `<div style="color:var(--text-muted); font-size:12px; padding:10px;">No Set Bonuses Active</div>`;
+
+        panel.innerHTML = `
+           <div>
+             <div class="sub-title">Sigil Matrix</div>
+             <h2>Loadout</h2>
+           </div>
+           
+           <h3>Active Set Bonuses</h3>
+           ${setHtml}
+           
+           <div style="margin-top:auto; font-size:12px; color:var(--text-muted); opacity:0.7">
+             Select a slot in the matrix to equip Sigils.
+           </div>
+        `;
+      }
+
+      // --- TAB: SKINS ---
+      function renderSkins(c, center, panel) {
+        panel.style.display = "none";
+        center.style.gridColumn = "2 / -1";
+
+        const skin = skins.find((s) => s.id === c.skinId) || skins[0];
+
+        center.innerHTML = `
+          <div class="skins-nav">
+             <div class="skin-arr">‹</div>
+             <div class="skin-arr">›</div>
+          </div>
+          <div class="char-img-placeholder" style="transform:scale(1.2)"></div>
+          
+          <div class="skin-dock">
+             <div>
+               <div style="font-size:10px; color:var(--text-muted)">CURRENT SKIN</div>
+               <div style="font-size:16px; font-weight:800">${skin.name}</div>
+             </div>
+             <button class="btn-primary" style="width:auto; padding:10px 20px" disabled>EQUIPPED</button>
+          </div>
+        `;
+      }
+
+      // --- MODAL ---
+      function openSelectionModal(mode) {
+        const modal = $("#selectionModal");
+        const list = $("#modalList");
+        const details = $("#modalDetails");
+        const title = $("#modalTitle");
+
+        list.innerHTML = "";
+        details.innerHTML = "";
+        state.tempSelectionId = null;
+
+        const c = getChar();
+
+        if (mode === "weapon") {
+          title.innerText = "Armory";
+          weapons.forEach((w) => {
+            const el = document.createElement("div");
+            el.className = `list-item ${c.weaponId === w.id ? "selected" : ""}`;
+            el.innerHTML = `
+              <div class="item-icon">W</div>
+              <div style="font-size:13px; font-weight:700">${w.name}</div>
+            `;
+            el.onclick = () => {
+              $$(".list-item").forEach((i) => i.classList.remove("selected"));
+              el.classList.add("selected");
+              renderModalDetails(w, "weapon");
+            };
+            list.appendChild(el);
+          });
+          renderModalDetails(getWeapon(c.weaponId), "weapon");
+        } else if (mode === "sigil") {
+          title.innerText = `Sigil Select (Slot ${state.selectedSigilSlot + 1})`;
+          sigils.forEach((s) => {
+            const el = document.createElement("div");
+            el.className = "list-item";
+            el.innerHTML = `
+              <div class="item-icon" style="background:#222">S</div>
+              <div>
+                <div style="font-size:13px; font-weight:700">${s.name}</div>
+                <div style="font-size:10px; color:var(--text-muted)">${s.set} Set</div>
+              </div>
+            `;
+            el.onclick = () => {
+              $$(".list-item").forEach((i) => i.classList.remove("selected"));
+              el.classList.add("selected");
+              renderModalDetails(s, "sigil");
+            };
+            list.appendChild(el);
+          });
+        }
+        modal.showModal();
+      }
+
+      function renderModalDetails(item, mode) {
+        const details = $("#modalDetails");
+        state.tempSelectionId = item.id;
+
+        if (mode === "weapon") {
+          details.innerHTML = `
+            <div class="modal-preview-large">WEAPON PREVIEW</div>
+            <h2>${item.name}</h2>
+            <div style="color:var(--text-muted); font-size:12px; margin-bottom:20px">${item.desc}</div>
+            
+            <h3>Stats</h3>
+            <div class="stat-row"><span class="stat-label">ATK</span> <span class="stat-val">${item.stats.atk}</span></div>
+            <div class="stat-row"><span class="stat-label">CRIT</span> <span class="stat-val">${item.stats.crit}</span></div>
+            
+            <h3>Passive</h3>
+            <div style="font-size:12px; color:#fff; line-height:1.4">${item.passive}</div>
+
+            <button class="btn-primary" onclick="confirmSelection('weapon')">Equip Weapon</button>
+          `;
+        } else if (mode === "sigil") {
+          details.innerHTML = `
+            <div class="modal-preview-large" style="height:80px; width:80px; border-radius:50%; margin:0 auto 20px auto;">SIGIL</div>
+            <h2 style="text-align:center">${item.name}</h2>
+            <div style="text-align:center; color:var(--primary); font-size:12px; font-weight:bold">${item.set} Set</div>
+
+            <h3>Main Attribute</h3>
+            <div class="stat-row" style="border:1px solid var(--primary-glow)">
+               <span class="stat-val" style="color:var(--primary)">${item.main}</span>
+            </div>
+
+            <h3>Sub Attributes</h3>
+            <div class="stat-row"><span class="stat-val" style="font-size:12px">${item.sub1}</span></div>
+            <div class="stat-row"><span class="stat-val" style="font-size:12px">${item.sub2}</span></div>
+
+            <button class="btn-primary" onclick="confirmSelection('sigil')">Equip Sigil</button>
+          `;
+        }
+      }
+
+      function confirmSelection(mode) {
+        const c = getChar();
+        if (!state.tempSelectionId) return;
+
+        if (mode === "weapon") {
+          c.weaponId = state.tempSelectionId;
+        } else if (mode === "sigil") {
+          c.sigilSlots[state.selectedSigilSlot] = state.tempSelectionId;
+        }
+
+        renderStage();
+        closeModal();
+      }
+
+      function closeModal() {
+        $("#selectionModal").close();
+      }
+
+      function setupEvents() {
+        $$(".nav-item").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            state.tab = btn.dataset.tab;
+            $("#infoPanel").style.display = "flex";
+            $("#centerArea").style.gridColumn = "auto";
+            renderStage();
+          });
+        });
+        $("#rosterLeft").onclick = () =>
+          $("#rosterScroll").scrollBy({ left: -100, behavior: "smooth" });
+        $("#rosterRight").onclick = () =>
+          $("#rosterScroll").scrollBy({ left: 100, behavior: "smooth" });
+      }
+
+      init();
+    </script>
+  </body>
+</html>

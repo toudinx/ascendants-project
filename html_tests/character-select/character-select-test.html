@@ -1,0 +1,1489 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KAEZAN — Kaelis Hub (Reference)</title>
+    <style>
+      :root {
+        --bg: #050511;
+        --panel: rgba(17, 17, 32, 0.68);
+        --panel2: rgba(17, 17, 32, 0.46);
+        --stroke: rgba(255, 255, 255, 0.1);
+        --stroke2: rgba(255, 255, 255, 0.14);
+        --text: rgba(245, 245, 250, 0.94);
+        --muted: rgba(164, 164, 181, 0.88);
+
+        --primary: #8a7cff;
+        --secondary: #e28fe8;
+        --good: #2de3c8;
+        --warn: #ffd344;
+        --bad: #ff5a78;
+
+        --r: 16px;
+        --r2: 22px;
+        --shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+        --shadowSoft: 0 14px 42px rgba(0, 0, 0, 0.35);
+        --glass: blur(10px);
+        --glass2: blur(16px);
+
+        --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        overflow: hidden;
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial;
+        background:
+          radial-gradient(
+            1200px 800px at 24% 55%,
+            rgba(138, 124, 255, 0.15),
+            rgba(5, 5, 17, 0.88)
+          ),
+          radial-gradient(
+            900px 700px at 72% 30%,
+            rgba(226, 143, 232, 0.12),
+            rgba(5, 5, 17, 0.92)
+          ),
+          var(--bg);
+      }
+
+      /* Subtle stars */
+      .stars {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.55;
+        mix-blend-mode: screen;
+        background:
+          radial-gradient(
+            2px 2px at 14% 28%,
+            rgba(255, 255, 255, 0.22),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 62% 22%,
+            rgba(255, 255, 255, 0.18),
+            transparent 60%
+          ),
+          radial-gradient(
+            2px 2px at 82% 64%,
+            rgba(255, 255, 255, 0.16),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 34% 72%,
+            rgba(255, 255, 255, 0.14),
+            transparent 60%
+          ),
+          radial-gradient(
+            1px 1px at 46% 54%,
+            rgba(255, 255, 255, 0.1),
+            transparent 60%
+          );
+      }
+
+      /* Layout */
+      .app {
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+      }
+
+      .brand {
+        display: grid;
+        gap: 6px;
+      }
+      .brand .kicker {
+        font-weight: 800;
+        font-size: 10px;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.6);
+      }
+      .brand .title {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .brand .title h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 950;
+        letter-spacing: 0.02em;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: rgba(0, 0, 0, 0.22);
+        backdrop-filter: var(--glass);
+        -webkit-backdrop-filter: var(--glass);
+        color: rgba(255, 255, 255, 0.82);
+        font-weight: 850;
+        font-size: 11px;
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .icon-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: var(--glass);
+        -webkit-backdrop-filter: var(--glass);
+        color: rgba(255, 255, 255, 0.86);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease);
+      }
+      .icon-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.35);
+      }
+      .icon-btn:active {
+        transform: translateY(0px) scale(0.98);
+      }
+
+      /* Roster strip (HSR-like) */
+      .roster {
+        padding: 0 18px 12px 18px;
+      }
+
+      .roster-bar {
+        border-radius: var(--r2);
+        border: 1px solid var(--stroke);
+        background: rgba(0, 0, 0, 0.18);
+        backdrop-filter: var(--glass);
+        -webkit-backdrop-filter: var(--glass);
+        box-shadow: var(--shadowSoft);
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        overflow: hidden;
+      }
+
+      .roster-scroll {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 2px 2px;
+        scrollbar-width: thin;
+        flex: 1;
+      }
+      .roster-scroll::-webkit-scrollbar {
+        height: 10px;
+      }
+      .roster-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+      }
+      .roster-scroll::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 999px;
+      }
+
+      .portrait {
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: linear-gradient(
+          135deg,
+          rgba(138, 124, 255, 0.22),
+          rgba(226, 143, 232, 0.18)
+        );
+        cursor: pointer;
+        position: relative;
+        flex: 0 0 auto;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease),
+          box-shadow 140ms var(--ease);
+      }
+      .portrait:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.28);
+      }
+      .portrait.active {
+        border-color: rgba(138, 124, 255, 0.5);
+        box-shadow:
+          0 0 0 1px rgba(138, 124, 255, 0.25),
+          0 0 26px rgba(138, 124, 255, 0.22);
+      }
+      .portrait .lvl {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        padding: 4px 7px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.35);
+        font-weight: 950;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .roster-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .roster-right .mini {
+        color: rgba(255, 255, 255, 0.72);
+        font-weight: 800;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      /* Main grid */
+      .main {
+        padding: 0 18px 18px 18px;
+        display: grid;
+        grid-template-columns: 260px 1fr 420px;
+        gap: 14px;
+        min-height: 0;
+      }
+
+      /* Left nav (HSR-style) */
+      .nav {
+        border-radius: var(--r2);
+        border: 1px solid var(--stroke);
+        background: var(--panel2);
+        backdrop-filter: var(--glass2);
+        -webkit-backdrop-filter: var(--glass2);
+        box-shadow: var(--shadowSoft);
+        overflow: hidden;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-height: 0;
+      }
+
+      .nav-head {
+        padding: 14px 14px 12px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: grid;
+        gap: 8px;
+      }
+
+      .nav-head .name {
+        font-weight: 950;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+      }
+
+      .nav-head .sub {
+        color: rgba(164, 164, 181, 0.92);
+        font-weight: 650;
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .nav-items {
+        padding: 10px;
+        overflow: auto;
+      }
+
+      .nav-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.14);
+        color: rgba(255, 255, 255, 0.86);
+        cursor: pointer;
+        margin-bottom: 10px;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease),
+          background 140ms var(--ease);
+      }
+      .nav-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.26);
+      }
+      .nav-btn.active {
+        border-color: rgba(138, 124, 255, 0.48);
+        background: rgba(138, 124, 255, 0.12);
+        box-shadow: 0 0 0 1px rgba(138, 124, 255, 0.22);
+      }
+
+      .nav-ico {
+        width: 34px;
+        height: 34px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+      }
+
+      .nav-meta {
+        display: grid;
+        gap: 4px;
+      }
+      .nav-meta .t {
+        font-weight: 950;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .nav-meta .d {
+        color: rgba(164, 164, 181, 0.9);
+        font-weight: 650;
+        font-size: 12px;
+      }
+
+      .nav-foot {
+        padding: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: grid;
+        gap: 10px;
+      }
+
+      .cta {
+        border: 1px solid rgba(138, 124, 255, 0.42);
+        background: linear-gradient(
+          90deg,
+          rgba(138, 124, 255, 0.22),
+          rgba(226, 143, 232, 0.14)
+        );
+        border-radius: 16px;
+        padding: 12px 12px;
+        font-weight: 950;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.92);
+        cursor: pointer;
+        box-shadow:
+          0 0 0 1px rgba(138, 124, 255, 0.22),
+          0 0 28px rgba(138, 124, 255, 0.18);
+        transition: transform 140ms var(--ease);
+      }
+      .cta:hover {
+        transform: translateY(-1px);
+      }
+
+      .ghost {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.14);
+        border-radius: 16px;
+        padding: 12px 12px;
+        font-weight: 950;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.84);
+        cursor: pointer;
+      }
+
+      /* Center stage (character “palco”) */
+      .stage {
+        border-radius: var(--r2);
+        border: 1px solid var(--stroke);
+        background: rgba(0, 0, 0, 0.18);
+        backdrop-filter: var(--glass2);
+        -webkit-backdrop-filter: var(--glass2);
+        box-shadow: var(--shadowSoft);
+        overflow: hidden;
+        position: relative;
+        min-height: 0;
+      }
+
+      .stage::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            900px 540px at 30% 55%,
+            var(--themeA),
+            transparent 60%
+          ),
+          radial-gradient(
+            720px 540px at 70% 32%,
+            var(--themeB),
+            transparent 62%
+          ),
+          linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.55));
+      }
+
+      .stage-grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px
+          );
+        background-size: 44px 44px;
+        opacity: 0.2;
+        mask-image: radial-gradient(
+          ellipse at 50% 55%,
+          black 26%,
+          transparent 70%
+        );
+      }
+
+      .stage-inner {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 22px;
+      }
+
+      /* Placeholder “art” — troque por PNG/WebP depois */
+      .pose {
+        width: min(520px, 68%);
+        height: min(720px, 86%);
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background:
+          radial-gradient(
+            280px 280px at 40% 25%,
+            rgba(255, 255, 255, 0.14),
+            transparent 60%
+          ),
+          linear-gradient(
+            135deg,
+            rgba(138, 124, 255, 0.24),
+            rgba(226, 143, 232, 0.18)
+          ),
+          linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.62));
+        box-shadow: 0 28px 92px rgba(0, 0, 0, 0.58);
+        transition:
+          transform 240ms var(--ease),
+          opacity 240ms var(--ease),
+          filter 240ms var(--ease);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .pose::after {
+        content: "";
+        position: absolute;
+        inset: -60%;
+        background: conic-gradient(
+          from 180deg,
+          rgba(138, 124, 255, 0),
+          rgba(138, 124, 255, 0.18),
+          rgba(226, 143, 232, 0.12),
+          rgba(138, 124, 255, 0)
+        );
+        opacity: 0.55;
+        animation: spin 10s linear infinite;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .stage-foot {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+      }
+
+      .nameplate {
+        display: grid;
+        gap: 6px;
+      }
+      .nameplate .role {
+        color: rgba(255, 255, 255, 0.66);
+        font-weight: 850;
+        font-size: 10px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+      }
+      .nameplate .name {
+        font-weight: 980;
+        font-size: 20px;
+        letter-spacing: 0.01em;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .tag {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.2);
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .tag.primary {
+        border-color: rgba(138, 124, 255, 0.44);
+        box-shadow: 0 0 0 1px rgba(138, 124, 255, 0.2);
+      }
+
+      /* Right panel (content changes per tab) */
+      .right {
+        border-radius: var(--r2);
+        border: 1px solid var(--stroke);
+        background: var(--panel);
+        backdrop-filter: var(--glass2);
+        -webkit-backdrop-filter: var(--glass2);
+        box-shadow: var(--shadowSoft);
+        overflow: hidden;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto 1fr;
+      }
+
+      .right-head {
+        padding: 14px 14px 10px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .right-head .title {
+        display: grid;
+        gap: 6px;
+      }
+
+      .right-head .title .k {
+        color: rgba(255, 255, 255, 0.62);
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+      }
+      .right-head .title h2 {
+        margin: 0;
+        font-weight: 980;
+        font-size: 16px;
+      }
+      .right-head .title p {
+        margin: 0;
+        color: rgba(164, 164, 181, 0.92);
+        font-weight: 650;
+        font-size: 12px;
+        line-height: 1.35;
+        max-width: 44ch;
+      }
+
+      .right-body {
+        padding: 12px 12px 14px 12px;
+        overflow: auto;
+        min-height: 0;
+      }
+
+      .section {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.14);
+        border-radius: 18px;
+        padding: 12px;
+        margin-bottom: 12px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .section h3 {
+        margin: 0;
+        font-weight: 980;
+        font-size: 11px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.84);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .stat {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 16px;
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+      }
+
+      .stat .l {
+        color: rgba(255, 255, 255, 0.62);
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .stat .v {
+        font-weight: 980;
+        font-size: 14px;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .mini-btn {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.16);
+        color: rgba(255, 255, 255, 0.86);
+        border-radius: 14px;
+        padding: 10px 12px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 10px;
+        cursor: pointer;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease);
+      }
+      .mini-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.26);
+      }
+
+      /* Weapon list */
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .item {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.14);
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+        cursor: pointer;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease);
+      }
+      .item:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.26);
+      }
+      .item.active {
+        border-color: rgba(138, 124, 255, 0.48);
+        box-shadow: 0 0 0 1px rgba(138, 124, 255, 0.2);
+      }
+
+      .item .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .item .name {
+        font-weight: 980;
+        font-size: 13px;
+      }
+
+      .meta {
+        color: rgba(255, 255, 255, 0.62);
+        font-weight: 900;
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chips span {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.18);
+        font-weight: 900;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.74);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      /* Sigil slots */
+      .sig-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .sig {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.14);
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+      }
+      .sig .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .sig .slot {
+        font-weight: 980;
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.84);
+      }
+      .sig .name {
+        font-weight: 980;
+        font-size: 13px;
+      }
+
+      /* Skins */
+      .skin-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .skin {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.14);
+        overflow: hidden;
+        cursor: pointer;
+        transition:
+          transform 140ms var(--ease),
+          border-color 140ms var(--ease);
+      }
+      .skin:hover {
+        transform: translateY(-1px);
+        border-color: rgba(138, 124, 255, 0.26);
+      }
+      .skin.active {
+        border-color: rgba(138, 124, 255, 0.48);
+        box-shadow: 0 0 0 1px rgba(138, 124, 255, 0.2);
+      }
+      .skin .thumb {
+        height: 120px;
+        background: linear-gradient(
+          135deg,
+          rgba(138, 124, 255, 0.22),
+          rgba(226, 143, 232, 0.18)
+        );
+      }
+      .skin .body {
+        padding: 10px;
+        display: grid;
+        gap: 8px;
+      }
+      .skin .t {
+        font-weight: 980;
+        font-size: 12px;
+      }
+      .skin .s {
+        color: rgba(164, 164, 181, 0.92);
+        font-weight: 650;
+        font-size: 12px;
+      }
+
+      /* Center pose changes per section (the “HSR trick”) */
+      .pose.details {
+        transform: translateY(0px) scale(1);
+        filter: saturate(1.05);
+      }
+      .pose.weapon {
+        transform: translateY(-6px) scale(1.02);
+        filter: saturate(1.08) contrast(1.05);
+      }
+      .pose.sigils {
+        transform: translateY(4px) scale(1.02);
+        filter: saturate(1.05) contrast(1.02);
+      }
+      .pose.skins {
+        transform: translateY(0px) scale(1.01);
+        filter: saturate(1.12);
+      }
+
+      /* Responsive */
+      @media (max-width: 1100px) {
+        body {
+          overflow: auto;
+        }
+        .main {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="stars"></div>
+
+    <div class="app">
+      <!-- Top -->
+      <div class="topbar">
+        <div class="brand">
+          <div class="kicker">Echoes of Ascension</div>
+          <div class="title">
+            <h1>Kaelis</h1>
+            <span class="pill">HSR-like Hub · Reference</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="icon-btn" title="Back">⟵</button>
+          <button class="icon-btn" title="Inventory">🎒</button>
+          <button class="icon-btn" title="Settings">⚙️</button>
+        </div>
+      </div>
+
+      <!-- Roster -->
+      <div class="roster">
+        <div class="roster-bar">
+          <span class="pill" id="rosterLabel">ROSTER</span>
+          <div class="roster-scroll" id="rosterScroll"></div>
+          <div class="roster-right">
+            <span class="mini" id="rosterCount">0 Kaelis</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main -->
+      <div class="main">
+        <!-- Left nav -->
+        <aside class="nav">
+          <div class="nav-head">
+            <div class="name" id="navName">Velvet Arclight</div>
+            <div class="sub" id="navSub">
+              Overview, loadout e cosméticos na mesma tela (sem modal).
+            </div>
+          </div>
+
+          <div class="nav-items">
+            <button class="nav-btn active" data-tab="details">
+              <div class="nav-ico">📌</div>
+              <div class="nav-meta">
+                <div class="t">Details</div>
+                <div class="d">Level · Stats · Affinity</div>
+              </div>
+            </button>
+
+            <button class="nav-btn" data-tab="weapon">
+              <div class="nav-ico">🗡️</div>
+              <div class="nav-meta">
+                <div class="t">Weapon</div>
+                <div class="d">Select & inspect weapon</div>
+              </div>
+            </button>
+
+            <button class="nav-btn" data-tab="sigils">
+              <div class="nav-ico">🜂</div>
+              <div class="nav-meta">
+                <div class="t">Sigils</div>
+                <div class="d">Slots · Set bonus</div>
+              </div>
+            </button>
+
+            <button class="nav-btn" data-tab="skins">
+              <div class="nav-ico">🎭</div>
+              <div class="nav-meta">
+                <div class="t">Skins</div>
+                <div class="d">Poses & outfits</div>
+              </div>
+            </button>
+          </div>
+
+          <div class="nav-foot">
+            <!-- 1 CTA só, sem “botão demais” -->
+            <button class="cta" id="btnConfirm">Confirm Kaelis</button>
+            <button class="ghost" id="btnClose">Close</button>
+          </div>
+        </aside>
+
+        <!-- Center stage -->
+        <section class="stage" id="stage">
+          <div class="stage-grid"></div>
+          <div class="stage-inner">
+            <div
+              class="pose details"
+              id="poseBox"
+              title="Trocar por PNG/WebP da pose"
+            ></div>
+          </div>
+
+          <div class="stage-foot">
+            <div class="nameplate">
+              <div class="role" id="stageRole">ROSTER LEAD</div>
+              <div class="name" id="stageName">Velvet Arclight</div>
+            </div>
+            <div class="tags" id="stageTags"></div>
+          </div>
+        </section>
+
+        <!-- Right panel -->
+        <aside class="right">
+          <div class="right-head">
+            <div class="title">
+              <div class="k" id="rightKicker">DETAILS</div>
+              <h2 id="rightTitle">Overview</h2>
+              <p id="rightDesc">
+                Level, affinity e um resumo do loadout atual (arma + sigils).
+              </p>
+            </div>
+            <span class="pill" id="rightBadge">Lv 52</span>
+          </div>
+
+          <div class="right-body" id="rightBody">
+            <!-- injected by JS -->
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <script>
+      // ==========================
+      // Mock data (substituir depois)
+      // ==========================
+      const KAELIS = [
+        {
+          id: "velvet",
+          name: "Velvet Arclight",
+          role: "Echo Duelist",
+          tags: ["Sentinela", "Adaptive Skirmisher"],
+          level: 52,
+          affinity: 7,
+          stats: { hp: 9000, atk: 920, crit: "34%", dot: "20%", energy: 110 },
+          themeA: "rgba(138,124,255,0.18)",
+          themeB: "rgba(226,143,232,0.12)",
+          weapon: {
+            id: "ascBlade",
+            name: "Ascendant Blade",
+            meta: "ATK · Tempo",
+            chips: ["ATK +140", "CRIT +2%"],
+          },
+          sigils: [
+            {
+              slot: 1,
+              set: "Aggression",
+              name: "Aggression Crest II",
+              chips: ["DMG +20%", "Crit DMG +10%"],
+            },
+            {
+              slot: 2,
+              set: "Aggression",
+              name: "Aggression Crest IV",
+              chips: ["ATK +6%", "Energy +4%"],
+            },
+            {
+              slot: 3,
+              set: "Aggression",
+              name: "Aggression Crest II",
+              chips: ["DMG +20%", "Crit DMG +10%"],
+            },
+            {
+              slot: 4,
+              set: "Aggression",
+              name: "Aggression Crest IV",
+              chips: ["ATK +6%", "Energy +4%"],
+            },
+            {
+              slot: 5,
+              set: "Aggression",
+              name: "Aggression Crest II",
+              chips: ["DMG +20%", "Crit DMG +10%"],
+            },
+          ],
+          skins: [
+            { id: "quiet", title: "Quiet Guard", sub: "Default skin" },
+            { id: "heroic", title: "Heroic", sub: "Alt outfit" },
+          ],
+          equippedSkin: "quiet",
+        },
+        {
+          id: "lumen",
+          name: "Lumen Cerys",
+          role: "Resonant Weaver",
+          tags: ["Ruína", "Status Amplifier"],
+          level: 44,
+          affinity: 3,
+          stats: { hp: 9000, atk: 880, crit: "28%", dot: "34%", energy: 100 },
+          themeA: "rgba(226,143,232,0.14)",
+          themeB: "rgba(138,124,255,0.10)",
+          weapon: {
+            id: "ruinSpindle",
+            name: "Ruin Spindle",
+            meta: "DoT · Attrition",
+            chips: ["ATK +110", "DoT +6%"],
+          },
+          sigils: [
+            {
+              slot: 1,
+              set: "Ruína",
+              name: "Ruin Echo Mark",
+              chips: ["DoT +8%", "DMG +10%"],
+            },
+            {
+              slot: 2,
+              set: "Ruína",
+              name: "Ruin Echo Mark",
+              chips: ["DoT +8%", "DMG +10%"],
+            },
+            {
+              slot: 3,
+              set: "Aegis",
+              name: "Aegis Reserve Band",
+              chips: ["HP +6%", "Posture +8%"],
+            },
+            {
+              slot: 4,
+              set: "Ruína",
+              name: "Ruin Echo Mark",
+              chips: ["DoT +8%", "DMG +10%"],
+            },
+            {
+              slot: 5,
+              set: "Ruína",
+              name: "Ruin Echo Mark",
+              chips: ["DoT +8%", "DMG +10%"],
+            },
+          ],
+          skins: [
+            { id: "default", title: "Resonant", sub: "Default skin" },
+            { id: "alt", title: "Nocturne", sub: "Alt outfit" },
+          ],
+          equippedSkin: "default",
+        },
+      ];
+
+      const state = {
+        selectedId: "velvet",
+        tab: "details", // details | weapon | sigils | skins
+      };
+
+      const $ = (q) => document.querySelector(q);
+      const $$ = (q) => Array.from(document.querySelectorAll(q));
+
+      const getKaelis = () =>
+        KAELIS.find((k) => k.id === state.selectedId) || KAELIS[0];
+
+      function setTheme() {
+        const k = getKaelis();
+        const stage = $("#stage");
+        stage.style.setProperty("--themeA", k.themeA);
+        stage.style.setProperty("--themeB", k.themeB);
+      }
+
+      function renderRoster() {
+        const sc = $("#rosterScroll");
+        sc.innerHTML = "";
+
+        KAELIS.forEach((k) => {
+          const el = document.createElement("div");
+          el.className =
+            "portrait" + (k.id === state.selectedId ? " active" : "");
+          el.title = k.name;
+          el.innerHTML = `<div class="lvl">${k.level}</div>`;
+          el.addEventListener("click", () => {
+            state.selectedId = k.id;
+            renderAll(true);
+          });
+          sc.appendChild(el);
+        });
+
+        $("#rosterCount").textContent = `${KAELIS.length} Kaelis`;
+      }
+
+      function renderStage(animate) {
+        const k = getKaelis();
+
+        $("#navName").textContent = k.name;
+        $("#navSub").textContent = `${k.role} · Affinity ${k.affinity}/10`;
+
+        $("#stageName").textContent = k.name;
+        $("#stageRole").textContent = k.role.toUpperCase();
+
+        const tags = $("#stageTags");
+        tags.innerHTML = "";
+        k.tags.forEach((t, i) => {
+          const span = document.createElement("span");
+          span.className = "tag" + (i === 0 ? " primary" : "");
+          span.textContent = t;
+          tags.appendChild(span);
+        });
+
+        // Pose changes based on tab (placeholder animation)
+        const pose = $("#poseBox");
+        pose.className = "pose " + state.tab;
+
+        if (animate) {
+          pose.style.opacity = "0";
+          pose.style.transform = "translateY(10px) scale(0.98)";
+          setTimeout(() => {
+            pose.style.opacity = "1";
+            pose.style.transform = "";
+          }, 90);
+        }
+      }
+
+      function renderRight() {
+        const k = getKaelis();
+        const rightBody = $("#rightBody");
+
+        const setHeader = (kicker, title, desc, badge) => {
+          $("#rightKicker").textContent = kicker;
+          $("#rightTitle").textContent = title;
+          $("#rightDesc").textContent = desc;
+          $("#rightBadge").textContent = badge;
+        };
+
+        if (state.tab === "details") {
+          setHeader(
+            "DETAILS",
+            "Overview",
+            "Level, affinity e um resumo do loadout atual (arma + sigils).",
+            `Lv ${k.level}`
+          );
+
+          // set bonus quick
+          const counts = k.sigils.reduce((acc, s) => {
+            acc[s.set] = (acc[s.set] || 0) + 1;
+            return acc;
+          }, {});
+          const [bestSet, bestN] = Object.entries(counts).sort(
+            (a, b) => b[1] - a[1]
+          )[0] || ["None", 0];
+
+          rightBody.innerHTML = `
+            <div class="section">
+              <h3>Core Stats</h3>
+              <div class="grid2">
+                <div class="stat"><span class="l">HP</span><span class="v">${k.stats.hp}</span></div>
+                <div class="stat"><span class="l">ATK</span><span class="v">${k.stats.atk}</span></div>
+                <div class="stat"><span class="l">CRIT</span><span class="v">${k.stats.crit}</span></div>
+                <div class="stat"><span class="l">ENERGY</span><span class="v">${k.stats.energy}</span></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3>Loadout Summary <span class="meta">Current</span></h3>
+              <div class="row">
+                <div>
+                  <div class="meta">Weapon</div>
+                  <div style="font-weight:980; font-size:13px;">${k.weapon.name}</div>
+                </div>
+                <button class="mini-btn" onclick="window.__setTab('weapon')">Go</button>
+              </div>
+              <div class="chips">${k.weapon.chips.map((c) => `<span>${c}</span>`).join("")}</div>
+
+              <div style="height:10px;"></div>
+
+              <div class="row">
+                <div>
+                  <div class="meta">Sigils</div>
+                  <div style="font-weight:980; font-size:13px;">${bestSet} · ${bestN}/5</div>
+                </div>
+                <button class="mini-btn" onclick="window.__setTab('sigils')">Go</button>
+              </div>
+              <div class="chips"><span>Set Bonus</span><span>${bestSet}</span><span>${bestN}/5</span></div>
+            </div>
+
+            <div class="section">
+              <h3>Affinity</h3>
+              <div class="row">
+                <div class="meta">Bond Level</div>
+                <div style="font-weight:980;">${k.affinity}/10</div>
+              </div>
+              <div class="chips">
+                <span>Unlock Scenes</span>
+                <span>Unlock Poses</span>
+                <span>Cosmetics</span>
+              </div>
+            </div>
+          `;
+        }
+
+        if (state.tab === "weapon") {
+          setHeader(
+            "WEAPON",
+            "Select Weapon",
+            "Escolha uma arma. A pose no centro muda para 'combat-ready'.",
+            "Weapon"
+          );
+
+          // Mock list
+          const list = [
+            k.weapon,
+            {
+              id: "alt1",
+              name: "Nightpiercer",
+              meta: "CRIT · Burst",
+              chips: ["ATK +90", "Crit DMG +12%"],
+            },
+            {
+              id: "alt2",
+              name: "Astra Coil",
+              meta: "Energy · Tempo",
+              chips: ["Energy +8", "DMG +6%"],
+            },
+          ];
+
+          rightBody.innerHTML = `
+            <div class="section">
+              <h3>Available Weapons <span class="meta">${list.length} items</span></h3>
+              <div class="list" id="weaponList"></div>
+            </div>
+            <div class="section">
+              <h3>Notes</h3>
+              <div style="color:${getComputedStyle(document.documentElement).getPropertyValue("--muted")}; font-weight:650; font-size:12px;">
+                No Angular: clicar em item já equipa, e o painel de stats reflete isso. Sem modal.
+              </div>
+            </div>
+          `;
+
+          const wl = $("#weaponList");
+          list.forEach((w) => {
+            const el = document.createElement("div");
+            el.className = "item" + (w.id === k.weapon.id ? " active" : "");
+            el.innerHTML = `
+              <div class="top">
+                <div class="name">${w.name}</div>
+                <div class="meta">${w.meta}</div>
+              </div>
+              <div class="chips">${w.chips.map((c) => `<span>${c}</span>`).join("")}</div>
+            `;
+            el.addEventListener("click", () => {
+              k.weapon = w;
+              renderRight();
+            });
+            wl.appendChild(el);
+          });
+        }
+
+        if (state.tab === "sigils") {
+          setHeader(
+            "SIGILS",
+            "Sigil Slots",
+            "Clique num slot e troque. Set bonus fica sempre visível.",
+            "Sigils"
+          );
+
+          // bonus
+          const counts = k.sigils.reduce((acc, s) => {
+            acc[s.set] = (acc[s.set] || 0) + 1;
+            return acc;
+          }, {});
+          const [bestSet, bestN] = Object.entries(counts).sort(
+            (a, b) => b[1] - a[1]
+          )[0] || ["None", 0];
+
+          rightBody.innerHTML = `
+            <div class="section">
+              <h3>Set Bonus <span class="meta">Active</span></h3>
+              <div class="row">
+                <div style="font-weight:980;">${bestSet} · ${bestN}/5</div>
+                <button class="mini-btn" onclick="alert('Future: abrir picker de set / filtro')">Manage</button>
+              </div>
+              <div class="chips">
+                <span>${bestSet}</span>
+                <span>${bestN}/5</span>
+                <span>${bestN === 5 ? "ACTIVE" : "PARTIAL"}</span>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3>Slots</h3>
+              <div class="sig-grid" id="sigGrid"></div>
+            </div>
+          `;
+
+          const sg = $("#sigGrid");
+          k.sigils.forEach((s) => {
+            const el = document.createElement("div");
+            el.className = "sig";
+            el.innerHTML = `
+              <div class="top">
+                <div class="slot">Slot ${s.slot}</div>
+                <div class="meta">${s.set}</div>
+              </div>
+              <div class="name">${s.name}</div>
+              <div class="chips">${s.chips.map((c) => `<span>${c}</span>`).join("")}</div>
+              <div class="row">
+                <div class="meta">Click to swap</div>
+                <button class="mini-btn">Change</button>
+              </div>
+            `;
+            el.addEventListener("click", () => {
+              alert("Reference: aqui abre um picker (drawer) ou troca rápida.");
+            });
+            sg.appendChild(el);
+          });
+        }
+
+        if (state.tab === "skins") {
+          setHeader(
+            "SKINS",
+            "Skins & Poses",
+            "Selecione uma skin. A pose central muda para 'showcase'.",
+            "Skins"
+          );
+
+          rightBody.innerHTML = `
+            <div class="section">
+              <h3>Available Skins <span class="meta">${k.skins.length} items</span></h3>
+              <div class="skin-grid" id="skinGrid"></div>
+            </div>
+            <div class="section">
+              <h3>Notes</h3>
+              <div style="color:${getComputedStyle(document.documentElement).getPropertyValue("--muted")}; font-weight:650; font-size:12px;">
+                Depois você pode ligar "Affinity unlock" aqui: skins/poses/cenas liberadas por afinidade e conquistas.
+              </div>
+            </div>
+          `;
+
+          const grid = $("#skinGrid");
+          k.skins.forEach((s) => {
+            const el = document.createElement("div");
+            el.className = "skin" + (s.id === k.equippedSkin ? " active" : "");
+            el.innerHTML = `
+              <div class="thumb"></div>
+              <div class="body">
+                <div class="t">${s.title}</div>
+                <div class="s">${s.sub}</div>
+                <div class="row">
+                  <div class="meta">${s.id === k.equippedSkin ? "Equipped" : "Tap to equip"}</div>
+                  <button class="mini-btn">${s.id === k.equippedSkin ? "Active" : "Equip"}</button>
+                </div>
+              </div>
+            `;
+            el.addEventListener("click", () => {
+              k.equippedSkin = s.id;
+              renderRight();
+            });
+            grid.appendChild(el);
+          });
+        }
+      }
+
+      function setTab(tab, animatePose) {
+        state.tab = tab;
+        $$(".nav-btn").forEach((b) =>
+          b.classList.toggle("active", b.dataset.tab === tab)
+        );
+        renderStage(animatePose);
+        renderRight();
+      }
+
+      function renderAll(animatePose) {
+        renderRoster();
+        setTheme();
+        renderStage(animatePose);
+        renderRight();
+      }
+
+      // Wire nav
+      $$(".nav-btn").forEach((b) =>
+        b.addEventListener("click", () => setTab(b.dataset.tab, true))
+      );
+
+      // Expose helper for small "Go" buttons
+      window.__setTab = (t) => setTab(t, true);
+
+      // Buttons
+      $("#btnConfirm").addEventListener("click", () => {
+        const k = getKaelis();
+        alert(`Confirm Kaelis (reference)\n${k.name}\n(Tab: ${state.tab})`);
+      });
+      $("#btnClose").addEventListener("click", () =>
+        alert("Close (reference)")
+      );
+
+      // Initial render
+      renderAll(false);
+      setTab("details", false);
+    </script>
+  </body>
+</html>

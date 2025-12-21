@@ -2,8 +2,9 @@ import { SigilDef } from '../sigil.types';
 
 export const AGGRESSION_CREST_III_DEF: SigilDef = {
   id: 'agressao-slot3',
-  name: 'Agressão Crest III',
+  name: 'Aggression Crest III',
   description: 'Sharpened for decisive strikes.',
+  imageUrl: 'assets/battle/fx/shadow_ground.png',
   level: 90,
   slot: 'slot3',
   setKey: 'agressao',
@@ -15,3 +16,4 @@ export const AGGRESSION_CREST_III_DEF: SigilDef = {
     { type: 'crit_damage_percent', value: 0.1 }
   ]
 };
+

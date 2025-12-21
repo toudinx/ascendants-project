@@ -1,4 +1,4 @@
-﻿import { Component, inject, OnInit } from "@angular/core";
+import { Component, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import {
   AppHeaderComponent,
@@ -45,7 +45,7 @@ interface TrackOption {
     <div class="grid gap-4 md:grid-cols-[1fr,1.2fr]">
       <app-panel
         [title]="activeKaelis.name"
-        [subtitle]="activeKaelis.title + ' · ' + activeKaelis.routeType"
+        [subtitle]="activeKaelis.title + ' - ' + activeKaelis.routeType"
       >
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-3">
@@ -109,11 +109,11 @@ interface TrackOption {
         <div class="flex items-center justify-between gap-3">
           <app-premium-tease size="compact"></app-premium-tease>
           <div class="flex gap-2">
-            <app-button
-              label="Edit Loadout"
-              variant="ghost"
-              (click)="goToLoadout()"
-            ></app-button>
+              <app-button
+                label="Character Management"
+                variant="ghost"
+                (click)="goToLoadout()"
+              ></app-button>
             <app-button
               label="Back"
               variant="ghost"
@@ -172,6 +172,6 @@ export class RunStartPageComponent implements OnInit {
   }
 
   goToLoadout(): void {
-    this.router.navigate(['/loadout']);
+    this.router.navigate(['/character-management']);
   }
 }

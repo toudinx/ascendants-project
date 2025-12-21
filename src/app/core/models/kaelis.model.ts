@@ -41,6 +41,13 @@ export interface KaelisKitDotConfig {
   tickMultiplier: number;
 }
 
+export interface KaelisProfileMeta {
+  level: number;
+  xpCurrent: number;
+  xpMax: number;
+  affinity: number;
+}
+
 export interface KaelisDefinition {
   id: string;
   name: string;
@@ -49,9 +56,11 @@ export interface KaelisDefinition {
   routeType: KaelisRouteType;
   portrait: string;
   sprite: string;
+  imageUrl?: string;
   role: string;
   baseStats: KaelisBaseStats;
   kit: KaelisKitConfig;
+  profile?: KaelisProfileMeta;
 }
 
 export type KaelisId = KaelisDefinition['id'];

@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import {
   AppPanelComponent,
-  AppStatBarComponent,
   AppButtonComponent,
   AppTagComponent,
   AppCardComponent,
@@ -21,7 +20,6 @@ import { SIGIL_SETS } from '../../content/equipment/sigils';
   imports: [
     CommonModule,
     AppPanelComponent,
-    AppStatBarComponent,
     AppButtonComponent,
     AppTagComponent,
     AppCardComponent,
@@ -203,7 +201,7 @@ import { SIGIL_SETS } from '../../content/equipment/sigils';
                 }
               </div>
               <span class="text-[10px] uppercase tracking-[0.2em] text-white/60">
-                {{ ringSlotLabel(ring.slot) }} · {{ ringSetName(ring.setKey) }}
+                {{ ringSlotLabel(ring.slot) }} - {{ ringSetName(ring.setKey) }}
               </span>
             </div>
           </app-card>

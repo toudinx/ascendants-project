@@ -4,6 +4,7 @@ export interface SigilDef {
   id: string;
   name: string;
   description: string;
+  imageUrl: string;
   level: number;
   slot: RingSlot;
   setKey: RingSetKey;

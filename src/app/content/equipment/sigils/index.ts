@@ -21,6 +21,7 @@ function mapSigil(def: SigilDef): RingDefinition {
     id: def.id,
     name: def.name,
     description: def.description,
+    imageUrl: def.imageUrl,
     level: def.level,
     slot: def.slot,
     setKey: def.setKey,
@@ -41,7 +42,7 @@ export const SIGIL_LIST: RingDefinition[] = Object.values(SIGIL_CATALOG);
 export const SIGIL_SETS: Record<string, RingSetDefinition> = {
   agressao: {
     key: 'agressao',
-    name: 'Agressão',
+    name: 'Aggression',
     threePieceBonus: {
       type: 'damage_percent',
       value: 12

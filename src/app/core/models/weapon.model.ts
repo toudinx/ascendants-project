@@ -10,6 +10,8 @@ export interface WeaponDefinition {
   id: string;
   name: string;
   description: string;
+  passive?: string;
+  imageUrl?: string;
   flatStat: WeaponStat<WeaponFlatStatType>;
   secondaryStat: WeaponStat<WeaponSecondaryStatType>;
   rarity?: 'R' | 'SR' | 'SSR';
