@@ -80,11 +80,6 @@
 
         <div class="loadout-container">
           <div class="loadout-row">
-            <div class="item-icon">
-              @if (activeWeapon.imageUrl) {
-              <img [src]="activeWeapon.imageUrl" [alt]="activeWeapon.name" />
-              }
-            </div>
             <div class="item-info">
               <div class="item-name">{{ activeWeapon.name }}</div>
               <div class="item-subtext">{{ activeWeaponPassive }}</div>
@@ -92,14 +87,6 @@
           </div>
 
           <div class="loadout-row">
-            <div class="item-icon">
-              @if (sigilSetSummary.iconUrl) {
-              <img
-                [src]="sigilSetSummary.iconUrl"
-                [alt]="sigilSetSummary.name"
-              />
-              }
-            </div>
             <div class="item-info">
               <div class="item-name">
                 <span class="item-label">Set:</span>

@@ -18,10 +18,10 @@ import { filter } from "rxjs/operators";
     RunTransitionOverlayComponent,
   ],
   template: `
-    <div class="min-h-screen bg-black/40">
+    <div class="min-h-screen bg-black/40 flex items-center justify-center">
       <app-run-transition-overlay></app-run-transition-overlay>
       <div
-        class="mx-auto py-10"
+        class="w-full py-10"
         [class.px-4]="!isWideLayout()"
         [class.px-6]="isWideLayout()"
         [class.max-w-6xl]="!isWideLayout()"
@@ -54,6 +54,8 @@ export class AppComponent {
   }
 
   private updateLayout(url: string): void {
-    this.isWideLayout.set(url.startsWith("/character-management"));
+    this.isWideLayout.set(
+      url.startsWith("/character-management") || url.startsWith("/run/battle")
+    );
   }
 }
