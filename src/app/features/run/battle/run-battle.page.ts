@@ -262,10 +262,7 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
   }
 
   get playerSprite(): string {
-    return (
-      this.playerState.kaelisSprite ||
-      "assets/battle/characters/velvet/velvet_battle_default.png"
-    );
+    return this.playerState.kaelisSprite;
   }
 
   get skillCooldown(): number {

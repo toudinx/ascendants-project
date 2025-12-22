@@ -8,6 +8,7 @@ export const VELVET_DEF: KaelisDef = {
   routeType: "Sentinel",
   portrait: "assets/battle/characters/velvet/velvet_battle_default.png",
   sprite: "assets/battle/characters/velvet/velvet_battle_default.png",
+  defaultBattleSpriteId: "velvet_battle_default",
   imageUrl: "assets/battle/characters/velvet/velvet_skin_default.png",
   role: "Adaptive skirmisher",
   tags: ["multi-hit", "tempo"],

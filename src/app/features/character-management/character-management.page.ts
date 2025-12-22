@@ -1,17 +1,32 @@
-import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { CharacterManagementStateService, CharacterManagementTab } from './character-management-state.service';
-import { LoadoutService } from '../../core/services/loadout.service';
-import { KaelisDefinition, KaelisId } from '../../core/models/kaelis.model';
-import { RingDefinition, RingSetDefinition, RingStat, RingStatType } from '../../core/models/ring.model';
-import { WeaponDefinition } from '../../core/models/weapon.model';
-import { SkinDefinition } from '../../core/models/skin.model';
-import { SIGIL_SETS } from '../../content/equipment/sigils';
-import { RosterStripComponent } from './components/roster-strip/roster-strip.component';
-import { SideNavigationComponent } from './components/side-navigation/side-navigation.component';
-import { CenterPreviewComponent } from './components/center-preview/center-preview.component';
-import { InfoPanelComponent, InfoPanelStat, SetBonusDisplay } from './components/info-panel/info-panel.component';
-import { SelectionModalComponent, SelectionMode } from './components/selection-modal/selection-modal.component';
+import { CommonModule } from "@angular/common";
+import { Component, computed, effect, inject, signal } from "@angular/core";
+import {
+  CharacterManagementStateService,
+  CharacterManagementTab,
+} from "./character-management-state.service";
+import { LoadoutService } from "../../core/services/loadout.service";
+import { KaelisDefinition, KaelisId } from "../../core/models/kaelis.model";
+import {
+  RingDefinition,
+  RingSetDefinition,
+  RingStat,
+  RingStatType,
+} from "../../core/models/ring.model";
+import { WeaponDefinition } from "../../core/models/weapon.model";
+import { SkinDefinition } from "../../core/models/skin.model";
+import { SIGIL_SETS } from "../../content/equipment/sigils";
+import { RosterStripComponent } from "./components/roster-strip/roster-strip.component";
+import { SideNavigationComponent } from "./components/side-navigation/side-navigation.component";
+import { CenterPreviewComponent } from "./components/center-preview/center-preview.component";
+import {
+  InfoPanelComponent,
+  InfoPanelStat,
+  SetBonusDisplay,
+} from "./components/info-panel/info-panel.component";
+import {
+  SelectionModalComponent,
+  SelectionMode,
+} from "./components/selection-modal/selection-modal.component";
 
 interface WeaponStatRow {
   label: string;
@@ -19,7 +34,7 @@ interface WeaponStatRow {
 }
 
 @Component({
-  selector: 'app-character-management-page',
+  selector: "app-character-management-page",
   standalone: true,
   imports: [
     CommonModule,
@@ -27,48 +42,53 @@ interface WeaponStatRow {
     SideNavigationComponent,
     CenterPreviewComponent,
     InfoPanelComponent,
-    SelectionModalComponent
+    SelectionModalComponent,
   ],
-  templateUrl: './character-management.page.html',
-  styleUrls: ['./character-management.page.scss']
+  templateUrl: "./character-management.page.html",
+  styleUrls: ["./character-management.page.scss"],
 })
 export class CharacterManagementPageComponent {
   protected readonly state = inject(CharacterManagementStateService);
   protected readonly loadout = inject(LoadoutService);
 
-  protected readonly headerTitle = 'KAELIS';
-
   protected readonly modalOpen = signal(false);
-  protected readonly modalMode = signal<SelectionMode>('weapon');
+  protected readonly modalMode = signal<SelectionMode>("weapon");
   protected readonly modalSelectedId = signal<string | null>(null);
   protected readonly previewSkinId = signal<string | null>(null);
 
   protected readonly roster = computed(() => this.loadout.kaelisList());
-  protected readonly currentKaelis = computed(() => this.state.currentKaelis$());
-  protected readonly equippedWeapon = computed(() => this.state.equippedWeapon$());
+  protected readonly currentKaelis = computed(() =>
+    this.state.currentKaelis$()
+  );
+  protected readonly equippedWeapon = computed(() =>
+    this.state.equippedWeapon$()
+  );
   protected readonly sigilIds = computed(() => this.state.equippedSigils$());
   protected readonly sigilById = computed(
-    () => new Map(this.loadout.sigilInventory().map(sigil => [sigil.id, sigil]))
+    () =>
+      new Map(this.loadout.sigilInventory().map((sigil) => [sigil.id, sigil]))
   );
   protected readonly equippedRings = computed(() =>
     this.sigilIds()
-      .map(id => (id ? this.sigilById().get(id) ?? null : null))
+      .map((id) => (id ? (this.sigilById().get(id) ?? null) : null))
       .filter((ring): ring is RingDefinition => !!ring)
   );
-  protected readonly skins = computed(() => this.loadout.getSkinsForKaelis(this.state.selectedKaelisId()));
+  protected readonly skins = computed(() =>
+    this.loadout.getSkinsForKaelis(this.state.selectedKaelisId())
+  );
   protected readonly equippedSkin = computed(() => this.state.equippedSkin$());
 
   protected readonly previewSkin = computed(() => {
     const list = this.skins();
     const fallback = this.equippedSkin()?.id;
     const id = this.previewSkinId() ?? fallback;
-    return list.find(item => item.id === id) ?? list[0] ?? null;
+    return list.find((item) => item.id === id) ?? list[0] ?? null;
   });
   protected readonly previewSkinIndex = computed(() => {
     const list = this.skins();
     const id = this.previewSkin()?.id;
     if (!id) return -1;
-    return list.findIndex(item => item.id === id);
+    return list.findIndex((item) => item.id === id);
   });
   protected readonly canPrevSkin = computed(() => this.skins().length > 1);
   protected readonly canNextSkin = computed(() => this.skins().length > 1);
@@ -81,14 +101,28 @@ export class CharacterManagementPageComponent {
     return skin?.id === this.equippedSkin()?.id;
   });
 
-  protected readonly baseStats = computed(() => this.buildBaseStats(this.currentKaelis()));
-  protected readonly weaponStats = computed(() => this.buildWeaponStats(this.equippedWeapon()));
-  protected readonly sigilStats = computed(() => this.buildSigilStats(this.equippedRings()));
-  protected readonly sigilSetBonuses = computed(() => this.buildSigilSetBonuses(this.equippedRings()));
-  protected readonly primarySigilBonus = computed(() => this.pickPrimarySetBonus(this.equippedRings()));
+  protected readonly baseStats = computed(() =>
+    this.buildBaseStats(this.currentKaelis())
+  );
+  protected readonly weaponStats = computed(() =>
+    this.buildWeaponStats(this.equippedWeapon())
+  );
+  protected readonly sigilStats = computed(() =>
+    this.buildSigilStats(this.equippedRings())
+  );
+  protected readonly sigilSetBonuses = computed(() =>
+    this.buildSigilSetBonuses(this.equippedRings())
+  );
+  protected readonly primarySigilBonus = computed(() =>
+    this.pickPrimarySetBonus(this.equippedRings())
+  );
 
-  protected readonly availableWeapons = computed(() => this.loadout.weaponList());
-  protected readonly availableSigils = computed(() => this.loadout.sigilInventory());
+  protected readonly availableWeapons = computed(() =>
+    this.loadout.weaponList()
+  );
+  protected readonly availableSigils = computed(() =>
+    this.loadout.sigilInventory()
+  );
 
   constructor() {
     effect(
@@ -109,7 +143,7 @@ export class CharacterManagementPageComponent {
   }
 
   openWeaponModal(): void {
-    this.modalMode.set('weapon');
+    this.modalMode.set("weapon");
     this.modalSelectedId.set(this.equippedWeapon()?.id ?? null);
     this.modalOpen.set(true);
   }
@@ -117,7 +151,7 @@ export class CharacterManagementPageComponent {
   openSigilModal(index: number): void {
     this.state.selectSigilSlot(index);
     const slotId = this.sigilIds()[index] ?? null;
-    this.modalMode.set('sigil');
+    this.modalMode.set("sigil");
     this.modalSelectedId.set(slotId);
     this.modalOpen.set(true);
   }
@@ -128,14 +162,14 @@ export class CharacterManagementPageComponent {
 
   confirmSelection(id: string | null): void {
     const kaelisId = this.state.selectedKaelisId();
-    if (this.modalMode() === 'weapon') {
+    if (this.modalMode() === "weapon") {
       if (id) {
-        this.loadout.equipWeapon(kaelisId, id as WeaponDefinition['id']);
+        this.loadout.equipWeapon(kaelisId, id as WeaponDefinition["id"]);
       }
       this.modalOpen.set(false);
       return;
     }
-    this.state.equipSigilToSelectedSlot(id as RingDefinition['id'] | null);
+    this.state.equipSigilToSelectedSlot(id as RingDefinition["id"] | null);
     this.modalOpen.set(false);
   }
 
@@ -169,62 +203,74 @@ export class CharacterManagementPageComponent {
   private buildBaseStats(kaelis?: KaelisDefinition): InfoPanelStat[] {
     if (!kaelis) return [];
     return [
-      { label: 'HP', value: `${kaelis.baseStats.hpBase}` },
-      { label: 'ATK', value: `${kaelis.baseStats.atkBase}` },
-      { label: 'Crit', value: `${Math.round(kaelis.baseStats.critRateBase * 100)}%` },
-      { label: 'DOT', value: `${Math.round(kaelis.baseStats.dotChanceBase * 100)}%` },
-      { label: 'Energy', value: `${kaelis.baseStats.energyBase}` }
+      { label: "HP", value: `${kaelis.baseStats.hpBase}` },
+      { label: "ATK", value: `${kaelis.baseStats.atkBase}` },
+      {
+        label: "Crit",
+        value: `${Math.round(kaelis.baseStats.critRateBase * 100)}%`,
+      },
+      {
+        label: "DOT",
+        value: `${Math.round(kaelis.baseStats.dotChanceBase * 100)}%`,
+      },
+      { label: "Energy", value: `${kaelis.baseStats.energyBase}` },
     ];
   }
 
   private buildWeaponStats(weapon?: WeaponDefinition | null): WeaponStatRow[] {
     if (!weapon) return [];
     return [
-      { label: 'Base', value: this.weaponFlatLabel(weapon) },
-      { label: 'Secondary', value: this.weaponSecondaryLabel(weapon) }
+      { label: "Base", value: this.weaponFlatLabel(weapon) },
+      { label: "Secondary", value: this.weaponSecondaryLabel(weapon) },
     ];
   }
 
   private buildSigilStats(rings: RingDefinition[]): InfoPanelStat[] {
     if (!rings.length) return [];
     const totals = new Map<RingStatType, number>();
-    rings.forEach(ring => {
+    rings.forEach((ring) => {
       this.addStat(totals, ring.mainStat);
-      ring.subStats.forEach(stat => this.addStat(totals, stat));
+      ring.subStats.forEach((stat) => this.addStat(totals, stat));
     });
 
     const order: RingStatType[] = [
-      'hp_flat',
-      'hp_percent',
-      'atk_flat',
-      'atk_percent',
-      'crit_rate_percent',
-      'crit_damage_percent',
-      'damage_percent',
-      'energy_regen_percent',
-      'damage_reduction_percent',
-      'heal_percent'
+      "hp_flat",
+      "hp_percent",
+      "atk_flat",
+      "atk_percent",
+      "crit_rate_percent",
+      "crit_damage_percent",
+      "damage_percent",
+      "energy_regen_percent",
+      "damage_reduction_percent",
+      "heal_percent",
     ];
 
     return order
-      .filter(type => (totals.get(type) ?? 0) !== 0)
-      .map(type => ({
+      .filter((type) => (totals.get(type) ?? 0) !== 0)
+      .map((type) => ({
         label: this.ringStatLabel({ type, value: totals.get(type) ?? 0 }),
-        value: this.ringStatValue(type, totals.get(type) ?? 0)
+        value: this.ringStatValue(type, totals.get(type) ?? 0),
       }));
   }
 
   private buildSigilSetBonuses(rings: RingDefinition[]): SetBonusDisplay[] {
     if (!rings.length) return [];
     const counts = this.buildSetCounts(rings);
-    return Object.values(SIGIL_SETS).flatMap(set => this.resolveSetBonuses(set, counts[set.key] ?? 0));
+    return Object.values(SIGIL_SETS).flatMap((set) =>
+      this.resolveSetBonuses(set, counts[set.key] ?? 0)
+    );
   }
 
   private pickPrimarySetBonus(rings: RingDefinition[]): SetBonusDisplay | null {
     if (!rings.length) return null;
     const counts = this.buildSetCounts(rings);
-    const best = Object.entries(counts).reduce<{ key: string; count: number } | null>(
-      (current, [key, count]) => (!current || count > current.count ? { key, count } : current),
+    const best = Object.entries(counts).reduce<{
+      key: string;
+      count: number;
+    } | null>(
+      (current, [key, count]) =>
+        !current || count > current.count ? { key, count } : current,
       null
     );
     if (!best) return null;
@@ -241,37 +287,40 @@ export class CharacterManagementPageComponent {
     }, {});
   }
 
-  private resolveSetBonuses(set: RingSetDefinition, count: number): SetBonusDisplay[] {
+  private resolveSetBonuses(
+    set: RingSetDefinition,
+    count: number
+  ): SetBonusDisplay[] {
     const entries: SetBonusDisplay[] = [];
     if (set.threePieceBonus && count >= 3) {
       entries.push({
         id: `${set.key}-3`,
         label: `${set.name} (3pc)`,
-        detail: `Damage +${set.threePieceBonus.value}%`
+        detail: `Damage +${set.threePieceBonus.value}%`,
       });
     }
     if (set.fivePieceSkillBuff && count >= 5) {
       entries.push({
         id: `${set.key}-5`,
         label: `${set.name} (5pc)`,
-        detail: `Skill: +${set.fivePieceSkillBuff.damagePercent}% damage for ${set.fivePieceSkillBuff.durationTurns} turns`
+        detail: `Skill: +${set.fivePieceSkillBuff.damagePercent}% damage for ${set.fivePieceSkillBuff.durationTurns} turns`,
       });
     }
     return entries;
   }
 
   private weaponFlatLabel(weapon: WeaponDefinition): string {
-    return weapon.flatStat.type === 'atk'
+    return weapon.flatStat.type === "atk"
       ? `ATK +${weapon.flatStat.value}`
       : `HP +${weapon.flatStat.value}`;
   }
 
   private weaponSecondaryLabel(weapon: WeaponDefinition): string {
-    if (weapon.secondaryStat.type === 'energyRegen') {
+    if (weapon.secondaryStat.type === "energyRegen") {
       return `Energy Regen +${weapon.secondaryStat.value}%`;
     }
     const percent = Math.round(weapon.secondaryStat.value * 100);
-    return weapon.secondaryStat.type === 'critRate'
+    return weapon.secondaryStat.type === "critRate"
       ? `Crit Rate +${percent}%`
       : `Crit DMG +${percent}%`;
   }
@@ -282,36 +331,36 @@ export class CharacterManagementPageComponent {
 
   private ringStatLabel(stat: RingStat): string {
     switch (stat.type) {
-      case 'hp_flat':
-        return 'HP';
-      case 'atk_flat':
-        return 'ATK';
-      case 'hp_percent':
-        return 'HP %';
-      case 'atk_percent':
-        return 'ATK %';
-      case 'crit_rate_percent':
-        return 'Crit Rate';
-      case 'crit_damage_percent':
-        return 'Crit DMG';
-      case 'damage_percent':
-        return 'Damage';
-      case 'energy_regen_percent':
-        return 'Energy Regen';
-      case 'damage_reduction_percent':
-        return 'Damage Reduction';
-      case 'heal_percent':
-        return 'Heal Bonus';
+      case "hp_flat":
+        return "HP";
+      case "atk_flat":
+        return "ATK";
+      case "hp_percent":
+        return "HP %";
+      case "atk_percent":
+        return "ATK %";
+      case "crit_rate_percent":
+        return "Crit Rate";
+      case "crit_damage_percent":
+        return "Crit DMG";
+      case "damage_percent":
+        return "Damage";
+      case "energy_regen_percent":
+        return "Energy Regen";
+      case "damage_reduction_percent":
+        return "Damage Reduction";
+      case "heal_percent":
+        return "Heal Bonus";
       default:
-        return '';
+        return "";
     }
   }
 
   private ringStatValue(type: RingStatType, value: number): string {
-    if (type === 'crit_rate_percent' || type === 'crit_damage_percent') {
+    if (type === "crit_rate_percent" || type === "crit_damage_percent") {
       return `+${Math.round(value * 100)}%`;
     }
-    if (type.endsWith('_percent')) {
+    if (type.endsWith("_percent")) {
       return `+${value}%`;
     }
     return `+${value}`;

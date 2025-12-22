@@ -7,6 +7,7 @@ export interface SkinDef {
   description: string;
   rarity: 'R' | 'SR' | 'SSR';
   imageUrl: string;
+  battleSpriteId?: string;
   tags?: string[];
   isDefault?: boolean;
 }

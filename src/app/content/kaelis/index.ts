@@ -38,6 +38,7 @@ function mapKaelisDef(def: KaelisDef): KaelisDefinition {
     routeType: def.routeType,
     portrait: def.portrait,
     sprite: def.sprite,
+    defaultBattleSpriteId: def.defaultBattleSpriteId,
     imageUrl: def.imageUrl,
     role: def.role,
     baseStats,
@@ -55,6 +56,7 @@ export function mapDefinitionToContent(def: KaelisDefinition): KaelisDef {
     routeType: def.routeType,
     portrait: def.portrait,
     sprite: def.sprite,
+    defaultBattleSpriteId: def.defaultBattleSpriteId,
     imageUrl: def.imageUrl ?? def.portrait,
     role: def.role,
     base: {

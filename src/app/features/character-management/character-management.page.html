@@ -1,6 +1,6 @@
 <div class="character-management">
   <header class="top-bar">
-    <div class="brand">{{ headerTitle }}</div>
+    <div class="header-title">KAELIS // <strong>DETAILS</strong></div>
   </header>
 
   <app-roster-strip
@@ -48,13 +48,13 @@
     ></app-info-panel>
   </div>
 
-    <app-selection-modal
-      [open]="modalOpen()"
-      [mode]="modalMode()"
-      [items]="modalMode() === 'weapon' ? availableWeapons() : availableSigils()"
-      [selectedId]="modalSelectedId()"
-      [slotIndex]="state.selectedSigilSlotIndex()"
-      (closed)="closeModal()"
-      (confirmed)="confirmSelection($event)"
-    ></app-selection-modal>
+  <app-selection-modal
+    [open]="modalOpen()"
+    [mode]="modalMode()"
+    [items]="modalMode() === 'weapon' ? availableWeapons() : availableSigils()"
+    [selectedId]="modalSelectedId()"
+    [slotIndex]="state.selectedSigilSlotIndex()"
+    (closed)="closeModal()"
+    (confirmed)="confirmSelection($event)"
+  ></app-selection-modal>
 </div>

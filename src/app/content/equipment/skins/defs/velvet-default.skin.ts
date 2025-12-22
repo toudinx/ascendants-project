@@ -7,6 +7,7 @@ export const VELVET_DEFAULT_SKIN_DEF: SkinDef = {
   description: 'Base attire tuned for early ascension missions.',
   rarity: 'R',
   imageUrl: 'assets/battle/characters/velvet/velvet_skin_default.png',
+  battleSpriteId: 'velvet_battle_default',
   tags: ['base'],
   isDefault: true
 };

@@ -27,7 +27,7 @@ import { ProfileStateService } from "../../core/services/profile-state.service";
         <!-- HEADER -->
         <div class="mb-6 flex items-center justify-between">
           <h1 class="text-xs tracking-[0.3em] text-white/60">
-            ECHOES OF ASCENSION
+            KAEZAN: AWAKENING
           </h1>
 
           <span
@@ -69,7 +69,8 @@ import { ProfileStateService } from "../../core/services/profile-state.service";
 
               <div class="mt-3 flex items-center justify-between">
                 <p class="text-sm text-[#A4A4B5]">
-                  {{ profile.activeKaelis().name }} - {{ profile.activeKaelis().routeType }} route
+                  {{ profile.activeKaelis().name }} -
+                  {{ profile.activeKaelis().routeType }} route
                   <br />
                   Equipped skin: {{ skinState.currentSkin().name }}
                 </p>
@@ -97,11 +98,20 @@ import { ProfileStateService } from "../../core/services/profile-state.service";
               ></app-button>
 
               <p class="mt-2 text-xs text-[#A4A4B5]">
-                Active Kaelis: {{ profile.activeKaelis().name }} ({{ profile.activeKaelis().routeType }})
+                Active Kaelis: {{ profile.activeKaelis().name }} ({{
+                  profile.activeKaelis().routeType
+                }})
               </p>
-              <div class="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-[#7F7F95]">
-                <span>Gold: {{ profile.currencies().gold | number : '1.0-0' }}</span>
-                <span>Sigils: {{ profile.currencies().sigils | number : '1.0-0' }}</span>
+              <div
+                class="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-[#7F7F95]"
+              >
+                <span
+                  >Gold: {{ profile.currencies().gold | number: "1.0-0" }}</span
+                >
+                <span
+                  >Sigils:
+                  {{ profile.currencies().sigils | number: "1.0-0" }}</span
+                >
                 <span>Potions: {{ profile.potionCount() }} / 2</span>
               </div>
               <div class="mt-3 flex justify-center">

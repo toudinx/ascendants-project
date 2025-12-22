@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expedition Select - Kaezan</title>
+    <style>
+      :root {
+        /* Cores extraídas/baseadas na sua imagem de referência */
+        --bg-color: #03040a;
+        --panel-bg: #0b0c15;
+        --panel-border: #1e1f2e;
+        --accent-purple: #7c3aed; /* Roxo do botão */
+        --accent-cyan: #00f0ff; /* Ciano das barras */
+        --text-main: #ffffff;
+        --text-muted: #8b9bb4;
+        --highlight-glow: rgba(124, 58, 237, 0.4);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      /* --- Header --- */
+      header {
+        width: 100%;
+        max-width: 1400px;
+        padding: 20px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--panel-border);
+        margin-bottom: 20px;
+      }
+
+      .header-title strong {
+        color: var(--text-main);
+      }
+
+      /* --- Main Layout Grid --- */
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 400px; /* Visual ocupa o resto, Painel fixo a direita */
+        gap: 24px;
+        width: 100%;
+        max-width: 1400px;
+        height: 80vh;
+        padding: 0 40px;
+      }
+
+      /* --- Coluna da Esquerda: Personagem (Visual) --- */
+      .character-stage {
+        position: relative;
+        background: radial-gradient(
+          circle at center,
+          #1a1b2e 0%,
+          var(--bg-color) 70%
+        );
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .character-img {
+        height: 95%;
+        width: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5));
+        mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+      }
+
+      /* Botões de Navegação (< >) */
+      .nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--panel-border);
+        color: var(--text-main);
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-size: 1.2rem;
+      }
+      .nav-btn:hover {
+        background: var(--accent-purple);
+        border-color: var(--accent-purple);
+      }
+      .nav-left {
+        left: 20px;
+      }
+      .nav-right {
+        right: 20px;
+      }
+
+      /* Nome do Personagem Flutuante */
+      .char-info-overlay {
+        position: absolute;
+        bottom: 40px;
+        left: 40px;
+        text-align: left;
+      }
+      .char-name {
+        font-size: 2.5rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+      .char-title {
+        color: var(--accent-purple);
+        font-weight: 600;
+        letter-spacing: 1px;
+        margin-top: 5px;
+        text-transform: uppercase;
+      }
+
+      /* --- Coluna da Direita: Painel de Preparação --- */
+      .prep-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      /* Card Genérico */
+      .card {
+        background-color: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .card-header {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 8px;
+      }
+
+      /* Stats Grid */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px 0;
+        font-size: 0.9rem;
+      }
+      .stat-row {
+        display: contents;
+      }
+      .stat-label {
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        align-self: center;
+      }
+      .stat-value {
+        font-weight: bold;
+        text-align: right;
+        letter-spacing: 1px;
+      }
+
+      /* Loadout (Arma) */
+      .loadout-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 10px;
+      }
+      .item-icon {
+        width: 32px;
+        height: 32px;
+        background: #2a2b40;
+        border-radius: 4px;
+      }
+      .item-details h4 {
+        font-size: 0.9rem;
+      }
+      .item-details span {
+        font-size: 0.75rem;
+        color: var(--accent-cyan);
+      }
+
+      /* Path Selection (Trilhas) */
+      .path-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .path-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--panel-border);
+        padding: 12px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+      }
+
+      .path-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      /* Estado Selecionado */
+      .path-card.active {
+        border-color: var(--accent-purple);
+        background: linear-gradient(
+          90deg,
+          rgba(124, 58, 237, 0.1) 0%,
+          transparent 100%
+        );
+      }
+      .path-card.active::before {
+        content: "SELECTED";
+        position: absolute;
+        right: 10px;
+        top: 12px;
+        font-size: 0.6rem;
+        color: var(--accent-purple);
+        font-weight: bold;
+      }
+
+      .path-title {
+        font-weight: bold;
+        color: var(--text-main);
+        font-size: 0.95rem;
+      }
+      .path-desc {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+      .path-badge {
+        display: inline-block;
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        background: #1e1f2e;
+        border-radius: 4px;
+        margin-bottom: 4px;
+        color: var(--accent-cyan);
+      }
+
+      /* Botão de Ação */
+      .start-btn {
+        margin-top: auto; /* Empurra para o final */
+        background: var(--text-main);
+        color: #000;
+        border: none;
+        padding: 18px;
+        font-size: 1rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .start-btn:hover {
+        background: var(--accent-cyan);
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+      }
+
+      /* Responsividade Básica */
+      @media (max-width: 900px) {
+        .container {
+          grid-template-columns: 1fr;
+          height: auto;
+          overflow-y: auto;
+          padding-bottom: 40px;
+        }
+        .character-stage {
+          height: 400px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-title">
+        Expedition // <strong>Select Phase</strong>
+      </div>
+      <div class="header-user">LVL 72 COMMANDER</div>
+    </header>
+
+    <div class="container">
+      <section class="character-stage">
+        <button class="nav-btn nav-left">&lt;</button>
+
+        <img
+          src="https://files.catbox.moe/0v256w.png"
+          alt="Character Skin"
+          class="character-img"
+        />
+
+        <button class="nav-btn nav-right">&gt;</button>
+
+        <div class="char-info-overlay">
+          <div class="char-name">Velvet Arclight</div>
+          <div class="char-title">Echo Duelist · Sentinel</div>
+        </div>
+      </section>
+
+      <aside class="prep-panel">
+        <div class="card">
+          <div class="card-header">Attributes & Loadout</div>
+          <div class="stats-grid">
+            <div class="stat-row">
+              <span class="stat-label">HP</span>
+              <span class="stat-value">9,800</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">ATK</span>
+              <span class="stat-value">920</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">CRIT</span>
+              <span class="stat-value" style="color: var(--accent-cyan)"
+                >34%</span
+              >
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">DOT</span>
+              <span class="stat-value">20%</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Energy</span>
+              <span class="stat-value">110</span>
+            </div>
+          </div>
+
+          <div class="loadout-item">
+            <div class="item-icon"></div>
+            <div class="item-details">
+              <h4>Etheric Scepter</h4>
+              <span>Active Sigil Set: Void</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Select Starting Path</div>
+          <div class="path-options">
+            <div class="path-card active">
+              <span class="path-badge">A</span>
+              <div class="path-title">Critical Route</div>
+              <div class="path-desc">Sentinel + Multi-hit focus</div>
+            </div>
+
+            <div class="path-card">
+              <span class="path-badge">B</span>
+              <div class="path-title">Spiritual Route</div>
+              <div class="path-desc">Ruin + DoT Scaling</div>
+            </div>
+
+            <div class="path-card">
+              <span class="path-badge">C</span>
+              <div class="path-title">Impact Route</div>
+              <div class="path-desc">Resonance + Posture Break</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="start-btn">Confirm & Initiate</button>
+      </aside>
+    </div>
+  </body>
+</html>

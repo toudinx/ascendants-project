@@ -1,7 +1,7 @@
 .character-management {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  min-height: 100svh;
+  min-height: 95svh;
   width: 100%;
 }
 
@@ -18,12 +18,8 @@
   pointer-events: auto;
 }
 
-.brand {
-  font-size: 12px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--primary);
+.header-title strong {
+  color: var(--text-primary);
 }
 
 .stage-grid {

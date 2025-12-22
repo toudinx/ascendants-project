@@ -8,6 +8,7 @@ export const LUMEN_DEF: KaelisDef = {
   routeType: "Ruin",
   portrait: "assets/battle/characters/lumen/lumen_skin_default.png",
   sprite: "assets/battle/characters/lumen/lumen_skin_default.png",
+  defaultBattleSpriteId: "lumen_skin_default",
   imageUrl: "assets/battle/characters/lumen/lumen_skin_default.png",
   role: "Status amplifier",
   tags: ["dot", "tempo"],

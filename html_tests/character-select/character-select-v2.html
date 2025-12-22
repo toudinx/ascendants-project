@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expedition Select - Kaezan</title>
+    <style>
+      :root {
+        --bg-color: #03040a;
+        --panel-bg: #0b0c15;
+        --panel-border: #1e1f2e;
+        --accent-purple: #7c3aed;
+        --accent-cyan: #00f0ff;
+        --accent-green: #4ade80; /* Adicionado para o texto do Sigil */
+        --text-main: #ffffff;
+        --text-muted: #8b9bb4;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      /* --- Header --- */
+      header {
+        width: 100%;
+        max-width: 1400px;
+        padding: 20px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--panel-border);
+        margin-bottom: 20px;
+      }
+
+      .header-title strong {
+        color: var(--text-main);
+      }
+      /* Removido o Commander Level daqui */
+
+      /* --- Main Layout Grid --- */
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 420px; /* Aumentei um pouco a largura do painel lateral para caber as infos */
+        gap: 24px;
+        width: 100%;
+        max-width: 1400px;
+        height: 80vh;
+        padding: 0 40px;
+      }
+
+      /* --- Coluna da Esquerda: Personagem (Visual) --- */
+      .character-stage {
+        position: relative;
+        background: radial-gradient(
+          circle at center,
+          #1a1b2e 0%,
+          var(--bg-color) 70%
+        );
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .character-img {
+        height: 95%;
+        width: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5));
+        mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+      }
+
+      .nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--panel-border);
+        color: var(--text-main);
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-size: 1.2rem;
+        z-index: 10;
+      }
+      .nav-btn:hover {
+        background: var(--accent-purple);
+        border-color: var(--accent-purple);
+      }
+      .nav-left {
+        left: 20px;
+      }
+      .nav-right {
+        right: 20px;
+      }
+
+      /* Infos do Personagem (Nome + Level) */
+      .char-info-overlay {
+        position: absolute;
+        bottom: 40px;
+        left: 40px;
+        text-align: left;
+      }
+
+      .char-level-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: var(--accent-cyan);
+        margin-bottom: 8px;
+        background: rgba(0, 240, 255, 0.1);
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(0, 240, 255, 0.2);
+      }
+
+      .char-name {
+        font-size: 2.5rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+      .char-title {
+        color: var(--accent-purple);
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+      }
+
+      /* --- Coluna da Direita: Painel --- */
+      .prep-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .card {
+        background-color: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .card-header {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 8px;
+      }
+
+      /* Stats Grid */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px 0;
+        font-size: 0.9rem;
+        margin-bottom: 20px; /* Espaço antes do Loadout */
+      }
+      .stat-row {
+        display: contents;
+      }
+      .stat-label {
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        align-self: center;
+      }
+      .stat-value {
+        font-weight: bold;
+        text-align: right;
+        letter-spacing: 1px;
+      }
+
+      /* Loadout Section (Arma e Sigils) */
+      .loadout-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 16px;
+      }
+
+      .loadout-row {
+        display: flex;
+        gap: 12px;
+      }
+
+      .item-icon {
+        width: 40px;
+        height: 40px;
+        background: #1e1f2e;
+        border-radius: 6px;
+        flex-shrink: 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .item-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .item-name {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: var(--text-main);
+      }
+
+      /* Estilo para status da arma (cinza) */
+      .item-subtext {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+
+      /* Estilo para descrição do Sigil (verde/ciano) */
+      .item-highlight {
+        font-size: 0.75rem;
+        color: var(--accent-green);
+        margin-top: 2px;
+      }
+      .sigil-set-name {
+        color: var(--accent-cyan);
+        font-weight: 600;
+      }
+
+      /* Path Selection */
+      .path-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .path-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--panel-border);
+        padding: 12px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+      }
+      .path-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .path-card.active {
+        border-color: var(--accent-purple);
+        background: linear-gradient(
+          90deg,
+          rgba(124, 58, 237, 0.1) 0%,
+          transparent 100%
+        );
+      }
+      .path-card.active::before {
+        content: "SELECTED";
+        position: absolute;
+        right: 10px;
+        top: 12px;
+        font-size: 0.6rem;
+        color: var(--accent-purple);
+        font-weight: bold;
+      }
+      .path-title {
+        font-weight: bold;
+        color: var(--text-main);
+        font-size: 0.95rem;
+      }
+      .path-desc {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+      .path-badge {
+        display: inline-block;
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        background: #1e1f2e;
+        border-radius: 4px;
+        margin-bottom: 4px;
+        color: var(--accent-cyan);
+      }
+
+      .start-btn {
+        margin-top: auto;
+        background: var(--text-main);
+        color: #000;
+        border: none;
+        padding: 18px;
+        font-size: 1rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .start-btn:hover {
+        background: var(--accent-cyan);
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+      }
+
+      @media (max-width: 900px) {
+        .container {
+          grid-template-columns: 1fr;
+          height: auto;
+          overflow-y: auto;
+          padding-bottom: 40px;
+        }
+        .character-stage {
+          height: 400px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-title">
+        Expedition // <strong>Select Phase</strong>
+      </div>
+      <div style="font-size: 0.75rem; color: #444">SYSTEM READY</div>
+    </header>
+
+    <div class="container">
+      <section class="character-stage">
+        <button class="nav-btn nav-left">&lt;</button>
+        <img
+          src="https://files.catbox.moe/0v256w.png"
+          alt="Character Skin"
+          class="character-img"
+        />
+        <button class="nav-btn nav-right">&gt;</button>
+
+        <div class="char-info-overlay">
+          <div class="char-level-badge">LV. 72</div>
+          <div class="char-name">Velvet Arclight</div>
+          <div class="char-title">Echo Duelist · Sentinel</div>
+        </div>
+      </section>
+
+      <aside class="prep-panel">
+        <div class="card">
+          <div class="card-header">Attributes & Loadout</div>
+
+          <div class="stats-grid">
+            <div class="stat-row">
+              <span class="stat-label">HP</span>
+              <span class="stat-value">9,800</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">ATK</span>
+              <span class="stat-value">920</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">CRIT</span>
+              <span class="stat-value" style="color: var(--accent-cyan)"
+                >34%</span
+              >
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">DOT</span>
+              <span class="stat-value">20%</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Energy</span>
+              <span class="stat-value">110</span>
+            </div>
+          </div>
+
+          <div class="loadout-container">
+            <div class="loadout-row">
+              <div class="item-icon" style="background-color: #222"></div>
+              <div class="item-info">
+                <div class="item-name">Etheric Scepter</div>
+                <div class="item-subtext">HP +1400 Energy Regen +20%</div>
+              </div>
+            </div>
+
+            <div class="loadout-row">
+              <div class="item-icon" style="background-color: #222"></div>
+              <div class="item-info">
+                <div class="item-name">
+                  <span class="stat-label" style="margin-right: 4px">Set:</span>
+                  <span class="sigil-set-name">Void</span>
+                </div>
+                <div class="item-highlight">Skill: +25% damage for 2 turns</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Select Starting Path</div>
+          <div class="path-options">
+            <div class="path-card active">
+              <span class="path-badge">A</span>
+              <div class="path-title">Critical Route</div>
+              <div class="path-desc">Sentinel + Multi-hit focus</div>
+            </div>
+            <div class="path-card">
+              <span class="path-badge">B</span>
+              <div class="path-title">Spiritual Route</div>
+              <div class="path-desc">Ruin + DoT Scaling</div>
+            </div>
+            <div class="path-card">
+              <span class="path-badge">C</span>
+              <div class="path-title">Impact Route</div>
+              <div class="path-desc">Resonance + Posture Break</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="start-btn">Confirm</button>
+      </aside>
+    </div>
+  </body>
+</html>

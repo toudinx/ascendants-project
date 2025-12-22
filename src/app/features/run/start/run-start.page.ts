@@ -1,18 +1,11 @@
-import { Component, inject, OnInit } from "@angular/core";
+﻿import { Component, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import {
-  AppHeaderComponent,
-  AppPanelComponent,
-  AppCardComponent,
-  AppButtonComponent,
-  AppTagComponent,
-  AppStatBarComponent,
-  PremiumTeaseComponent,
-} from "../../../shared/components";
 import { RunStateService } from "../../../core/services/run-state.service";
 import { PlayerStateService } from "../../../core/services/player-state.service";
 import { ProfileStateService } from "../../../core/services/profile-state.service";
+import { LoadoutService } from "../../../core/services/loadout.service";
 import { TrackKey } from "../../../core/models/tracks.model";
+import { SIGIL_SETS } from "../../../content/equipment/sigils";
 import { Router } from "@angular/router";
 
 interface TrackOption {
@@ -22,128 +15,50 @@ interface TrackOption {
   tag: string;
 }
 
+interface SigilSetSummary {
+  name: string;
+  bonus: string;
+  iconUrl?: string;
+}
+
 @Component({
   selector: "app-run-start-page",
   standalone: true,
-  imports: [
-    CommonModule,
-    AppHeaderComponent,
-    AppPanelComponent,
-    AppCardComponent,
-    AppButtonComponent,
-    AppTagComponent,
-    AppStatBarComponent,
-    PremiumTeaseComponent,
-  ],
-  template: `
-    <app-header
-      title="Choose your Starting Trilha"
-      subtitle="Define the tone of your run: Critical, Spiritual, or Impact builds."
-      kicker="Run"
-    ></app-header>
-
-    <div class="grid gap-4 md:grid-cols-[1fr,1.2fr]">
-      <app-panel
-        [title]="activeKaelis.name"
-        [subtitle]="activeKaelis.title + ' - ' + activeKaelis.routeType"
-      >
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center gap-3">
-            <img
-              class="h-24 w-20 rounded-[12px] border border-white/10 object-cover"
-              [src]="activeKaelis.portrait"
-              [alt]="activeKaelis.name"
-            />
-            <div class="flex-1 space-y-2">
-              <app-stat-bar
-                label="HP"
-                [current]="player.state().attributes.hp"
-                [max]="player.state().attributes.maxHp"
-                tone="hp"
-              ></app-stat-bar>
-              <app-stat-bar
-                label="Posture"
-                [current]="player.state().attributes.posture"
-                [max]="player.state().attributes.maxPosture"
-                tone="posture"
-              ></app-stat-bar>
-              <app-stat-bar
-                label="Energy"
-                [current]="player.state().attributes.energy"
-                [max]="player.state().attributes.maxEnergy"
-                tone="energy"
-              ></app-stat-bar>
-            </div>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <app-tag label="Tick-based" tone="accent"></app-tag>
-            <app-tag label="Auto-battle" tone="muted"></app-tag>
-            <app-tag [label]="activeKaelis.routeType + ' route'" tone="accent"></app-tag>
-          </div>
-        </div>
-      </app-panel>
-
-      <div class="space-y-4">
-        <div class="grid gap-3 md:grid-cols-3">
-          @for (trackOption of tracks; track trackOption.key) {
-            <app-card
-              [title]="trackOption.name"
-              [subtitle]="trackOption.fantasy"
-              [tag]="trackOption.tag"
-              [interactive]="true"
-              (click)="selectTrack(trackOption.key)"
-              [ngClass]="{
-                'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16]':
-                  selectedTrack === trackOption.key,
-              }"
-            >
-              <div class="flex flex-col gap-2 text-sm text-[#A4A4B5]">
-                <p>Initial identity for your build.</p>
-                @if (selectedTrack === trackOption.key) {
-                  <app-tag label="Selected" tone="success"></app-tag>
-                }
-              </div>
-            </app-card>
-          }
-        </div>
-        <div class="flex items-center justify-between gap-3">
-          <app-premium-tease size="compact"></app-premium-tease>
-          <div class="flex gap-2">
-              <app-button
-                label="Character Management"
-                variant="ghost"
-                (click)="goToLoadout()"
-              ></app-button>
-            <app-button
-              label="Back"
-              variant="ghost"
-              (click)="cancel()"
-            ></app-button>
-              <app-button
-                label="Confirm"
-                variant="primary"
-                [disabled]="!selectedTrack"
-                (click)="confirm()"
-              ></app-button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
+  imports: [CommonModule],
+  templateUrl: "./run-start.page.html",
+  styleUrls: ["./run-start.page.scss"],
 })
 export class RunStartPageComponent implements OnInit {
   protected readonly runState = inject(RunStateService);
   protected readonly player = inject(PlayerStateService);
   protected readonly profile = inject(ProfileStateService);
+  protected readonly loadout = inject(LoadoutService);
   protected readonly router = inject(Router);
 
   protected tracks: TrackOption[] = [
-    { key: "A", name: "Critical", fantasy: "Sentinel + multi-hit", tag: "A" },
-    { key: "B", name: "Spiritual", fantasy: "Ruin + DoT", tag: "B" },
-    { key: "C", name: "Impact", fantasy: "Resonance + posture", tag: "C" },
+    {
+      key: "A",
+      name: "Critical Route",
+      fantasy: "Sentinel Focus + Multi-hit Vulnerability",
+      tag: "A",
+    },
+    {
+      key: "B",
+      name: "Spiritual Route",
+      fantasy: "Ruin Focus + DoT Scaling Increase",
+      tag: "B",
+    },
+    {
+      key: "C",
+      name: "Impact Route",
+      fantasy: "Resonance Focus + Heavy Posture Break",
+      tag: "C",
+    },
   ];
 
   protected selectedTrack?: TrackKey;
+  protected readonly fallbackPortrait =
+    "assets/battle/characters/placeholder.png";
 
   ngOnInit(): void {
     if (
@@ -158,8 +73,92 @@ export class RunStartPageComponent implements OnInit {
     return this.profile.activeKaelis();
   }
 
+  get attributes() {
+    return this.player.state().attributes;
+  }
+
+  get activeWeapon() {
+    return this.profile.getEquippedWeapon(this.activeKaelis.id);
+  }
+
+  get activeWeaponPassive(): string {
+    return (
+      this.activeWeapon.passive ??
+      this.activeWeapon.description ??
+      "Passive: (coming soon)"
+    );
+  }
+
+  get kaelisLevel(): number {
+    return this.activeKaelis.profile?.level ?? 1;
+  }
+
+  get kaelisTitleLine(): string {
+    const title = this.activeKaelis.title || "Kaelis";
+    const route = this.activeKaelis.routeType
+      ? ` - ${this.activeKaelis.routeType}`
+      : "";
+    return `${title}${route}`;
+  }
+
+  get kaelisStageImage(): string {
+    const skin = this.loadout.getEquippedSkin(this.activeKaelis.id);
+    return (
+      skin?.imageUrl ||
+      this.activeKaelis.imageUrl ||
+      this.activeKaelis.portrait ||
+      this.fallbackPortrait
+    );
+  }
+
+  get sigilSetSummary(): SigilSetSummary {
+    const rings = this.profile.getEquippedRings(this.activeKaelis.id);
+    const counts = this.profile.getRingSetCounts(this.activeKaelis.id);
+    const entries = Object.entries(counts) as Array<[string, number]>;
+    if (!entries.length) {
+      return {
+        name: "None",
+        bonus: "Bonus: (coming soon)",
+        iconUrl: rings[0]?.imageUrl,
+      };
+    }
+
+    const [setKey, count] = entries.sort((a, b) => b[1] - a[1])[0];
+    const setDef = SIGIL_SETS[setKey];
+    const name = setDef?.name ?? "Unknown Set";
+    let bonus = "Bonus: (coming soon)";
+
+    if (setDef?.fivePieceSkillBuff && count >= 5) {
+      bonus = `5-Pc: +${setDef.fivePieceSkillBuff.damagePercent}% Skill Dmg`;
+    } else if (setDef?.threePieceBonus && count >= 3) {
+      bonus = `3-Pc: +${setDef.threePieceBonus.value}% Damage`;
+    }
+
+    return {
+      name,
+      bonus,
+      iconUrl: rings[0]?.imageUrl,
+    };
+  }
+
   selectTrack(track: TrackKey): void {
     this.selectedTrack = track;
+  }
+
+  cycleKaelis(direction: "prev" | "next"): void {
+    const roster = this.profile.kaelisList();
+    if (!roster.length) return;
+    const currentId = this.profile.selectedKaelisId();
+    const currentIndex = roster.findIndex((item) => item.id === currentId);
+    const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex =
+      direction === "next"
+        ? (safeIndex + 1) % roster.length
+        : (safeIndex - 1 + roster.length) % roster.length;
+    const nextKaelis = roster[nextIndex];
+    if (nextKaelis) {
+      this.profile.setSelectedKaelis(nextKaelis.id);
+    }
   }
 
   confirm(): void {
@@ -172,6 +171,6 @@ export class RunStartPageComponent implements OnInit {
   }
 
   goToLoadout(): void {
-    this.router.navigate(['/character-management']);
+    this.router.navigate(["/character-management"]);
   }
 }

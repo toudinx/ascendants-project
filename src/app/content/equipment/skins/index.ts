@@ -24,6 +24,7 @@ function mapSkin(def: SkinDef): SkinDefinition {
     description: def.description,
     rarity: def.rarity,
     imageUrl: def.imageUrl,
+    battleSpriteId: def.battleSpriteId,
     tags: def.tags ? [...def.tags] : undefined,
     isDefault: def.isDefault
   };

@@ -1,0 +1,1124 @@
+<style>
+  /* --- VARIÁVEIS & TEMA --- */
+  :host {
+    --c-bg-deep: #0b0b15;
+    --c-bg-panel: rgba(20, 20, 35, 0.9);
+    --c-border: rgba(255, 255, 255, 0.1);
+    --c-border-hover: rgba(255, 255, 255, 0.25);
+
+    --c-primary: #8b5cf6; /* Violet */
+    --c-accent: #06b6d4; /* Cyan */
+    --c-danger: #f43f5e; /* Red/Pink */
+    --c-success: #10b981; /* Emerald */
+
+    --c-text-main: #e2e8f0;
+    --c-text-muted: #94a3b8;
+
+    --font-main: "Inter", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+
+    display: block;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--c-bg-deep);
+    color: var(--c-text-main);
+    font-family: var(--font-main);
+  }
+
+  /* --- LAYOUT SHELL --- */
+  .kaezan-layout {
+    display: grid;
+    grid-template-rows: 60px 1fr; /* Header / Content */
+    height: 100vh;
+    position: relative;
+  }
+
+  /* Background visual noise/gradient */
+  .ambient-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        circle at 50% 120%,
+        rgba(139, 92, 246, 0.15),
+        transparent 60%
+      ),
+      linear-gradient(to bottom, #05050a, #13131f);
+    z-index: -1;
+  }
+
+  /* --- HEADER --- */
+  .battle-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: rgba(10, 10, 20, 0.8);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--c-border);
+    z-index: 50;
+  }
+
+  .game-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin: 0;
+    color: #fff;
+  }
+  .game-title .subtitle {
+    color: var(--c-primary);
+    font-weight: 400;
+    opacity: 0.8;
+  }
+
+  .mode-chip {
+    display: inline-block;
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 12px;
+    color: var(--c-text-muted);
+    border: 1px solid var(--c-border);
+  }
+
+  .header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .room-tracker {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--c-accent);
+    display: flex;
+    align-items: center;
+  }
+  .room-tracker .label {
+    color: var(--c-text-muted);
+    margin-right: 8px;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+  }
+  .room-tracker .divider {
+    color: var(--c-border);
+    margin: 0 4px;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 8px;
+  }
+
+  .sys-btn {
+    background: transparent;
+    border: 1px solid var(--c-border);
+    color: var(--c-text-muted);
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+  .sys-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border-color: var(--c-border-hover);
+  }
+  .sys-btn.active {
+    background: var(--c-primary);
+    color: #fff;
+    border-color: var(--c-primary);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+  }
+
+  .sys-btn .icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+  .sys-btn .text {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- MAIN BATTLE AREA --- */
+  .battle-main {
+    display: grid;
+    grid-template-columns: 1fr 340px; /* Arena | Log dock */
+    overflow: hidden;
+    gap: 1px;
+  }
+
+  /* 1. STAGE CONTAINER (Arena + HUD) */
+  .stage-container {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 16px;
+    overflow-y: auto;
+    align-items: center;
+  }
+
+  /* Scrollbar hide */
+  .stage-container::-webkit-scrollbar {
+    width: 0;
+  }
+
+  .arena-frame {
+    width: 100%;
+    max-width: 1000px;
+    aspect-ratio: 16/9;
+    border: 1px solid var(--c-border);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background: #000;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
+  }
+
+  .arena-viewport {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .arena-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+  }
+
+  /* Vignette effect */
+  .arena-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+  }
+
+  /* ACTORS & SPRITES */
+  .actor {
+    position: absolute;
+    bottom: 15%;
+    width: 180px;
+    height: 220px;
+    z-index: 10;
+    transition: transform 0.1s;
+  }
+  .actor.player-actor {
+    left: 15%;
+  }
+  .actor.enemy-actor {
+    right: 15%;
+    filter: brightness(0.9);
+  }
+
+  .actor .sprite {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.6));
+  }
+
+  /* HUD PANEL */
+  .hud-panel {
+    width: 100%;
+    max-width: 1000px;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1.2fr; /* Stats | Deck | Stats */
+    gap: 24px;
+    align-items: end;
+  }
+
+  /* STAT CARDS */
+  .stat-card {
+    background: linear-gradient(
+      180deg,
+      rgba(20, 20, 35, 0.6),
+      rgba(20, 20, 35, 0.9)
+    );
+    border: 1px solid var(--c-border);
+    padding: 12px 16px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .stat-card.enemy-card {
+    text-align: right;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--font-mono);
+  }
+  .card-header .name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .card-header .role,
+  .card-header .lvl {
+    font-size: 0.7rem;
+    color: var(--c-text-muted);
+    text-transform: uppercase;
+  }
+
+  /* BARS */
+  .bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--c-text-muted);
+  }
+  .bar-label .nums {
+    color: #fff;
+    font-family: var(--font-mono);
+  }
+
+  .bar-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-track.small {
+    height: 4px;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease-out;
+    position: relative;
+  }
+
+  /* Glow effect inside bar */
+  .bar-fill::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 4px;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  }
+
+  .bar-fill.hp {
+    background: var(--c-success);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  }
+  .bar-fill.ep {
+    background: var(--c-accent);
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+  }
+  .bar-fill.hp.enemy {
+    background: var(--c-danger);
+    box-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+  }
+  .bar-fill.posture {
+    background: #f59e0b;
+  }
+
+  .bar-ticks {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: space-evenly;
+  }
+  .bar-ticks i {
+    width: 1px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .status-row {
+    height: 20px;
+    display: flex;
+    gap: 6px;
+  }
+  .status-row.right-align {
+    justify-content: flex-end;
+  }
+
+  .pill {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .pill.shield {
+    background: rgba(6, 182, 212, 0.2);
+    color: var(--c-accent);
+    border: 1px solid var(--c-accent);
+  }
+  .pill.broken {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid #f59e0b;
+  }
+  .pill.superbroken {
+    background: rgba(244, 63, 94, 0.2);
+    color: var(--c-danger);
+    border: 1px solid var(--c-danger);
+    animation: pulse-red 1s infinite;
+  }
+
+  /* ACTION DECK (Buttons) */
+  .action-deck {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding-bottom: 4px;
+  }
+
+  .skill-btn {
+    position: relative;
+    background: rgba(30, 30, 50, 0.8);
+    border: 1px solid var(--c-border);
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    overflow: hidden;
+    clip-path: polygon(
+      10px 0,
+      100% 0,
+      100% calc(100% - 10px),
+      calc(100% - 10px) 100%,
+      0 100%,
+      0 10px
+    );
+  }
+  .skill-btn.attack-btn {
+    width: 80px;
+    height: 80px;
+  }
+  .skill-btn.special-btn {
+    width: 110px;
+    height: 80px;
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.3);
+  }
+
+  .skill-btn .btn-inner {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .skill-btn .label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+  .skill-btn .key-hint {
+    font-size: 0.7rem;
+    color: var(--c-text-muted);
+    border: 1px solid var(--c-border);
+    padding: 0 4px;
+    border-radius: 3px;
+  }
+  .skill-btn .cost {
+    font-size: 0.7rem;
+    color: var(--c-accent);
+  }
+
+  /* States */
+  .skill-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: #fff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  }
+  .skill-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .skill-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(1);
+  }
+  .skill-btn.blocked {
+    border-color: var(--c-danger);
+    color: var(--c-danger);
+  }
+
+  .skill-btn .cooldown-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .skill-btn .cooldown-overlay .cd-num {
+    font-size: 1.5rem;
+    font-weight: 900;
+  }
+
+  /* --- LOG DRAWER/DOCK --- */
+  .log-drawer {
+    background: #080810;
+    border-left: 1px solid var(--c-border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    height: 100%;
+  }
+
+  .log-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--c-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .log-header h3 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin: 0;
+    color: var(--c-text-muted);
+  }
+  .log-header .close-mobile {
+    display: none;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+  }
+
+  .log-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+  }
+  .log-scroll-area::-webkit-scrollbar {
+    width: 6px;
+  }
+  .log-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  .log-group {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .log-group.is-live {
+    background: linear-gradient(90deg, rgba(139, 92, 246, 0.05), transparent);
+    border-left: 2px solid var(--c-primary);
+  }
+
+  .group-header {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .group-header:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .group-header .gh-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+  }
+  .group-header .caret {
+    font-size: 0.6rem;
+    transition: transform 0.2s;
+    opacity: 0.5;
+  }
+  .group-header .badge-live {
+    background: var(--c-danger);
+    color: #fff;
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    border-radius: 2px;
+    animation: pulse-red 1.5s infinite;
+  }
+
+  .log-group.expanded .caret {
+    transform: rotate(90deg);
+  }
+
+  .group-body {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 8px 16px 16px;
+    font-size: 0.85rem;
+    color: var(--c-text-muted);
+    border-top: 1px solid rgba(255, 255, 255, 0.02);
+  }
+
+  .log-entry {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 8px;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  .log-entry .entry-time {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    opacity: 0.4;
+    margin-top: 2px;
+  }
+
+  .log-entry .actor-name {
+    font-weight: 700;
+    font-size: 0.7rem;
+    margin-right: 6px;
+  }
+  .log-entry .actor-name.player {
+    color: var(--c-accent);
+  }
+  .log-entry .actor-name.enemy {
+    color: var(--c-danger);
+  }
+  .log-entry .actor-name.system {
+    color: var(--c-primary);
+  }
+
+  .chip-mini {
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 4px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .chip-mini.damage {
+    color: #fca5a5;
+  }
+  .chip-mini.break {
+    color: #fcd34d;
+  }
+
+  /* --- RESPONSIVE LOGIC --- */
+  /* Tablet/Mobile (Log Collapsed/Overlay) */
+  @media (max-width: 1100px) {
+    .battle-main {
+      grid-template-columns: 1fr; /* Stacked */
+    }
+
+    .log-drawer {
+      position: fixed;
+      top: 60px; /* Below header */
+      right: 0;
+      bottom: 0;
+      width: 320px;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 100;
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+      border-left: 1px solid var(--c-border);
+    }
+    .log-drawer .close-mobile {
+      display: block;
+    }
+
+    /* When JS state says log is open */
+    .kaezan-layout.log-open .log-drawer {
+      transform: translateX(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stage-container {
+      padding: 10px;
+    }
+    .arena-frame {
+      aspect-ratio: 4/3;
+    }
+    .hud-panel {
+      grid-template-columns: 1fr 1fr; /* 2 cols */
+      grid-template-areas: "player enemy" "deck deck";
+      gap: 12px;
+    }
+    .player-card {
+      grid-area: player;
+    }
+    .enemy-card {
+      grid-area: enemy;
+    }
+    .action-deck {
+      grid-area: deck;
+      width: 100%;
+      justify-content: space-evenly;
+    }
+    .skill-btn {
+      flex: 1;
+      max-width: 140px;
+    }
+
+    .log-drawer {
+      width: 100%;
+    } /* Full width drawer */
+  }
+
+  /* --- ANIMATIONS (Utility) --- */
+  @keyframes pulse-red {
+    0% {
+      opacity: 1;
+      box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4);
+    }
+    70% {
+      opacity: 0.7;
+      box-shadow: 0 0 0 6px rgba(244, 63, 94, 0);
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  /* Pause Overlay */
+  .pause-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 11, 21, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pause-modal {
+    background: #181825;
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid var(--c-border);
+    text-align: center;
+    min-width: 300px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+  .pause-modal .modal-icon {
+    font-size: 2rem;
+    color: var(--c-primary);
+    margin-bottom: 16px;
+  }
+  .pause-modal h2 {
+    margin: 0 0 24px;
+    font-weight: 800;
+    letter-spacing: 2px;
+  }
+
+  .pause-modal .modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .action-btn {
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .action-btn.primary {
+    background: var(--c-primary);
+    color: #fff;
+    border: none;
+  }
+  .action-btn.ghost {
+    background: transparent;
+    color: var(--c-danger);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+  }
+
+  /* Reduced Motion Override */
+  .reduce-motion *,
+  .reduce-motion ::before,
+  .reduce-motion ::after {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+
+  /* FX Placeholders */
+  .fx-hit {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .float-chip {
+    position: absolute;
+    font-weight: 900;
+    font-size: 1.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    animation: floatUp 0.8s forwards;
+  }
+  @keyframes floatUp {
+    0% {
+      transform: translateY(0) scale(0.8);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+      transform: translateY(-20px) scale(1.2);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-60px) scale(1);
+    }
+  }
+  .float-chip.dmg {
+    color: #fff;
+  }
+  .float-chip.crit {
+    color: #f59e0b;
+    font-size: 2rem;
+  }
+</style>
+
+<div
+  class="kaezan-layout"
+  [class.is-paused]="paused"
+  [class.log-open]="logOpen()"
+  [class.hit-pause]="hitPauseActive()"
+  [class.reduce-motion]="prefersReducedMotion"
+>
+  <div class="ambient-bg"></div>
+
+  <header class="battle-header">
+    <div class="header-left">
+      <h1 class="game-title">KAEZAN <span class="subtitle">AWAKENING</span></h1>
+      <div class="mode-chip">ECOS DA RUÍNA</div>
+    </div>
+
+    <div class="header-center">
+      <div class="room-tracker">
+        <span class="label">FLOOR</span>
+        <span class="value"
+          >{{ currentRoom() }} <span class="divider">/</span> {{ totalRooms()
+          }}</span
+        >
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button
+        class="sys-btn"
+        (click)="toggleAutoplay()"
+        [class.active]="autoplay"
+        title="Toggle Autoplay"
+      >
+        <span class="icon">⚡</span>
+        <span class="text">AUTO</span>
+      </button>
+      <button class="sys-btn" (click)="togglePause()" title="Pause Game">
+        <span class="icon">{{ paused ? '▶' : 'II' }}</span>
+      </button>
+      <button
+        class="sys-btn log-toggle"
+        (click)="toggleLog()"
+        [class.active]="logOpen()"
+        title="Toggle Log"
+      >
+        <span class="icon">≣</span>
+        <span class="text">LOG</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="battle-main">
+    <section class="stage-container">
+      @if (hasBattleActors) {
+      <div class="arena-frame">
+        <div class="arena-viewport">
+          <img
+            class="arena-bg"
+            src="assets/battle/arena/arena_ruin_base.png"
+            alt="Arena Background"
+          />
+
+          <div
+            class="actor player-actor"
+            [class.hit-shake-sm]="hasImpact('player', 'hit-sm')"
+            [class.hit-shake-lg]="hasImpact('player', 'hit-lg')"
+            [class.hit-tick]="hasImpact('player', 'hit-dot')"
+          >
+            <img [src]="playerSprite" class="sprite" alt="Player" />
+            <div class="fx-anchor">
+              @for (fx of activeFx(); track fx.id) { @if (fx.to === 'player') {
+              <div [class]="'fx-hit ' + fx.tone"></div>
+              } }
+            </div>
+            <div class="float-anchor">
+              @for (float of activeFloats(); track float.id) { @if (float.target
+              === 'player') {
+              <div class="float-chip" [class]="float.tone">
+                {{ float.text }}
+              </div>
+              } }
+            </div>
+          </div>
+
+          <div
+            class="actor enemy-actor"
+            [class.hit-shake-sm]="hasImpact('enemy', 'hit-sm')"
+            [class.hit-shake-lg]="hasImpact('enemy', 'hit-lg')"
+          >
+            <img [src]="enemySprite" class="sprite" alt="Enemy" />
+            <div class="fx-anchor">
+              @for (fx of activeFx(); track fx.id) { @if (fx.to === 'enemy') {
+              <div [class]="'fx-hit ' + fx.tone"></div>
+              } }
+            </div>
+            <div class="float-anchor">
+              @for (float of activeFloats(); track float.id) { @if (float.target
+              === 'enemy') {
+              <div class="float-chip" [class]="float.tone">
+                {{ float.text }}
+              </div>
+              } }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-panel">
+        <div class="stat-card player-card">
+          <div class="card-header">
+            <span class="name">VELVET</span>
+            <span class="role">Echo Duelist</span>
+          </div>
+
+          <div class="bar-group hp-group">
+            <div class="bar-label">
+              <span>HP</span>
+              <span class="nums"
+                >{{ playerState.currentHp }} / {{ playerState.maxHp }}</span
+              >
+            </div>
+            <div class="bar-track">
+              <div
+                class="bar-fill hp"
+                [style.width.%]="(playerState.currentHp / playerState.maxHp) * 100"
+              ></div>
+            </div>
+          </div>
+
+          <div class="bar-group ep-group">
+            <div class="bar-label">
+              <span>EP</span>
+              <span class="nums">{{ currentEp() }} / {{ maxEp() }}</span>
+            </div>
+            <div class="bar-track">
+              <div
+                class="bar-fill ep"
+                [style.width.%]="(currentEp() / maxEp()) * 100"
+              ></div>
+              <div class="bar-ticks"><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+
+          <div class="status-row">
+            @if (playerState.shield > 0) {
+            <span class="pill shield">🛡 {{ playerState.shield }}</span> }
+          </div>
+        </div>
+
+        <div class="action-deck">
+          <button
+            class="skill-btn attack-btn"
+            [disabled]="autoplay || paused"
+            (click)="onAttack()"
+          >
+            <div class="btn-inner">
+              <span class="label">ATTACK</span>
+              <span class="key-hint">A</span>
+            </div>
+          </button>
+
+          <button
+            class="skill-btn special-btn"
+            [class.cooldown]="playerState.skillCooldown > 0"
+            [class.blocked]="!playerState.skillReady"
+            [disabled]="!playerState.skillReady || autoplay || paused"
+            (click)="onSkill()"
+          >
+            <div class="btn-inner">
+              <span class="label">SKILL</span>
+              <span class="cost">20 EP</span>
+
+              @if (playerState.skillCooldown > 0) {
+              <div class="cooldown-overlay">
+                <span class="cd-num">{{ playerState.skillCooldown }}</span>
+              </div>
+              }
+            </div>
+          </button>
+        </div>
+
+        <div class="stat-card enemy-card">
+          <div class="card-header">
+            <span class="name">UNKNOWN ENTITY</span>
+            <span class="lvl">LV. ??</span>
+          </div>
+
+          <div class="bar-group hp-group">
+            <div class="bar-label">
+              <span>HP</span>
+              <span class="nums">{{ enemyState.currentHp }}%</span>
+            </div>
+            <div class="bar-track">
+              <div
+                class="bar-fill hp enemy"
+                [style.width.%]="enemyState.currentHp"
+              ></div>
+            </div>
+          </div>
+
+          <div class="bar-group posture-group">
+            <div class="bar-track small">
+              <div
+                class="bar-fill posture"
+                [style.width.%]="enemyState.posture"
+              ></div>
+            </div>
+          </div>
+
+          <div class="status-row right-align">
+            @if (enemyState.isBroken) {
+            <span class="pill broken">BROKEN</span> } @if
+            (enemyState.isSuperBroken) {
+            <span class="pill superbroken">SHATTERED</span> }
+          </div>
+        </div>
+      </div>
+      } @else {
+      <div class="empty-state">
+        <div class="loader-spinner"></div>
+        <p
+          style="text-align: center; padding: 20px; color: var(--c-text-muted)"
+        >
+          Synchronizing Neural Link...
+        </p>
+      </div>
+      }
+    </section>
+
+    <aside class="log-drawer">
+      <div class="log-header">
+        <h3>COMBAT LOG</h3>
+        <button class="close-mobile" (click)="toggleLog()">✕</button>
+      </div>
+
+      <div class="log-scroll-area">
+        @if (ui.state().logs.length) { @for (group of ui.state().logs; track
+        group.id) {
+
+        <div
+          class="log-group"
+          [class.expanded]="isTurnGroupExpanded(group.id)"
+          [class.is-live]="group.isLatest"
+        >
+          <div class="group-header" (click)="toggleTurnGroup(group.id)">
+            <div class="gh-left">
+              <span class="caret">▶</span>
+              <span class="turn-num">TURN {{ group.turn }}</span>
+              @if (group.isLatest) { <span class="badge-live">LIVE</span> }
+            </div>
+
+            @if (!isTurnGroupExpanded(group.id)) {
+            <div class="gh-summary-chips">
+              @for (chip of getTurnGroupSummary(group.id); track $index) {
+              <span class="chip-mini" [class]="chip.tone">{{ chip.text }}</span>
+              }
+            </div>
+            }
+          </div>
+
+          @if (isTurnGroupExpanded(group.id)) {
+          <div class="group-body">
+            @for (entry of group.entries; track $index) {
+            <div class="log-entry" [class]="entry.kind">
+              <div class="entry-time">{{ entry.timestamp | date:'mm:ss' }}</div>
+              <div class="entry-content">
+                <span class="actor-name" [class]="entry.actor"
+                  >{{ entry.actor | uppercase }}</span
+                >
+                <span class="text">{{ entry.text }}</span>
+              </div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        } } @else {
+        <div
+          style="padding: 20px; color: var(--c-text-muted); font-size: 0.8rem"
+        >
+          Waiting for combat data...
+        </div>
+        }
+      </div>
+    </aside>
+  </main>
+
+  @if (paused) {
+  <div class="pause-overlay">
+    <div class="pause-modal">
+      <div class="modal-icon">⏸</div>
+      <h2>SIMULATION PAUSED</h2>
+      <div class="modal-actions">
+        <button class="action-btn primary" (click)="togglePause()">
+          RESUME
+        </button>
+        <button class="action-btn ghost" (click)="abandonRun()">ABANDON</button>
+      </div>
+    </div>
+  </div>
+  } @if (evolutionOverlay(); as evo) {
+  <div
+    class="evolution-overlay"
+    (animationend)="onEvolutionOverlayEnd()"
+    [class.reduce-motion]="prefersReducedMotion"
+  >
+    <div class="overlay-card">
+      <div class="icon">{{ evo.icon || '✶' }}</div>
+      <div class="copy">
+        <span class="kicker">Evolution Unlocked</span>
+        <strong class="evo-name">{{ evo.name }}</strong>
+      </div>
+    </div>
+  </div>
+  }
+</div>

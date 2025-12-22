@@ -22,6 +22,7 @@ import {
 import { ENEMY_CATALOG, ENEMY_DEFS } from "../../../content/enemies";
 import {
   computeKaelisScores,
+  validateBattleSpriteMapping,
   validateEnemyDef,
   validateKaelisDef,
   WithScoresReport,
@@ -193,6 +194,9 @@ export class ContentWorkshopPageComponent {
   protected readonly enemyCatalogResults = computed(() =>
     this.buildEnemyCatalogResults()
   );
+  protected readonly battleSpriteValidation = computed(() =>
+    validateBattleSpriteMapping()
+  );
 
   protected readonly kaelisPowerTable = computed(() =>
     KAELIS_LIST.map((def) => ({
@@ -289,6 +293,7 @@ export class ContentWorkshopPageComponent {
   private buildKaelisDef(form: KaelisFormState): KaelisDef {
     const basePosture = Math.max(120, Math.floor(form.hp * 0.2));
     const defaults = BALANCE_CONFIG.playerDefaults;
+    const spriteBase = form.id.replace(/-/g, "_");
     const kit: KaelisDef["kit"] = {
       autoMultiplier: form.autoMultiplier,
       skillMultiplier: form.skillMultiplier,
@@ -317,6 +322,7 @@ export class ContentWorkshopPageComponent {
       routeType: form.routeType,
       portrait: "assets/battle/characters/placeholder.png",
       sprite: "assets/battle/characters/placeholder.png",
+      defaultBattleSpriteId: `${spriteBase}_battle_default`,
       imageUrl: "assets/battle/characters/placeholder.png",
       role: "Custom",
       profile: {

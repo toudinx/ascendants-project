@@ -1,18 +1,19 @@
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { AppTagComponent } from '../app-tag/app-tag.component';
+import { Component, Input } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { AppTagComponent } from "../app-tag/app-tag.component";
 
-type TagTone = 'accent' | 'info' | 'warning' | 'danger';
+type TagTone = "accent" | "info" | "warning" | "danger";
 
 @Component({
-  selector: 'app-card',
+  selector: "app-card",
   standalone: true,
   imports: [CommonModule, AppTagComponent],
   template: `
     <div
       class="card-surface relative flex h-full flex-col gap-3 border border-white/8 p-4 md:p-5 transition duration-150"
       [ngClass]="{
-        'hover:-translate-y-1 hover:border-white/20 hover:shadow-neon': interactive
+        'hover:-translate-y-1 hover:border-white/20 hover:shadow-neon':
+          interactive,
       }"
     >
       @if (title || subtitle || tag) {
@@ -37,13 +38,13 @@ type TagTone = 'accent' | 'info' | 'warning' | 'danger';
       }
       <ng-content></ng-content>
     </div>
-  `
+  `,
 })
 export class AppCardComponent {
-  @Input() title = '';
+  @Input() title = "";
   @Input() subtitle?: string;
   @Input() eyebrow?: string;
   @Input() tag?: string;
-  @Input() tagTone: TagTone = 'accent';
+  @Input() tagTone: TagTone = "accent";
   @Input() interactive = true;
 }

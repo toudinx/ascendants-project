@@ -56,6 +56,7 @@ export interface KaelisDefinition {
   routeType: KaelisRouteType;
   portrait: string;
   sprite: string;
+  defaultBattleSpriteId: string;
   imageUrl?: string;
   role: string;
   baseStats: KaelisBaseStats;

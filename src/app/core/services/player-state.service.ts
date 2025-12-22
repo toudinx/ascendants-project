@@ -6,6 +6,7 @@ import { WeaponDefinition } from '../models/weapon.model';
 import { SIGIL_SETS } from '../../content/equipment/sigils';
 import { RingDefinition, RingSetKey, RingStat } from '../models/ring.model';
 import { BALANCE_CONFIG } from '../../content/balance/balance.config';
+import { resolveBattleSpriteId, spriteIdToAssetPath } from '../../content/battle-sprites';
 
 interface BuildAttributesResult {
   attributes: PlayerAttributes;
@@ -68,7 +69,8 @@ export class PlayerStateService {
       const snapshot = this.profile.getActiveSnapshot();
       const weapon = this.profile.getEquippedWeapon(snapshot.id);
       const rings = this.profile.getEquippedRings(snapshot.id);
-      this.applyEquipment(snapshot, weapon, rings);
+      const equippedSkinId = this.profile.getActiveSkinFor(snapshot.id);
+      this.applyEquipment(snapshot, weapon, rings, undefined, equippedSkinId);
     });
   }
 
@@ -98,7 +100,10 @@ export class PlayerStateService {
       subStats: ring.subStats.map(stat => ({ ...stat }))
     }));
     this.currentModifiers = modifiers ? { ...modifiers } : {};
-    this.state.set(buildPlayerState(this.lastKaelis, this.lastWeapon, this.lastRings, this.currentModifiers));
+    const equippedSkinId = this.profile.getActiveSkinFor(kaelis.id);
+    this.state.set(
+      buildPlayerState(this.lastKaelis, this.lastWeapon, this.lastRings, this.currentModifiers, equippedSkinId)
+    );
   }
 
   applyRunAttributeModifiers(modifiers: PlayerAttributeModifierSet): void {
@@ -131,7 +136,8 @@ export class PlayerStateService {
     kaelis: RunKaelisSnapshot,
     weapon: WeaponDefinition,
     rings: RingDefinition[],
-    modifiers?: PlayerAttributeModifierSet
+    modifiers?: PlayerAttributeModifierSet,
+    equippedSkinId?: string | null
   ): void {
     this.lastKaelis = { ...kaelis, baseStats: { ...kaelis.baseStats }, kit: { ...kaelis.kit } };
     this.lastWeapon = { ...weapon };
@@ -143,6 +149,8 @@ export class PlayerStateService {
     if (modifiers) {
       this.currentModifiers = { ...modifiers };
     }
+    const activeSkinId = equippedSkinId ?? this.profile.getActiveSkinFor(kaelis.id);
+    const battleSprite = resolveBattleSpritePath(kaelis.id, activeSkinId);
     this.state.update(current => {
       const prev = current.attributes;
       const hpRatio = prev.maxHp > 0 ? prev.hp / prev.maxHp : 1;
@@ -165,6 +173,7 @@ export class PlayerStateService {
             Math.max(0, Math.floor(rebuilt.attributes.maxEnergy * energyRatio))
           )
         },
+        kaelisSprite: battleSprite,
         weaponId: this.lastWeapon!.id,
         ringSetCounts: rebuilt.ringSetCounts,
         ringSkillBuffs: rebuilt.ringSkillBuffs,
@@ -370,7 +379,8 @@ export class PlayerStateService {
       mainStat: { ...ring.mainStat },
       subStats: ring.subStats.map(stat => ({ ...stat }))
     }));
-    return buildPlayerState(this.lastKaelis, this.lastWeapon, this.lastRings, this.currentModifiers);
+    const equippedSkinId = this.profile.getActiveSkinFor(snapshot.id);
+    return buildPlayerState(this.lastKaelis, this.lastWeapon, this.lastRings, this.currentModifiers, equippedSkinId);
   }
 
   private preserveRingBuff(current: PlayerState, buffs: PlayerRingSkillBuff[]): RingBuffState {
@@ -397,11 +407,17 @@ function mockBuffs(): PlayerBuff[] {
   ];
 }
 
+function resolveBattleSpritePath(kaelisId: RunKaelisSnapshot['id'], equippedSkinId?: string | null): string {
+  const spriteId = resolveBattleSpriteId(kaelisId, equippedSkinId);
+  return spriteIdToAssetPath(spriteId);
+}
+
 function buildPlayerState(
   kaelis: RunKaelisSnapshot,
   weapon: WeaponDefinition,
   rings: RingDefinition[],
-  modifiers: PlayerAttributeModifierSet = {}
+  modifiers: PlayerAttributeModifierSet = {},
+  equippedSkinId?: string | null
 ): PlayerState {
   const result = buildPlayerAttributes(kaelis, weapon, rings, modifiers);
   return {
@@ -413,7 +429,7 @@ function buildPlayerState(
     kaelisRoute: kaelis.routeType,
     kaelisId: kaelis.id,
     kaelisName: kaelis.name,
-    kaelisSprite: kaelis.sprite,
+    kaelisSprite: resolveBattleSpritePath(kaelis.id, equippedSkinId),
     kit: { ...kaelis.kit },
     weaponId: weapon.id,
     ringSetCounts: result.ringSetCounts,

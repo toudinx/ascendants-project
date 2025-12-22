@@ -674,6 +674,42 @@
         </div>
       </app-panel>
 
+      <app-panel title="Battle Sprite Validation" subtitle="Checks skin mapping for battle sprite ids.">
+        <div class="validation-summary">
+          @if (battleSpriteValidation().errors.length === 0) {
+            <app-tag label="No blocking errors" tone="accent"></app-tag>
+          } @else {
+            <app-tag
+              [label]="'Errors: ' + battleSpriteValidation().errors.length"
+              tone="danger"
+            ></app-tag>
+          }
+          @if (battleSpriteValidation().warnings.length) {
+            <app-tag
+              [label]="'Warnings: ' + battleSpriteValidation().warnings.length"
+              tone="warning"
+            ></app-tag>
+          }
+        </div>
+        @if (battleSpriteValidation().errors.length) {
+          <ul class="validation-list">
+            @for (issue of battleSpriteValidation().errors; track $index) {
+              <li class="validation-item validation-item--error">{{ issue }}</li>
+            }
+          </ul>
+        }
+        @if (battleSpriteValidation().warnings.length) {
+          <ul class="validation-list">
+            @for (issue of battleSpriteValidation().warnings; track $index) {
+              <li class="validation-item validation-item--warning">{{ issue }}</li>
+            }
+          </ul>
+        }
+        @if (!battleSpriteValidation().errors.length && !battleSpriteValidation().warnings.length) {
+          <p class="text-xs text-[#7F7F95]">All checks passed.</p>
+        }
+      </app-panel>
+
       <app-panel title="Kaelis Power Budget Table" subtitle="Compare definitions quickly.">
         <div class="power-table-wrapper">
           <table class="power-table">

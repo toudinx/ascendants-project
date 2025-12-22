@@ -1,0 +1,162 @@
+<section class="run-start">
+  <header class="run-start__header">
+    <div class="header-title">Expedition // <strong>Select Phase</strong></div>
+  </header>
+
+  <div class="run-start__grid">
+    <section class="character-stage">
+      <button
+        type="button"
+        class="nav-btn nav-left"
+        (click)="cycleKaelis('prev')"
+        aria-label="Previous Kaelis"
+      >
+        &lt;
+      </button>
+
+      <img
+        class="character-img"
+        [src]="kaelisStageImage"
+        [alt]="activeKaelis.name || 'Kaelis'"
+      />
+
+      <button
+        type="button"
+        class="nav-btn nav-right"
+        (click)="cycleKaelis('next')"
+        aria-label="Next Kaelis"
+      >
+        &gt;
+      </button>
+
+      <div class="char-info-overlay">
+        <div class="char-level-badge">LV. {{ kaelisLevel }}</div>
+        <div class="char-name">{{ activeKaelis.name || 'Kaelis' }}</div>
+        <div class="char-title">{{ kaelisTitleLine }}</div>
+      </div>
+    </section>
+
+    <aside class="prep-panel">
+      <div class="card">
+        <div class="card-header">
+          <span>Attributes &amp; Loadout</span>
+          @if (activeKaelis.title) {
+          <span class="card-header__meta">Class: {{ activeKaelis.title }}</span>
+          }
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-row">
+            <span class="stat-label">HP</span>
+            <span class="stat-value"
+              >{{ attributes.maxHp | number: '1.0-0' }}</span
+            >
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">ATK</span>
+            <span class="stat-value"
+              >{{ attributes.attack | number: '1.0-0' }}</span
+            >
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">CRIT</span>
+            <span class="stat-value stat-value--crit"
+              >{{ attributes.critChance * 100 | number: '1.0-0' }}%</span
+            >
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">DOT</span>
+            <span class="stat-value"
+              >{{ attributes.dotChance * 100 | number: '1.0-0' }}%</span
+            >
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Energy</span>
+            <span class="stat-value"
+              >{{ attributes.maxEnergy | number: '1.0-0' }}</span
+            >
+          </div>
+        </div>
+
+        <div class="loadout-container">
+          <div class="loadout-row">
+            <div class="item-icon">
+              @if (activeWeapon.imageUrl) {
+              <img [src]="activeWeapon.imageUrl" [alt]="activeWeapon.name" />
+              }
+            </div>
+            <div class="item-info">
+              <div class="item-name">{{ activeWeapon.name }}</div>
+              <div class="item-subtext">{{ activeWeaponPassive }}</div>
+            </div>
+          </div>
+
+          <div class="loadout-row">
+            <div class="item-icon">
+              @if (sigilSetSummary.iconUrl) {
+              <img
+                [src]="sigilSetSummary.iconUrl"
+                [alt]="sigilSetSummary.name"
+              />
+              }
+            </div>
+            <div class="item-info">
+              <div class="item-name">
+                <span class="item-label">Set:</span>
+                <span class="sigil-set-name">{{ sigilSetSummary.name }}</span>
+              </div>
+              <div class="item-highlight">{{ sigilSetSummary.bonus }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span>Select Starting Path</span>
+        </div>
+        <div class="path-options">
+          @for (trackOption of tracks; track trackOption.key) {
+          <button
+            type="button"
+            class="path-card"
+            [class.active]="selectedTrack === trackOption.key"
+            (click)="selectTrack(trackOption.key)"
+            [attr.aria-pressed]="selectedTrack === trackOption.key"
+          >
+            <div class="path-badge">{{ trackOption.tag }}</div>
+            <div class="path-content">
+              <div class="path-title">{{ trackOption.name }}</div>
+              <div class="path-desc">{{ trackOption.fantasy }}</div>
+            </div>
+          </button>
+          }
+        </div>
+      </div>
+
+      <div class="action-footer">
+        <div class="secondary-actions-row">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
+            Back
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary btn-details"
+            (click)="goToLoadout()"
+          >
+            Details
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="!selectedTrack"
+          (click)="confirm()"
+        >
+          Confirm &amp; Initiate
+        </button>
+      </div>
+    </aside>
+  </div>
+</section>

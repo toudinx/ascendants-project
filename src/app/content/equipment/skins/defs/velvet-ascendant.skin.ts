@@ -7,6 +7,7 @@ export const VELVET_ASCENDANT_SKIN_DEF: SkinDef = {
   description: 'Gilded ascendant form with a radiant echo trail.',
   rarity: 'SSR',
   imageUrl: 'assets/battle/characters/velvet/velvet_skin_eternal.png',
+  battleSpriteId: 'velvet_battle_eternal',
   tags: ['limited', 'banner']
 };
 
