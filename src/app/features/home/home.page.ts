@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { HomeSceneStateService } from '../../core/services/home-scene-state.service';
 import { getHomeBackgrounds, getHomeKaelisOptions } from '../../content/home';
 import { HomeBackgroundComponent } from './components/home-background/home-background.component';
@@ -28,17 +29,18 @@ import { HomeCustomizePanelComponent } from './components/home-customize-panel/h
 })
 export class HomePageComponent {
   protected readonly homeScene = inject(HomeSceneStateService);
+  private readonly router = inject(Router);
 
   protected readonly backgrounds = getHomeBackgrounds();
   protected readonly kaelisOptions = getHomeKaelisOptions();
   protected readonly customizeOpen = signal(false);
+  protected readonly expeditionModeOpen = signal(false);
 
   protected readonly mainNavItems: HomeNavItem[] = [
     {
       id: 'expedition',
       title: 'Expedition',
       subtitle: 'Start Run',
-      route: '/run/start',
       tone: 'expedition'
     },
     {
@@ -102,6 +104,30 @@ export class HomePageComponent {
 
   closeCustomize(): void {
     this.customizeOpen.set(false);
+  }
+
+  openExpeditionMode(): void {
+    this.expeditionModeOpen.set(true);
+  }
+
+  closeExpeditionMode(): void {
+    this.expeditionModeOpen.set(false);
+  }
+
+  handleMainNavSelection(item: HomeNavItem): void {
+    if (item.id === 'expedition') {
+      this.openExpeditionMode();
+    }
+  }
+
+  startMvpRun(): void {
+    this.closeExpeditionMode();
+    this.router.navigateByUrl('/run/start');
+  }
+
+  startAscensionRun(): void {
+    this.closeExpeditionMode();
+    this.router.navigateByUrl('/ascension/start');
   }
 
   selectBackground(id: string): void {

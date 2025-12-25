@@ -1,0 +1,112 @@
+<section class="ascension-shop">
+  <app-header title="Ascension Shop" subtitle="Trade fragments for buffs." kicker="Ascension"></app-header>
+
+  @if (state$ | async; as state) {
+    <div class="shop-grid">
+      <aside class="shop-sidebar">
+        <div class="card">
+          <div class="card-header">
+            <span>Run Status</span>
+            <span class="card-header__meta">Floor {{ state.floorIndex }}</span>
+          </div>
+          <div class="status-list">
+            <div class="status-row">
+              <span class="status-label">Echo Fragments</span>
+              <span class="status-value">{{ state.echoFragments }}</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Echo Purchase</span>
+              <span class="status-value">Max 1</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Services</span>
+              <span class="status-value">Heal + 2 Buffs</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="shop-main">
+        <div class="card">
+          <div class="card-header">
+            <span>Echoes for Sale</span>
+            <span class="card-header__meta">Buy 1</span>
+          </div>
+          @if (inventory?.echoesForSale?.length) {
+            <div class="offer-grid">
+              @for (offer of inventory?.echoesForSale; track offer.kind === 'echo' ? offer.echo.id : offer.id) {
+                <button
+                  type="button"
+                  class="echo-card"
+                  (click)="buyEcho(offer)"
+                  [disabled]="!canBuyEcho(offer, state)"
+                >
+                  <div class="echo-card__tag">
+                    <span class="echo-tag" [class.echo-tag--rest]="offer.kind === 'rest'">
+                      {{ offer.kind === 'echo' ? offer.echo.pathId : 'REST' }}
+                    </span>
+                    <span class="echo-price">{{ offer.price }}F</span>
+                  </div>
+                  <div class="echo-card__name">
+                    {{ offer.kind === 'echo' ? offer.echo.name : offer.name }}
+                  </div>
+                  <div class="echo-card__desc">
+                    {{ offer.kind === 'echo' ? offer.echo.description : offer.description }}
+                  </div>
+                  <div class="echo-card__footer">
+                    <span class="echo-card__rarity">
+                      {{ offer.kind === 'echo' ? offer.echo.rarity : 'rest' }}
+                    </span>
+                    <span class="echo-card__cta">
+                      {{ offer.sold ? 'Purchased' : (offer.kind === 'echo' ? 'Buy' : 'Rest') }}
+                    </span>
+                  </div>
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">No echoes available.</div>
+          }
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span>Services</span>
+            <span class="card-header__meta">Max 1 Heal, 2 Buffs</span>
+          </div>
+          @if (inventory?.servicesForSale?.length) {
+            <div class="service-list">
+              @for (offer of inventory?.servicesForSale; track offer.service.id) {
+                <div class="service-row">
+                  <div class="service-info">
+                    <div class="service-name">{{ offer.service.name }}</div>
+                    <div class="service-desc">{{ offer.service.description }}</div>
+                  </div>
+                  <div class="service-actions">
+                    <span class="service-price">{{ offer.price }}F</span>
+                    <button
+                      type="button"
+                      class="service-btn"
+                      (click)="buyService(offer)"
+                      [disabled]="!canBuyService(offer, state)"
+                    >
+                      {{ offer.purchased ? 'Purchased' : 'Buy' }}
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">No services available.</div>
+          }
+        </div>
+
+        <div class="action-footer">
+          <button type="button" class="btn btn-primary" (click)="continue()">
+            Continue
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+</section>

@@ -18,16 +18,16 @@ import { filter } from "rxjs/operators";
     RunTransitionOverlayComponent,
   ],
   template: `
-    <div class="min-h-screen bg-black/40 flex items-center justify-center">
+    <div
+      class="min-h-screen bg-black/40"
+      [ngClass]="layoutShellClasses"
+    >
       <app-run-transition-overlay></app-run-transition-overlay>
-      <div
-        class="w-full py-10"
-        [class.px-4]="!isWideLayout()"
-        [class.px-6]="isWideLayout()"
-        [class.max-w-6xl]="!isWideLayout()"
-        [class.max-w-none]="isWideLayout()"
-      >
-        <div class="card-surface">
+      <div class="w-full" [ngClass]="layoutContainerClasses">
+        <div
+          class="card-surface"
+          [ngClass]="{ 'asc-start-card': isAscensionStartLayout() }"
+        >
           <div class="rounded-[16px]">
             <router-outlet></router-outlet>
           </div>
@@ -41,6 +41,8 @@ export class AppComponent {
   private readonly profile = inject(ProfileStateService);
   private readonly router = inject(Router);
   protected readonly isWideLayout = signal(false);
+  protected readonly isAscensionBattleLayout = signal(false);
+  protected readonly isAscensionStartLayout = signal(false);
 
   constructor() {
     this.updateLayout(this.router.url);
@@ -57,5 +59,30 @@ export class AppComponent {
     this.isWideLayout.set(
       url.startsWith("/character-management") || url.startsWith("/run/battle")
     );
+    this.isAscensionBattleLayout.set(url.startsWith("/ascension/battle"));
+    this.isAscensionStartLayout.set(url.startsWith("/ascension/start"));
+  }
+
+  get layoutContainerClasses(): string {
+    if (this.isAscensionBattleLayout()) {
+      return "p-3 sm:p-4 md:p-6 max-w-none";
+    }
+    if (this.isAscensionStartLayout()) {
+      return "px-4 max-w-6xl";
+    }
+    if (this.isWideLayout()) {
+      return "py-10 px-6 max-w-none";
+    }
+    return "py-10 px-4 max-w-6xl";
+  }
+
+  get layoutShellClasses(): string {
+    if (this.isAscensionBattleLayout()) {
+      return "grid place-items-center";
+    }
+    if (this.isAscensionStartLayout()) {
+      return "flex justify-center items-start pt-6 md:pt-10 pb-0";
+    }
+    return "flex items-center justify-center";
   }
 }

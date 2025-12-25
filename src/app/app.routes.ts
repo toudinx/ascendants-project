@@ -20,10 +20,12 @@ import { LoadoutPageComponent } from './features/loadout/loadout.page';
 import { CharacterManagementPageComponent } from './features/character-management/character-management.page';
 import { ContentWorkshopPageComponent } from './features/dev/content-workshop/content-workshop.page';
 import { devOnlyCanActivate, devOnlyCanMatch } from './core/guards/dev-only.guard';
+import { ASCENSION_ROUTES } from './features/echoes-of-ascension/echoes-of-ascension.routes';
 
 export const appRoutes: Routes = [
   { path: '', component: HomePageComponent },
   { path: 'run/start', component: RunStartPageComponent },
+  ...ASCENSION_ROUTES,
   {
     path: 'run/battle',
     component: RunBattlePageComponent,

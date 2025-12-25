@@ -20,7 +20,7 @@ export const VELVET_DEF: KaelisDef = {
   },
   base: {
     hp: 9800,
-    atk: 920,
+    atk: 1540,
     posture: 260,
     energy: 110,
     defense: 320,

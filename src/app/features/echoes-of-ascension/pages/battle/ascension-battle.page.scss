@@ -1,0 +1,358 @@
+.ascension-battle {
+  --panel-bg: rgba(17, 17, 32, 0.95);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --accent-origin: #2de3c8;
+  --accent-run: #8a7cff;
+  --accent-flex: rgba(255, 255, 255, 0.5);
+
+  width: 95vw;
+  max-width: none;
+  min-height: 92vh;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.4vw, 18px);
+}
+
+.ascension-battle__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 4px 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.header-title strong {
+  color: var(--text-primary);
+}
+
+.ascension-battle__layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(900px, 3fr) minmax(
+      320px,
+      1fr
+    );
+  gap: clamp(12px, 1.2vw, 18px);
+  align-items: stretch;
+  min-height: calc(92vh - 64px);
+  height: calc(92vh - 64px);
+}
+
+.run-panel,
+.log-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding-right: 6px;
+}
+
+.run-panel {
+  overflow: auto;
+}
+
+.log-panel {
+  overflow: visible;
+  min-height: 0;
+  padding: 6px 4px 8px 12px;
+  box-sizing: border-box;
+}
+
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.panel-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.panel-badge.active {
+  border-color: rgba(45, 227, 200, 0.4);
+  color: #2de3c8;
+  background: rgba(45, 227, 200, 0.12);
+}
+
+.panel-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.panel-label {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+}
+
+.panel-value {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.panel-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.panel-subtext {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.echo-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.echo-group {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.echo-group.origin {
+  border-color: rgba(45, 227, 200, 0.25);
+}
+
+.echo-group.run {
+  border-color: rgba(138, 124, 255, 0.25);
+}
+
+.echo-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.echo-group__name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.echo-group__tag {
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  text-transform: uppercase;
+  color: var(--accent-flex);
+}
+
+.echo-group.origin .echo-group__tag {
+  color: var(--accent-origin);
+  border-color: rgba(45, 227, 200, 0.4);
+  background: rgba(45, 227, 200, 0.12);
+}
+
+.echo-group.run .echo-group__tag {
+  color: var(--accent-run);
+  border-color: rgba(138, 124, 255, 0.4);
+  background: rgba(138, 124, 255, 0.12);
+}
+
+.echo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.echo-entry__name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.echo-entry__desc {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.battle-root {
+  position: relative;
+  overflow: visible;
+  height: 100%;
+}
+
+.battle-body,
+.battle-card {
+  height: 100%;
+}
+
+.battle-card {
+  position: relative;
+  z-index: 1;
+}
+
+.battle-stage,
+.arena-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.arena-stage {
+  z-index: 0;
+}
+
+.actor.velvet .shadow {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.ascension-battle .actor .shadow {
+  display: none;
+}
+
+.battle-hud {
+  position: relative;
+  z-index: 100;
+  isolation: isolate;
+  background: transparent;
+}
+
+.battle-hud::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 24, 0.98);
+  border-radius: inherit;
+  z-index: 0;
+}
+
+.battle-hud > * {
+  position: relative;
+  z-index: 1;
+}
+
+.action-btn,
+.hud-actions,
+.action-buttons {
+  position: relative;
+  z-index: 50;
+}
+
+.log-panel .log-dock {
+  position: relative;
+  top: 0;
+  width: 100%;
+  max-width: none;
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+.log-dock__header {
+  padding-inline: 12px;
+}
+
+.log-panel .log-dock:not(.open) {
+  opacity: 0.5;
+}
+
+.log-panel .log-dock:not(.open) .log-dock__body {
+  display: none;
+}
+
+.log-dock__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  max-height: none;
+  padding-inline: 12px;
+}
+
+.chip svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.log-turn__meta {
+  gap: 6px;
+}
+
+.log-turn__separator {
+  color: var(--text-secondary);
+}
+
+.hotkey-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 1200px) {
+  .ascension-battle__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .run-panel,
+  .log-panel {
+    order: initial;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .log-panel .log-dock {
+    position: static;
+  }
+}

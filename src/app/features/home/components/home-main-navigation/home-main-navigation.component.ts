@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -10,6 +10,7 @@ export interface HomeNavItem {
   subtitle: string;
   route?: string;
   tone: HomeNavTone;
+  disabled?: boolean;
 }
 
 @Component({
@@ -21,4 +22,11 @@ export interface HomeNavItem {
 })
 export class HomeMainNavigationComponent {
   @Input() items: HomeNavItem[] = [];
+  @Output() itemSelected = new EventEmitter<HomeNavItem>();
+
+  selectItem(item: HomeNavItem): void {
+    if (!item.disabled) {
+      this.itemSelected.emit(item);
+    }
+  }
 }

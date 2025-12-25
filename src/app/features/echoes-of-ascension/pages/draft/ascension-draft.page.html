@@ -1,0 +1,118 @@
+<section class="ascension-draft">
+  <app-header
+    title="Ascension Draft"
+    subtitle="Select your next echo."
+    kicker="Ascension"
+  ></app-header>
+
+  @if (state$ | async; as state) {
+    <div class="draft-grid">
+      <aside class="draft-sidebar">
+        <div class="card">
+          <div class="card-header">
+            <span>Run Status</span>
+            <span class="card-header__meta">
+              Floor {{ state.floorIndex }}/{{ totalFloors }}
+            </span>
+          </div>
+          <div class="status-list">
+            <div class="status-row">
+              <span class="status-label">Echo Fragments</span>
+              <span class="status-value">{{ state.echoFragments }}</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Origin Path</span>
+              <span class="status-value">{{ pathName(state.originPathId) }}</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Run Path</span>
+              <span class="status-value">{{ pathName(state.runPathId) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span>Resonance Progress</span>
+            <span class="card-header__meta">3 + 2</span>
+          </div>
+          <div class="progress-grid">
+            <div class="progress-row">
+              <span class="progress-label">Origin</span>
+              <span class="progress-value">{{ state.originEchoCount }}/3</span>
+            </div>
+            <div class="progress-row">
+              <span class="progress-label">Run</span>
+              <span class="progress-value">{{ state.runEchoCount }}/2</span>
+            </div>
+          </div>
+          @if (state.resonanceActive) {
+            <div class="resonance-badge">Resonance Active</div>
+          }
+        </div>
+      </aside>
+
+      <section class="draft-main">
+        <div class="card">
+          <div class="card-header">
+            <span>Echo Draft</span>
+            <span class="card-header__meta">Select 1</span>
+          </div>
+          @if (offer.length) {
+            <div class="offer-grid">
+              @for (option of offer; track option.id) {
+                <button
+                  type="button"
+                  class="echo-card"
+                  (click)="selectOption(option)"
+                  [disabled]="isResolving"
+                  [attr.aria-label]="'Select ' + (option.kind === 'echo' ? option.echo.name : option.name)"
+                >
+                  <div class="echo-card__tag">
+                    <span
+                      class="echo-tag"
+                      [class.echo-tag--origin]="option.kind === 'echo' && option.echo.pathId === state.originPathId"
+                      [class.echo-tag--run]="option.kind === 'echo' && option.echo.pathId === state.runPathId"
+                      [class.echo-tag--rest]="option.kind === 'rest'"
+                    >
+                      {{ option.kind === 'echo' ? option.echo.pathId : option.tag }}
+                    </span>
+                    <span class="echo-tag__meta">
+                      {{
+                        option.kind === 'echo'
+                          ? pathRoleLabel(option.echo, state)
+                          : 'Recovery'
+                      }}
+                    </span>
+                  </div>
+                  <div class="echo-card__name">
+                    {{ option.kind === 'echo' ? option.echo.name : option.name }}
+                  </div>
+                  <div class="echo-card__desc">
+                    {{
+                      option.kind === 'echo'
+                        ? option.echo.description
+                        : option.description
+                    }}
+                  </div>
+                  <div class="echo-card__footer">
+                    <span class="echo-card__rarity">
+                      {{ option.kind === 'echo' ? option.echo.rarity : 'rest' }}
+                    </span>
+                    <span class="echo-card__cta">Choose</span>
+                  </div>
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">No echoes available.</div>
+          }
+        </div>
+      </section>
+    </div>
+
+    @if (bannerMessage) {
+      <div class="resonance-banner">{{ bannerMessage }}</div>
+    }
+  }
+</section>

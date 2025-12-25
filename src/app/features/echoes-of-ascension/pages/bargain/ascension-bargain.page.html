@@ -1,0 +1,72 @@
+<section class="ascension-bargain">
+  <app-header
+    title="Devil's Bargain"
+    subtitle="Risk for power."
+    kicker="Ascension"
+  ></app-header>
+
+  @if (state$ | async; as state) {
+    <div class="bargain-grid">
+      <aside class="bargain-sidebar">
+        <div class="card">
+          <div class="card-header">
+            <span>Active Resonance</span>
+            <span class="card-header__meta">Floor {{ state.floorIndex }}</span>
+          </div>
+          @if (resonance) {
+            <div class="resonance-title">{{ resonance.name }}</div>
+            <div class="resonance-desc">{{ resonance.description }}</div>
+            <div class="resonance-summary">
+              @for (row of resonanceSummary(resonance, state); track row.label) {
+                <div class="summary-row">
+                  <span class="summary-label">{{ row.label }}</span>
+                  <span class="summary-value">{{ row.value }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">No resonance active.</div>
+          }
+        </div>
+      </aside>
+
+      <section class="bargain-main">
+        <div class="card">
+          <div class="card-header">
+            <span>Upgrade Offer</span>
+            <span class="card-header__meta">Max HP Trade</span>
+          </div>
+          @if (options.length) {
+            <div class="offer-grid">
+              @for (option of options; track option.id) {
+                <button
+                  type="button"
+                  class="offer-card"
+                  (click)="selectOption(option)"
+                  [disabled]="isResolving"
+                >
+                  <div class="offer-card__head">
+                    <span class="offer-title">{{ option.name }}</span>
+                    <span class="offer-cost">-{{ option.hpCostPercent * 100 | number:'1.0-0' }}% HP</span>
+                  </div>
+                  <div class="offer-desc">{{ option.description }}</div>
+                  <div class="offer-meta">
+                    Upgrade: {{ optionTargetLabel(option, resonance) }}
+                  </div>
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">No upgrades available.</div>
+          }
+        </div>
+
+        <div class="action-footer">
+          <button type="button" class="btn btn-ghost" (click)="decline()" [disabled]="isResolving">
+            Decline
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+</section>

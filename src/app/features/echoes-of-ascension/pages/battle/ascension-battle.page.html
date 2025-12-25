@@ -1,0 +1,584 @@
+<section class="ascension-battle">
+  <header class="ascension-battle__header">
+    <div class="header-title">Ascension // <strong>Battle</strong></div>
+  </header>
+
+  <div class="ascension-battle__layout">
+    <aside class="run-panel" aria-label="Run details">
+      <div class="panel">
+        <div class="panel-header">
+          <span>Run Status</span>
+        </div>
+        <div class="panel-row">
+          <span class="panel-label">Floor</span>
+          <span class="panel-value">{{ runDetailsVm.floorLabel }}</span>
+        </div>
+        <div class="panel-row">
+          <span class="panel-label">Echo Fragments</span>
+          <span class="panel-value">{{ runDetailsVm.echoFragments }}</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span>Active Potion</span>
+        </div>
+        <div class="panel-title">{{ runDetailsVm.potionName }}</div>
+        <div class="panel-subtext">{{ runDetailsVm.potionEffect }}</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span>Resonance</span>
+          <span
+            class="panel-badge"
+            [class.active]="runDetailsVm.resonanceActive"
+          >
+            {{ runDetailsVm.resonanceActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="panel-title">{{ runDetailsVm.resonanceName }}</div>
+        <div class="panel-subtext">{{ runDetailsVm.resonanceEffect }}</div>
+        <div class="panel-row">
+          <span class="panel-label">Origin Echoes</span>
+          <span class="panel-value">
+            {{ runDetailsVm.originEchoesCollected }} / {{
+            runDetailsVm.originRequirement }}
+          </span>
+        </div>
+        <div class="panel-row">
+          <span class="panel-label">Run Echoes</span>
+          <span class="panel-value">
+            {{ runDetailsVm.runEchoesCollected }} / {{
+            runDetailsVm.runRequirement }}
+          </span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span>Active Echoes</span>
+        </div>
+        @if (runDetailsVm.echoGroups.length) {
+        <div class="echo-groups">
+          @for (group of runDetailsVm.echoGroups; track group.pathId) {
+          <div
+            class="echo-group"
+            [class.origin]="group.kind === 'origin'"
+            [class.run]="group.kind === 'run'"
+          >
+            <div class="echo-group__header">
+              <span class="echo-group__name">{{ group.pathName }}</span>
+              <span class="echo-group__tag">{{ group.tag }}</span>
+            </div>
+            <div class="echo-list">
+              @for (echo of group.echoes; track echo.name) {
+              <div class="echo-entry">
+                <div class="echo-entry__name">{{ echo.name }}</div>
+                <div class="echo-entry__desc">{{ echo.description }}</div>
+              </div>
+              }
+            </div>
+          </div>
+          }
+        </div>
+        } @else {
+        <div class="panel-subtext">No echoes acquired yet.</div>
+        }
+      </div>
+    </aside>
+
+    <div
+      class="battle-root"
+      [class.hit-pause]="hitPauseActive()"
+      [class.is-paused]="paused"
+      [class.reduce-motion]="prefersReducedMotion"
+      [class.ruina-evolved]="activeEvolution?.cssClass === 'ruina-evolved'"
+      [class.impacto-evolved]="activeEvolution?.cssClass === 'impacto-evolved'"
+      [class.critico-evolved]="activeEvolution?.cssClass === 'critico-evolved'"
+    >
+      @if (hasBattleActors) {
+      <div class="battle-body">
+        <div class="battle-card">
+          <div class="battle-stage">
+            <div class="arena-wrapper">
+              <div class="arena-stage arena">
+                <img
+                  class="arena-bg"
+                  src="assets/battle/arena/arena_ruin_base.png"
+                  alt="Arena"
+                />
+
+                <div
+                  class="actor velvet"
+                  [class.hit-shake-sm]="hasImpact('player', 'hit-sm')"
+                  [class.hit-shake-lg]="hasImpact('player', 'hit-lg')"
+                  [class.hit-tick]="hasImpact('player', 'hit-dot')"
+                  [class.hit-posture]="hasImpact('player', 'hit-posture')"
+                  [class.crit-flare]="hasImpact('player', 'crit-flare')"
+                  [class.break-pulse]="hasImpact('player', 'break')"
+                  [class.superbreak-pulse]="hasImpact('player', 'superbreak')"
+                  [class.hit-flash]="ui.state().flashPlayer"
+                  [class.hit-shake]="ui.state().flashPlayer"
+                  [class.broken]="isPlayerBroken"
+                  [class.superbroken]="isPlayerSuperBroken"
+                  (animationend)="onImpactAnimationEnd('player', $event)"
+                >
+                  @if (hasDot('player')) {
+                  <div class="status-sigil dot">DoT</div>
+                  }
+                  <img
+                    class="shadow"
+                    src="assets/battle/fx/shadow_ground.png"
+                    alt=""
+                  />
+                  <img class="sprite" [src]="playerSprite" [alt]="playerName" />
+                </div>
+
+                <div
+                  class="actor enemy"
+                  [class.hit-shake-sm]="hasImpact('enemy', 'hit-sm')"
+                  [class.hit-shake-lg]="hasImpact('enemy', 'hit-lg')"
+                  [class.hit-tick]="hasImpact('enemy', 'hit-dot')"
+                  [class.hit-posture]="hasImpact('enemy', 'hit-posture')"
+                  [class.crit-flare]="hasImpact('enemy', 'crit-flare')"
+                  [class.break-pulse]="hasImpact('enemy', 'break')"
+                  [class.superbreak-pulse]="hasImpact('enemy', 'superbreak')"
+                  [class.hit-flash]="ui.state().flashEnemy"
+                  [class.hit-shake]="ui.state().flashEnemy"
+                  [class.broken]="isEnemyBroken"
+                  [class.superbroken]="isEnemySuperBroken"
+                  (animationend)="onImpactAnimationEnd('enemy', $event)"
+                >
+                  @if (enemyPreparing) {
+                  <div class="status-sigil alert">ALERT</div>
+                  } @if (hasDot('enemy')) {
+                  <div class="status-sigil dot">DoT</div>
+                  }
+                  <img
+                    class="shadow"
+                    src="assets/battle/fx/shadow_ground.png"
+                    alt=""
+                  />
+                  <img
+                    class="sprite"
+                    src="assets/battle/creatures/enemy_generic_idle.png"
+                    alt="Enemy"
+                  />
+                </div>
+
+                <div class="fx-layer">
+                  @for (fx of attackFx(); track fx.id) {
+                  <div
+                    class="attack-fx"
+                    [ngClass]="fx.tone"
+                    [style.--from-x]="positionFor(fx.from).x"
+                    [style.--from-y]="positionFor(fx.from).y"
+                    [style.--to-x]="positionFor(fx.to).x"
+                    [style.--to-y]="positionFor(fx.to).y"
+                    (animationend)="removeFx(fx.id)"
+                  ></div>
+                  } @for (float of visibleFloats(); track float.id) {
+                  <div
+                    class="float-chip"
+                    [ngClass]="floatTone(float)"
+                    [style.left]="floatPosition(float).x"
+                    [style.top]="floatPosition(float).y"
+                    (animationend)="removeFloat(float.id)"
+                  >
+                    {{ float.value }}
+                  </div>
+                  }
+                </div>
+
+                @if (paused) {
+                <div class="pause-veil">
+                  <div class="pause-copy">
+                    <span class="pause-icon">PAUSE</span>
+                    <span>Combat paused</span>
+                  </div>
+                </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="battle-hud">
+            @if (activeEvolution) {
+            <div class="evolution-banner">
+              <div class="badge" [attr.title]="activeEvolution.description">
+                <span class="icon">{{ activeEvolution.icon || 'EVO' }}</span>
+                <span class="label">{{ activeEvolution.name }}</span>
+              </div>
+            </div>
+            }
+            <div class="hud-status-row">
+              <div
+                class="status-card player"
+                [ngClass]="{
+                    broken: isPlayerBroken,
+                    superbroken: isPlayerSuperBroken,
+                   'hp-low': isHpLow(playerState.attributes.hp, playerState.attributes.maxHp),
+                   'posture-low': isPostureLow(playerState.attributes.posture, playerState.attributes.maxPosture)
+                  }"
+              >
+                <div class="status-header">
+                  <div>
+                    <strong>{{ playerName }}</strong>
+                    <span class="subtitle">Ascendant</span>
+                  </div>
+                  <div class="state-pills">
+                    @if (hasDot('player')) {
+                    <span
+                      class="status-pill dot"
+                      [class.dot-pulse]="hasImpact('player', 'hit-dot')"
+                      >DoT</span
+                    >
+                    } @if (isPlayerBroken) {
+                    <span class="status-pill break"
+                      >Broken {{ playerState.breakTurns || 0 }}T</span
+                    >
+                    } @if (isPlayerSuperBroken) {
+                    <span class="status-pill super"
+                      >Superbroken {{ playerState.breakTurns || 0 }}T</span
+                    >
+                    }
+                  </div>
+                </div>
+                <div class="status-meter">
+                  <span class="label">HP</span>
+                  <div class="meter">
+                    <div
+                      class="meter-fill hp"
+                      [ngClass]="{ 'crit-active': hasImpact('player', 'hit-lg') }"
+                      [style.width]="meterWidth(playerState.attributes.hp, playerState.attributes.maxHp)"
+                    ></div>
+                  </div>
+                  <span class="meter-value"
+                    >{{ playerState.attributes.hp }} / {{
+                    playerState.attributes.maxHp }}</span
+                  >
+                </div>
+                <div class="status-meter">
+                  <span class="label">EP</span>
+                  <div class="meter">
+                    <div
+                      class="meter-fill ep"
+                      [style.width]="meterWidth(playerState.attributes.energy, playerState.attributes.maxEnergy)"
+                    ></div>
+                  </div>
+                  <span class="meter-value"
+                    >{{ playerState.attributes.energy }} / {{
+                    playerState.attributes.maxEnergy }}</span
+                  >
+                </div>
+                <div class="status-meter">
+                  <span class="label">Posture</span>
+                  <div class="meter">
+                    <div
+                      class="meter-fill shield"
+                      [ngClass]="{ 'posture-spark': hasImpact('player', 'hit-posture') }"
+                      [style.width]="meterWidth(playerState.attributes.posture, playerState.attributes.maxPosture)"
+                    ></div>
+                  </div>
+                  <span class="meter-value"
+                    >{{ playerState.attributes.posture }} / {{
+                    playerState.attributes.maxPosture }}</span
+                  >
+                </div>
+              </div>
+
+              <div
+                class="status-card enemy"
+                [ngClass]="{
+                    broken: isEnemyBroken,
+                    superbroken: isEnemySuperBroken,
+                   'hp-low': isHpLow(enemyState.attributes.hp, enemyState.attributes.maxHp),
+                   'posture-low': isPostureLow(enemyState.attributes.posture, enemyState.attributes.maxPosture)
+                  }"
+              >
+                <div class="status-header">
+                  <div>
+                    <strong>{{ enemyState.attributes.name }}</strong>
+                    @if (enemyPreparing) {
+                    <span class="subtitle">Preparing attack</span>
+                    } @if (!enemyPreparing) {
+                    <span class="subtitle"
+                      >{{ enemyState.state | uppercase }}</span
+                    >
+                    }
+                  </div>
+                  <div class="state-pills">
+                    @if (enemyPreparing) {
+                    <span class="status-pill alert">ALERT</span>
+                    } @if (isEnemyBroken) {
+                    <span class="status-pill break"
+                      >Broken {{ enemyState.breakTurns || 0 }}T</span
+                    >
+                    } @if (isEnemySuperBroken) {
+                    <span class="status-pill super"
+                      >Superbroken {{ enemyState.breakTurns || 0 }}T</span
+                    >
+                    } @if (hasDot('enemy')) {
+                    <span
+                      class="status-pill dot"
+                      [class.dot-pulse]="hasImpact('enemy', 'hit-dot')"
+                      >DoT</span
+                    >
+                    }
+                  </div>
+                </div>
+                <div class="status-meter">
+                  <span class="label">HP</span>
+                  <div class="meter">
+                    <div
+                      class="meter-fill hp"
+                      [ngClass]="{ 'crit-active': hasImpact('enemy', 'hit-lg') }"
+                      [style.width]="meterWidth(enemyState.attributes.hp, enemyState.attributes.maxHp)"
+                    ></div>
+                  </div>
+                  <span class="meter-value"
+                    >{{ enemyState.attributes.hp }} / {{
+                    enemyState.attributes.maxHp }}</span
+                  >
+                </div>
+                <div class="status-meter">
+                  <span class="label">Posture</span>
+                  <div class="meter">
+                    <div
+                      class="meter-fill shield"
+                      [ngClass]="{ 'posture-spark': hasImpact('enemy', 'hit-posture') }"
+                      [style.width]="meterWidth(enemyState.attributes.posture, enemyState.attributes.maxPosture)"
+                    ></div>
+                  </div>
+                  <span class="meter-value"
+                    >{{ enemyState.attributes.posture }} / {{
+                    enemyState.attributes.maxPosture }}</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="hud-actions">
+              <div class="action-hint">
+                @if (autoplay) {
+                <span
+                  >Autoplay active: {{ playerName }} attacks and uses ability
+                  when ready.</span
+                >
+                } @if (!autoplay && awaitingPlayer) {
+                <span>Manual mode: choose the action for the turn.</span>
+                } @if (!autoplay && !awaitingPlayer) {
+                <span>Waiting for player's next turn...</span>
+                }
+              </div>
+              <div class="action-buttons">
+                <button
+                  type="button"
+                  class="action-btn primary"
+                  [class.indicator]="autoplay"
+                  [disabled]="!manualActionReady"
+                  (click)="handleAutoAttack()"
+                >
+                  <div class="action-label">
+                    <span>Auto-attack</span>
+                    @if (autoplay) {
+                    <small>Indicator</small>
+                    } @if (!autoplay) {
+                    <small>Execute turn</small>
+                    }
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  class="action-btn skill"
+                  [ngClass]="{
+                      ready: skillButtonEnabled && !skillOnCooldown && !skillEnergyBlocked,
+                      cooldown: skillOnCooldown,
+                      blocked: skillEnergyBlocked
+                    }"
+                  [disabled]="!skillButtonEnabled"
+                  (click)="handleActiveSkill()"
+                >
+                  <div class="action-label">
+                    <span>Active skill</span>
+                    <small>Cost {{ skillCost }} EP</small>
+                  </div>
+                  @if (skillOnCooldown) {
+                  <div class="skill-state">On cooldown</div>
+                  } @if (skillEnergyBlocked && !skillOnCooldown) {
+                  <div class="skill-state">Insufficient EP</div>
+                  } @if (skillButtonEnabled && !skillOnCooldown &&
+                  !skillEnergyBlocked) {
+                  <div class="skill-state highlight">Ready</div>
+                  } @if (skillOnCooldown) {
+                  <div
+                    class="cooldown-veil"
+                    [style.--cooldown]="skillCooldownRatio"
+                  ></div>
+                  }
+                </button>
+              </div>
+
+              <div class="action-toggles">
+                <button
+                  type="button"
+                  class="chip ghost"
+                  (click)="toggleAutoplay()"
+                  [attr.aria-pressed]="autoplay"
+                >
+                  <span class="dot" [class.on]="autoplay"></span>
+                  <span>{{ autoplay ? 'Autoplay ON' : 'Manual' }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="chip ghost"
+                  (click)="togglePause()"
+                  title="Pause"
+                  [attr.aria-label]="paused ? 'Resume' : 'Pause'"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 4h4v16H6zM14 4h4v16h-4z"></path>
+                  </svg>
+                  <span>PAUSE</span>
+                </button>
+                <button
+                  type="button"
+                  class="chip ghost"
+                  (click)="toggleLog()"
+                  title="Combat Log"
+                  [attr.aria-label]="logOpen ? 'Close log' : 'Open log'"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h10v2H4z"></path>
+                  </svg>
+                  <span>{{ logOpen ? 'CLOSE LOG' : 'OPEN LOG' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      } @else {
+      <div class="pause-overlay">
+        <div class="pause-modal">
+          <div class="pause-title">
+            <span class="icon">?</span>
+            <div>
+              <strong>Combat paused</strong>
+              <small>Waiting for combat data.</small>
+            </div>
+          </div>
+          <div class="pause-actions">
+            <button
+              type="button"
+              class="action-btn primary"
+              (click)="togglePause()"
+            >
+              Resume
+            </button>
+            <button
+              type="button"
+              class="action-btn ghost"
+              (click)="abandonRun()"
+            >
+              Abandon run
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <aside class="log-panel">
+      <div class="log-dock" [class.open]="logOpen" aria-label="Action log">
+        <div class="log-dock__header">
+          <div class="log-title">
+            <span>Combat Log</span>
+          </div>
+          <button
+            type="button"
+            class="chip ghost"
+            (click)="toggleLog()"
+            title="Combat Log"
+            [attr.aria-label]="logOpen ? 'Close log' : 'Open log'"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h10v2H4z"></path>
+            </svg>
+            <span>{{ logOpen ? 'CLOSE LOG' : 'OPEN LOG' }}</span>
+          </button>
+        </div>
+        <div #logBody class="log-dock__body" role="region" aria-live="polite">
+          @if (turnTimeline.length) { @for (turn of turnTimeline; track turn.id)
+          {
+          <div
+            class="log-turn"
+            [class.collapsed]="isTurnCollapsed(turn.id)"
+            [attr.data-turn-id]="turn.id"
+          >
+            <button
+              type="button"
+              class="log-turn__header"
+              (click)="toggleTurnCollapse(turn.id)"
+              [attr.aria-expanded]="!isTurnCollapsed(turn.id)"
+            >
+              <div class="log-turn__meta">
+                <span class="log-turn__label">Turn {{ turn.number }}</span>
+                <span class="log-turn__separator">-</span>
+                <span class="log-turn__actor"
+                  >{{ turn.actorLabel | uppercase }}</span
+                >
+              </div>
+              <div class="log-turn__status">
+                @if (turn.isLatest) {
+                <span class="log-turn__badge">LIVE</span>
+                }
+                <span class="log-turn__caret" aria-hidden="true"></span>
+              </div>
+            </button>
+            <div class="log-turn__summary-line">
+              @for (chip of turn.summary; track $index) {
+              <span class="summary-chip" [ngClass]="chip.tone"
+                >{{ chip.text }}</span
+              >
+              }
+            </div>
+            @if (!isTurnCollapsed(turn.id)) {
+            <div class="log-turn__body">
+              <div class="log-turn__events">
+                @for (event of turn.events; track event.id) {
+                <div class="log-event" [ngClass]="event.tone">
+                  <span class="log-event__icon">{{ event.icon }}</span>
+                  <span class="log-event__text">{{ event.text }}</span>
+                </div>
+                }
+              </div>
+            </div>
+            }
+          </div>
+          } } @else {
+          <div class="log-entry">No events yet. Combat syncs here.</div>
+          }
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+@if (evolutionOverlay(); as evo) {
+<div
+  class="evolution-overlay"
+  (animationend)="onEvolutionOverlayEnd()"
+  [class.reduce-motion]="prefersReducedMotion"
+>
+  <div class="overlay-card">
+    <div class="icon">{{ evo.icon || 'EVO' }}</div>
+    <div class="copy">
+      <span class="kicker">Evolution Unlocked</span>
+      <strong>{{ evo.name }}</strong>
+    </div>
+  </div>
+</div>
+}

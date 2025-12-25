@@ -21,6 +21,7 @@
 
     <app-home-main-navigation
       [items]="mainNavItems"
+      (itemSelected)="handleMainNavSelection($event)"
     ></app-home-main-navigation>
 
     <app-home-raid-banner
@@ -55,4 +56,53 @@
     (backgroundSelected)="selectBackground($event)"
     (kaelisSelected)="selectKaelis($event)"
   ></app-home-customize-panel>
+
+  @if (expeditionModeOpen()) {
+    <div class="expedition-modal" (click)="closeExpeditionMode()">
+      <div
+        class="expedition-modal__card"
+        role="dialog"
+        aria-modal="true"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="expedition-modal__header">
+          <h2>Select Mode</h2>
+          <button
+            type="button"
+            class="expedition-modal__close"
+            aria-label="Close"
+            (click)="closeExpeditionMode()"
+          >
+            X
+          </button>
+        </div>
+
+        <div class="expedition-modal__grid">
+          <button
+            type="button"
+            class="mode-card mode-card--mvp"
+            (click)="startMvpRun()"
+          >
+            <div class="mode-card__text">
+              <h3>MVP RUN</h3>
+              <p>Classic run (current MVP).</p>
+            </div>
+            <span class="mode-card__cta">Start</span>
+          </button>
+
+          <button
+            type="button"
+            class="mode-card mode-card--ascension"
+            (click)="startAscensionRun()"
+          >
+            <div class="mode-card__text">
+              <h3>Echoes of Ascension</h3>
+              <p>New run: Echoes, Resonance (3+2), Devil's Bargain, Shop.</p>
+            </div>
+            <span class="mode-card__cta">Start</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

@@ -105,6 +105,13 @@ body {
   border-radius: var(--radius-lg);
 }
 
+.asc-start-card {
+  box-sizing: border-box;
+  padding: 20px 28px;
+  max-height: none;
+  overflow: visible;
+}
+
 /* =========================================================
    TEXT / VISUAL HELPERS
    ========================================================= */

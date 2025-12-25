@@ -1,0 +1,107 @@
+<section class="ascension-summary">
+  <app-header
+    title="Ascension Summary"
+    subtitle="Echoes collected and bargains taken."
+    kicker="Ascension"
+  ></app-header>
+
+  @if (state$ | async; as state) {
+    <div class="summary-grid">
+      <section class="summary-hero">
+        <div class="summary-card summary-card--hero">
+          <div class="summary-outcome">
+            <span class="outcome-label">{{ outcomeLabel(state) }}</span>
+            <span class="outcome-floor">
+              Floors Cleared: {{ state.floorsCleared }}/{{ totalFloors }}
+            </span>
+          </div>
+          <div class="summary-body">
+            <div class="summary-avatar">
+              <img
+                [src]="kaelisStageImage"
+                [alt]="activeKaelis.name || 'Kaelis'"
+              />
+            </div>
+            <div class="summary-meta">
+              <h2>{{ activeKaelis.name || 'Kaelis' }}</h2>
+              <p class="summary-subtitle">{{ activeKaelis.title || 'Ascendant' }}</p>
+              <div class="summary-tags">
+                <span>Origin: {{ pathName(state.originPathId) }}</span>
+                <span>Run: {{ pathName(state.runPathId) }}</span>
+              </div>
+              <div class="summary-fragments">
+                <div>
+                  <span>Earned</span>
+                  <strong>{{ state.echoFragmentsEarnedTotal }}</strong>
+                </div>
+                <div>
+                  <span>Spent</span>
+                  <strong>{{ state.echoFragmentsSpentTotal }}</strong>
+                </div>
+                <div>
+                  <span>Remaining</span>
+                  <strong>{{ state.echoFragments }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="summary-columns">
+        <div class="summary-card">
+          <div class="card-header">
+            <span>Resonance</span>
+            <span class="card-header__meta">
+              {{ state.resonanceActive ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+          <div class="resonance-name">{{ resonanceName(state) }}</div>
+          <div class="resonance-row">
+            <span>Bargains Taken</span>
+            <strong>{{ state.bargainsTaken }}</strong>
+          </div>
+          <div class="resonance-row">
+            <span>Bargain Applied</span>
+            <strong>{{ state.bargainTakenForResonance ? 'Yes' : 'No' }}</strong>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-header">
+            <span>Echoes Collected</span>
+            <span class="card-header__meta">{{ state.pickedEchoIds.length }}</span>
+          </div>
+          @if (pickedEchoes(state).length) {
+            <div class="echo-list">
+              @for (echo of pickedEchoes(state); track echo.id) {
+                <div class="echo-row">
+                  <span class="echo-tag">{{ echo.pathId }}</span>
+                  <span class="echo-name">{{ echo.name }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">No echoes recorded.</div>
+          }
+        </div>
+      </section>
+
+      <section class="summary-actions">
+        <button type="button" class="btn btn-primary" (click)="runAgain()">
+          Run Again
+        </button>
+        <button type="button" class="btn btn-ghost" (click)="backToHome()">
+          Back to Home
+        </button>
+      </section>
+
+      <details class="summary-log">
+        <summary>View Run Log</summary>
+        <div class="summary-log__body">
+          Run log is not captured yet. This space will host draft/shop/battle events.
+        </div>
+      </details>
+    </div>
+  }
+</section>

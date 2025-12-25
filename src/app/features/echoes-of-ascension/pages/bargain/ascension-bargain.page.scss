@@ -1,0 +1,225 @@
+:host {
+  display: block;
+  padding: 12px 0 36px;
+}
+
+.ascension-bargain {
+  --accent-cyan: var(--energy);
+  --accent-purple: var(--primary);
+  --panel-bg: var(--panel);
+  --panel-border: var(--border);
+
+  margin: 0 auto;
+  padding: 0 40px;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bargain-grid {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 24px;
+}
+
+.bargain-sidebar,
+.bargain-main {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.card-header {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-header__meta {
+  opacity: 0.6;
+}
+
+.resonance-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.resonance-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.resonance-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.summary-label {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.summary-value {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.offer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.offer-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 160px;
+}
+
+.offer-card:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 20px rgba(138, 124, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.offer-card:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.offer-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.offer-title {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.offer-cost {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #ff8a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.offer-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.offer-meta {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.action-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 14px 18px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.empty-state {
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  padding: 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+}
+
+.offer-card:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid rgba(138, 124, 255, 0.55);
+  outline-offset: 2px;
+}
+
+@media (max-width: 960px) {
+  .ascension-bargain {
+    padding: 0 20px;
+  }
+
+  .bargain-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-footer {
+    justify-content: stretch;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
