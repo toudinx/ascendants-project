@@ -1,118 +1,136 @@
 <section class="ascension-draft">
-  <app-header
-    title="Ascension Draft"
-    subtitle="Select your next echo."
-    kicker="Ascension"
-  ></app-header>
-
-  @if (state$ | async; as state) {
-    <div class="draft-grid">
-      <aside class="draft-sidebar">
-        <div class="card">
-          <div class="card-header">
-            <span>Run Status</span>
-            <span class="card-header__meta">
-              Floor {{ state.floorIndex }}/{{ totalFloors }}
-            </span>
-          </div>
-          <div class="status-list">
-            <div class="status-row">
-              <span class="status-label">Echo Fragments</span>
-              <span class="status-value">{{ state.echoFragments }}</span>
+  <div class="draft-shell">
+    <header class="ascension-draft__header">
+      <div class="header-title">Ascension // <strong>Draft</strong></div>
+    </header>
+    <div class="draft-scroll">
+      @if (state$ | async; as state) {
+      <div class="draft-layout">
+        <aside class="draft-sidebar">
+          <div class="panel summary-panel">
+            <div class="panel-header">
+              <span>Run Summary</span>
             </div>
-            <div class="status-row">
-              <span class="status-label">Origin Path</span>
-              <span class="status-value">{{ pathName(state.originPathId) }}</span>
-            </div>
-            <div class="status-row">
-              <span class="status-label">Run Path</span>
-              <span class="status-value">{{ pathName(state.runPathId) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <span>Resonance Progress</span>
-            <span class="card-header__meta">3 + 2</span>
-          </div>
-          <div class="progress-grid">
-            <div class="progress-row">
-              <span class="progress-label">Origin</span>
-              <span class="progress-value">{{ state.originEchoCount }}/3</span>
-            </div>
-            <div class="progress-row">
-              <span class="progress-label">Run</span>
-              <span class="progress-value">{{ state.runEchoCount }}/2</span>
-            </div>
-          </div>
-          @if (state.resonanceActive) {
-            <div class="resonance-badge">Resonance Active</div>
-          }
-        </div>
-      </aside>
-
-      <section class="draft-main">
-        <div class="card">
-          <div class="card-header">
-            <span>Echo Draft</span>
-            <span class="card-header__meta">Select 1</span>
-          </div>
-          @if (offer.length) {
-            <div class="offer-grid">
-              @for (option of offer; track option.id) {
-                <button
-                  type="button"
-                  class="echo-card"
-                  (click)="selectOption(option)"
-                  [disabled]="isResolving"
-                  [attr.aria-label]="'Select ' + (option.kind === 'echo' ? option.echo.name : option.name)"
+            <div class="summary-grid">
+              <div class="panel-row">
+                <span class="panel-label">Floor</span>
+                <span class="panel-value">
+                  {{ state.floorIndex }}/{{ totalFloors }}
+                </span>
+              </div>
+              <div class="panel-row">
+                <span class="panel-label">Echo Fragments</span>
+                <span class="panel-value">{{ state.echoFragments }}</span>
+              </div>
+              <div class="panel-row">
+                <span class="panel-label">Origin Path</span>
+                <span class="panel-value"
+                  >{{ pathName(state.originPathId) }}</span
                 >
-                  <div class="echo-card__tag">
-                    <span
-                      class="echo-tag"
-                      [class.echo-tag--origin]="option.kind === 'echo' && option.echo.pathId === state.originPathId"
-                      [class.echo-tag--run]="option.kind === 'echo' && option.echo.pathId === state.runPathId"
-                      [class.echo-tag--rest]="option.kind === 'rest'"
-                    >
-                      {{ option.kind === 'echo' ? option.echo.pathId : option.tag }}
+              </div>
+              <div class="panel-row">
+                <span class="panel-label">Run Path</span>
+                <span class="panel-value">{{ pathName(state.runPathId) }}</span>
+              </div>
+              <div class="panel-row">
+                <span class="panel-label">Resonance</span>
+                <span
+                  class="panel-value"
+                  [class.panel-value--active]="state.resonanceActive"
+                >
+                  {{ state.resonanceActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+            </div>
+            <div class="panel-section">
+              <div class="panel-section__title">Progress</div>
+              <div class="panel-row">
+                <span class="panel-label">Origin Echoes</span>
+                <span class="panel-value">{{ state.originEchoCount }}/3</span>
+              </div>
+              <div class="panel-row">
+                <span class="panel-label">Run Echoes</span>
+                <span class="panel-value">{{ state.runEchoCount }}/2</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="draft-main">
+          <div class="panel draft-panel">
+            <div class="panel-header">
+              <span>Echo Draft</span>
+              <span class="panel-meta">Hotkeys 1-3</span>
+            </div>
+            @if (offer.length) {
+            <div class="offer-grid">
+              @for (option of offer; track option.id; let index = $index) {
+              <button
+                type="button"
+                class="echo-card"
+                (click)="selectOption(option)"
+                [disabled]="isResolving"
+                [class.echo-card--selected]="selectedOptionId === option.id"
+                [attr.aria-label]="'Select ' + (option.kind === 'echo' ? option.echo.name : option.name)"
+              >
+                <div class="echo-card__tag">
+                  <span class="path-badge"> {{ pathBadge(option) }} </span>
+                  <span
+                    class="source-tag"
+                    [class.source-tag--origin]="sourceRole(option, state) === 'origin'"
+                    [class.source-tag--run]="sourceRole(option, state) === 'run'"
+                    [class.source-tag--flex]="sourceRole(option, state) === 'flex'"
+                  >
+                    {{ sourceRoleLabel(option, state) }}
+                  </span>
+                </div>
+                <div class="echo-card__name">
+                  {{ option.kind === 'echo' ? option.echo.name : option.name }}
+                </div>
+                <div class="echo-card__desc">
+                  {{ option.kind === 'echo' ? option.echo.description :
+                  option.description }}
+                </div>
+                @if (resonanceImpact(option, state); as impact) {
+                <div
+                  class="echo-card__impact"
+                  [class.echo-card__impact--none]="impact.kind === 'none'"
+                  [class.echo-card__impact--origin]="impact.kind === 'origin'"
+                  [class.echo-card__impact--run]="impact.kind === 'run'"
+                >
+                  @if (impact.kind === 'none') {
+                  <span class="impact-neutral">{{ impact.label }}</span>
+                  } @else {
+                  <div class="impact-row">
+                    <span class="impact-label">{{ impact.label }}</span>
+                    <span class="impact-values">
+                      <span>{{ impact.before }}/{{ impact.max }}</span>
+                      <span class="impact-arrow">-&gt;</span>
+                      <span>{{ impact.after }}/{{ impact.max }}</span>
                     </span>
-                    <span class="echo-tag__meta">
-                      {{
-                        option.kind === 'echo'
-                          ? pathRoleLabel(option.echo, state)
-                          : 'Recovery'
-                      }}
-                    </span>
                   </div>
-                  <div class="echo-card__name">
-                    {{ option.kind === 'echo' ? option.echo.name : option.name }}
-                  </div>
-                  <div class="echo-card__desc">
-                    {{
-                      option.kind === 'echo'
-                        ? option.echo.description
-                        : option.description
-                    }}
-                  </div>
-                  <div class="echo-card__footer">
-                    <span class="echo-card__rarity">
-                      {{ option.kind === 'echo' ? option.echo.rarity : 'rest' }}
-                    </span>
-                    <span class="echo-card__cta">Choose</span>
-                  </div>
-                </button>
+                  }
+                </div>
+                }
+                <div class="echo-card__footer draft-card__actions">
+                  <span class="draft-choose-btn">Choose</span>
+                  <span class="draft-hotkey-chip">
+                    {{ hotkeyLabel(index) }}
+                  </span>
+                </div>
+              </button>
               }
             </div>
-          } @else {
+            } @else {
             <div class="empty-state">No echoes available.</div>
-          }
-        </div>
-      </section>
-    </div>
+            }
+          </div>
+        </section>
+      </div>
 
-    @if (bannerMessage) {
+      @if (bannerMessage) {
       <div class="resonance-banner">{{ bannerMessage }}</div>
-    }
-  }
+      } }
+    </div>
+  </div>
 </section>

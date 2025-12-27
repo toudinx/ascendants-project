@@ -38,7 +38,7 @@
           </div>
           @if (options.length) {
             <div class="offer-grid">
-              @for (option of options; track option.id) {
+              @for (option of options; track option.id; let index = $index) {
                 <button
                   type="button"
                   class="offer-card"
@@ -46,7 +46,12 @@
                   [disabled]="isResolving"
                 >
                   <div class="offer-card__head">
-                    <span class="offer-title">{{ option.name }}</span>
+                    <div class="offer-title-group">
+                      <span class="offer-hotkey" aria-hidden="true">
+                        {{ offerHotkeys[index] }}
+                      </span>
+                      <span class="offer-title">{{ option.name }}</span>
+                    </div>
                     <span class="offer-cost">-{{ option.hpCostPercent * 100 | number:'1.0-0' }}% HP</span>
                   </div>
                   <div class="offer-desc">{{ option.description }}</div>
@@ -62,6 +67,10 @@
         </div>
 
         <div class="action-footer">
+          <button type="button" class="btn btn-primary" (click)="decline()" [disabled]="isResolving">
+            Continue
+            <span class="btn-hotkey">SPACE</span>
+          </button>
           <button type="button" class="btn btn-ghost" (click)="decline()" [disabled]="isResolving">
             Decline
           </button>

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AppHeaderComponent } from '../../../../shared/components';
@@ -26,6 +26,9 @@ export class AscensionShopPageComponent implements OnInit {
 
   protected readonly state$ = this.runState.getState();
   protected inventory: AscensionShopInventory | null = null;
+  protected readonly echoHotkeys = ['1', '2', '3'];
+  protected readonly serviceHotkeys = ['Q', 'W', 'E'];
+  protected isTransitioning = false;
 
   ngOnInit(): void {
     this.inventory = this.shopService.generateShopInventory(this.runState.getSnapshot());
@@ -39,6 +42,29 @@ export class AscensionShopPageComponent implements OnInit {
     return this.shopService.canBuyService(offer, state);
   }
 
+  @HostListener('window:keydown', ['$event'])
+  handleHotkeys(event: KeyboardEvent): void {
+    if (event.repeat || this.isTransitioning || !this.inventory) return;
+    if (this.isEditableTarget(event.target)) return;
+
+    if (event.code === 'Space') {
+      event.preventDefault();
+      this.continue();
+      return;
+    }
+
+    const echoIndex = this.echoHotkeyIndex(event.code);
+    if (echoIndex !== null) {
+      this.tryBuyEchoByIndex(echoIndex, event);
+      return;
+    }
+
+    const serviceIndex = this.serviceHotkeyIndex(event.code);
+    if (serviceIndex !== null) {
+      this.tryBuyServiceByIndex(serviceIndex, event);
+    }
+  }
+
   buyEcho(offer: AscensionShopEchoOffer): void {
     if (offer.sold) return;
     this.shopService.buyEcho(offer);
@@ -50,6 +76,7 @@ export class AscensionShopPageComponent implements OnInit {
   }
 
   continue(): void {
+    this.isTransitioning = true;
     const snapshot = this.runState.getSnapshot();
     const nextFloor = snapshot.floorIndex + 1;
 
@@ -66,5 +93,61 @@ export class AscensionShopPageComponent implements OnInit {
     this.runState.patchState({ floorIndex: nextFloor, roomType: 'battle' });
     this.shopService.clearShop();
     this.router.navigateByUrl('/ascension/battle');
+  }
+
+  private tryBuyEchoByIndex(index: number, event: KeyboardEvent): void {
+    const offer = this.inventory?.echoesForSale?.[index];
+    if (!offer) return;
+    const snapshot = this.runState.getSnapshot();
+    if (!this.canBuyEcho(offer, snapshot)) return;
+    event.preventDefault();
+    this.buyEcho(offer);
+  }
+
+  private tryBuyServiceByIndex(index: number, event: KeyboardEvent): void {
+    const offer = this.inventory?.servicesForSale?.[index];
+    if (!offer) return;
+    const snapshot = this.runState.getSnapshot();
+    if (!this.canBuyService(offer, snapshot)) return;
+    event.preventDefault();
+    this.buyService(offer);
+  }
+
+  private echoHotkeyIndex(code: string): number | null {
+    switch (code) {
+      case 'Digit1':
+      case 'Numpad1':
+        return 0;
+      case 'Digit2':
+      case 'Numpad2':
+        return 1;
+      case 'Digit3':
+      case 'Numpad3':
+        return 2;
+      default:
+        return null;
+    }
+  }
+
+  private serviceHotkeyIndex(code: string): number | null {
+    switch (code) {
+      case 'KeyQ':
+        return 0;
+      case 'KeyW':
+        return 1;
+      case 'KeyE':
+        return 2;
+      default:
+        return null;
+    }
+  }
+
+  private isEditableTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    const tag = target.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+      return true;
+    }
+    return target.isContentEditable;
   }
 }

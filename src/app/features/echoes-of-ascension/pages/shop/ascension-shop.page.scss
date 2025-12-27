@@ -85,7 +85,7 @@
 
 .offer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -121,6 +121,39 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.echo-card__tag-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hotkey-badge {
+  min-width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.echo-card:hover:not(:disabled) .hotkey-badge,
+.service-row:hover .hotkey-badge {
+  border-color: rgba(138, 124, 255, 0.45);
+  color: var(--text-primary);
+  box-shadow: 0 0 12px rgba(138, 124, 255, 0.25);
+}
+
+.echo-card:disabled .hotkey-badge {
+  opacity: 0.5;
 }
 
 .echo-tag {
@@ -185,12 +218,19 @@
 .service-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 14px 16px;
   background: rgba(255, 255, 255, 0.02);
+}
+
+.service-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
 }
 
 .service-info {
@@ -297,6 +337,19 @@
   transform: translateY(-2px);
 }
 
+.btn-hotkey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .echo-card:focus-visible,
 .service-btn:focus-visible {
   outline: 2px solid rgba(138, 124, 255, 0.55);
@@ -318,5 +371,17 @@
 
   .btn-primary {
     width: 100%;
+  }
+}
+
+@media (max-width: 1200px) {
+  .offer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .offer-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 }

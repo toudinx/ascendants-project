@@ -98,7 +98,7 @@
 
 .offer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -136,6 +136,38 @@
   gap: 12px;
 }
 
+.offer-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.offer-hotkey {
+  min-width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.offer-card:hover:not(:disabled) .offer-hotkey {
+  border-color: rgba(138, 124, 255, 0.45);
+  color: var(--text-primary);
+  box-shadow: 0 0 12px rgba(138, 124, 255, 0.25);
+}
+
+.offer-card:disabled .offer-hotkey {
+  opacity: 0.5;
+}
+
 .offer-title {
   font-weight: 700;
   color: var(--text-primary);
@@ -166,6 +198,7 @@
 .action-footer {
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
 }
 
 .btn {
@@ -180,6 +213,41 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: transparent;
   color: var(--text-primary);
+}
+
+.btn-primary {
+  background: var(--text-primary);
+  color: #000;
+  padding: 14px 20px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  clip-path: polygon(
+    10px 0,
+    100% 0,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%,
+    0 10px
+  );
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 28px rgba(45, 227, 200, 0.35);
+  transform: translateY(-2px);
+}
+
+.btn-hotkey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .btn-ghost:hover:not(:disabled) {
@@ -217,9 +285,22 @@
 
   .action-footer {
     justify-content: stretch;
+    flex-direction: column;
   }
 
   .btn {
     width: 100%;
+  }
+}
+
+@media (max-width: 1200px) {
+  .offer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .offer-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 }

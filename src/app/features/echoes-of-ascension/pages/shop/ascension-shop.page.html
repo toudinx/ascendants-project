@@ -15,6 +15,22 @@
               <span class="status-value">{{ state.echoFragments }}</span>
             </div>
             <div class="status-row">
+              <span class="status-label">HP</span>
+              <span class="status-value">
+                @if (
+                  state.hpCurrent !== null &&
+                  state.hpCurrent !== undefined &&
+                  state.hpMax !== null &&
+                  state.hpMax !== undefined
+                ) {
+                  {{ state.hpCurrent | number:'1.0-0' }} /
+                  {{ state.hpMax | number:'1.0-0' }}
+                } @else {
+                  --
+                }
+              </span>
+            </div>
+            <div class="status-row">
               <span class="status-label">Echo Purchase</span>
               <span class="status-value">Max 1</span>
             </div>
@@ -34,7 +50,11 @@
           </div>
           @if (inventory?.echoesForSale?.length) {
             <div class="offer-grid">
-              @for (offer of inventory?.echoesForSale; track offer.kind === 'echo' ? offer.echo.id : offer.id) {
+              @for (
+                offer of inventory?.echoesForSale;
+                track offer.kind === 'echo' ? offer.echo.id : offer.id;
+                let index = $index
+              ) {
                 <button
                   type="button"
                   class="echo-card"
@@ -42,9 +62,14 @@
                   [disabled]="!canBuyEcho(offer, state)"
                 >
                   <div class="echo-card__tag">
-                    <span class="echo-tag" [class.echo-tag--rest]="offer.kind === 'rest'">
-                      {{ offer.kind === 'echo' ? offer.echo.pathId : 'REST' }}
-                    </span>
+                    <div class="echo-card__tag-left">
+                      <span class="hotkey-badge" aria-hidden="true">
+                        {{ echoHotkeys[index] }}
+                      </span>
+                      <span class="echo-tag" [class.echo-tag--rest]="offer.kind === 'rest'">
+                        {{ offer.kind === 'echo' ? offer.echo.pathId : 'REST' }}
+                      </span>
+                    </div>
                     <span class="echo-price">{{ offer.price }}F</span>
                   </div>
                   <div class="echo-card__name">
@@ -76,22 +101,27 @@
           </div>
           @if (inventory?.servicesForSale?.length) {
             <div class="service-list">
-              @for (offer of inventory?.servicesForSale; track offer.service.id) {
+              @for (offer of inventory?.servicesForSale; track offer.service.id; let index = $index) {
                 <div class="service-row">
-                  <div class="service-info">
-                    <div class="service-name">{{ offer.service.name }}</div>
-                    <div class="service-desc">{{ offer.service.description }}</div>
-                  </div>
-                  <div class="service-actions">
-                    <span class="service-price">{{ offer.price }}F</span>
-                    <button
-                      type="button"
-                      class="service-btn"
-                      (click)="buyService(offer)"
-                      [disabled]="!canBuyService(offer, state)"
-                    >
-                      {{ offer.purchased ? 'Purchased' : 'Buy' }}
-                    </button>
+                  <span class="hotkey-badge hotkey-badge--service" aria-hidden="true">
+                    {{ serviceHotkeys[index] }}
+                  </span>
+                  <div class="service-body">
+                    <div class="service-info">
+                      <div class="service-name">{{ offer.service.name }}</div>
+                      <div class="service-desc">{{ offer.service.description }}</div>
+                    </div>
+                    <div class="service-actions">
+                      <span class="service-price">{{ offer.price }}F</span>
+                      <button
+                        type="button"
+                        class="service-btn"
+                        (click)="buyService(offer)"
+                        [disabled]="!canBuyService(offer, state)"
+                      >
+                        {{ offer.purchased ? 'Purchased' : 'Buy' }}
+                      </button>
+                    </div>
                   </div>
                 </div>
               }
@@ -104,6 +134,7 @@
         <div class="action-footer">
           <button type="button" class="btn btn-primary" (click)="continue()">
             Continue
+            <span class="btn-hotkey">SPACE</span>
           </button>
         </div>
       </section>

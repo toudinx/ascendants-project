@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AppHeaderComponent } from '../../../../shared/components';
@@ -24,6 +24,7 @@ export class AscensionBargainPageComponent implements OnInit {
   protected resonance: ResonanceDefinition | null = null;
   protected options: ResonanceUpgradeOption[] = [];
   protected isResolving = false;
+  protected readonly offerHotkeys = ['1', '2', '3'];
 
   ngOnInit(): void {
     const snapshot = this.runState.getSnapshot();
@@ -84,6 +85,25 @@ export class AscensionBargainPageComponent implements OnInit {
     this.advanceToBattle();
   }
 
+  @HostListener('window:keydown', ['$event'])
+  handleHotkeys(event: KeyboardEvent): void {
+    if (event.repeat || this.isResolving) return;
+    if (this.isEditableTarget(event.target)) return;
+
+    if (event.code === 'Space') {
+      event.preventDefault();
+      this.decline();
+      return;
+    }
+
+    const optionIndex = this.offerHotkeyIndex(event.code);
+    if (optionIndex === null) return;
+    const option = this.options[optionIndex];
+    if (!option) return;
+    event.preventDefault();
+    this.selectOption(option);
+  }
+
   private advanceToBattle(): void {
     const snapshot = this.runState.getSnapshot();
     const nextFloor = snapshot.floorIndex + 1;
@@ -99,5 +119,30 @@ export class AscensionBargainPageComponent implements OnInit {
 
     this.runState.patchState({ floorIndex: nextFloor, roomType: 'battle' });
     this.router.navigateByUrl('/ascension/battle');
+  }
+
+  private offerHotkeyIndex(code: string): number | null {
+    switch (code) {
+      case 'Digit1':
+      case 'Numpad1':
+        return 0;
+      case 'Digit2':
+      case 'Numpad2':
+        return 1;
+      case 'Digit3':
+      case 'Numpad3':
+        return 2;
+      default:
+        return null;
+    }
+  }
+
+  private isEditableTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    const tag = target.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+      return true;
+    }
+    return target.isContentEditable;
   }
 }
