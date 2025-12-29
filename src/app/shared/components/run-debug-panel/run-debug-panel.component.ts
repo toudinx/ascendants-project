@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppButtonComponent, AppCardComponent } from '../index';
 import { RunStateService } from '../../../core/services/run-state.service';
+import { ProfileStateService } from '../../../core/services/profile-state.service';
 import { PlayerStateService } from '../../../core/services/player-state.service';
 import { EnemyStateService } from '../../../core/services/enemy-state.service';
 import { getPlayerPowerMultiplier, roomToStage } from '../../../core/config/balance.config';
@@ -59,6 +60,32 @@ const SHOW_DEBUG_PANEL = typeof ngDevMode === 'undefined' || !!ngDevMode;
           }
         </div>
       </div>
+      <div class="rounded-[12px] border border-white/10 bg-white/5 p-2">
+        <p class="text-[10px] uppercase tracking-[0.3em] text-[#7F7F95]">VFX</p>
+        <div class="mt-2 grid grid-cols-2 gap-2 text-[11px] text-white/80">
+          <button
+            type="button"
+            class="rounded-[10px] border border-white/10 bg-white/5 px-2 py-1 transition hover:border-white/30 hover:bg-white/10"
+            (click)="cycleVfxDensity()"
+          >
+            Density: {{ vfxDensityLabel }}
+          </button>
+          <button
+            type="button"
+            class="rounded-[10px] border border-white/10 bg-white/5 px-2 py-1 transition hover:border-white/30 hover:bg-white/10"
+            (click)="toggleScreenShake()"
+          >
+            Shake: {{ shakeLabel }}
+          </button>
+          <button
+            type="button"
+            class="rounded-[10px] border border-white/10 bg-white/5 px-2 py-1 transition hover:border-white/30 hover:bg-white/10"
+            (click)="toggleReducedFlash()"
+          >
+            Flash: {{ flashLabel }}
+          </button>
+        </div>
+      </div>
       <div class="grid grid-cols-2 gap-2">
         <app-button label="Force Win" variant="secondary" (click)="enemy.forceKill()"></app-button>
         <app-button label="Force Loss" variant="danger" (click)="player.applyDamage(9999, 9999)"></app-button>
@@ -71,6 +98,7 @@ const SHOW_DEBUG_PANEL = typeof ngDevMode === 'undefined' || !!ngDevMode;
 })
 export class RunDebugPanelComponent {
   protected readonly run = inject(RunStateService);
+  protected readonly profile = inject(ProfileStateService);
   protected readonly player = inject(PlayerStateService);
   protected readonly enemy = inject(EnemyStateService);
   readonly SHOW = SHOW_DEBUG_PANEL;
@@ -86,5 +114,34 @@ export class RunDebugPanelComponent {
   get playerPowerLabel(): string {
     const power = getPlayerPowerMultiplier(this.run.currentRoom());
     return `${Math.round(power * 100)}%`;
+  }
+
+  get vfxDensityLabel(): string {
+    const density = this.profile.settings().vfxDensity;
+    return density.toUpperCase();
+  }
+
+  get shakeLabel(): string {
+    return this.profile.settings().screenShake ? 'ON' : 'OFF';
+  }
+
+  get flashLabel(): string {
+    return this.profile.settings().reducedFlash ? 'LOW' : 'FULL';
+  }
+
+  cycleVfxDensity(): void {
+    const current = this.profile.settings().vfxDensity;
+    const next = current === 'low' ? 'med' : current === 'med' ? 'high' : 'low';
+    this.profile.setSetting('vfxDensity', next);
+  }
+
+  toggleScreenShake(): void {
+    const current = this.profile.settings().screenShake;
+    this.profile.setSetting('screenShake', !current);
+  }
+
+  toggleReducedFlash(): void {
+    const current = this.profile.settings().reducedFlash;
+    this.profile.setSetting('reducedFlash', !current);
   }
 }

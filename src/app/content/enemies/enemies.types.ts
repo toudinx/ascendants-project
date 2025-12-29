@@ -11,6 +11,7 @@ export interface EnemyCombatProfile {
   critChance: number;
   critDamage: number;
   multiHitChance: number;
+  baseHitCount?: number;
   dotChance: number;
 }
 

@@ -14,6 +14,7 @@ export const STORM_RAIDER_DEF: EnemyDef = {
     critChance: 0.15,
     critDamage: 1.5,
     multiHitChance: 0.18,
+    baseHitCount: 1,
     dotChance: 0.1,
   },
   abilities: {

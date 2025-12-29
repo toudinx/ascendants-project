@@ -1,0 +1,29 @@
+<div class="vfx-layer" #layer [class.vfx-layer--hold]="holdActive()">
+  <app-echo-signature-layer
+    [anchors]="anchors"
+    [activePaths]="echoPaths"
+    [reduceMotion]="reduceMotion"
+  ></app-echo-signature-layer>
+  <app-ambient-particles [reduceMotion]="reduceMotion"></app-ambient-particles>
+  @for (fx of instances(); track fx.id) {
+    <div
+      class="battle-vfx"
+      [ngClass]="[
+        'battle-vfx--' + fx.kind,
+        'battle-vfx--' + fx.variant,
+        fx.fieldKey ? 'battle-vfx--field-' + fx.fieldKey : ''
+      ]"
+      [style.left.px]="fx.x"
+      [style.top.px]="fx.y"
+      [style.--dx]="(fx.dx ?? 0) + 'px'"
+      [style.--dy]="(fx.dy ?? 0) + 'px'"
+      [style.--angle]="(fx.angle ?? 0) + 'deg'"
+      [style.--size]="(fx.size ?? 0) + 'px'"
+      [style.--length]="(fx.length ?? 0) + 'px'"
+      [style.--thickness]="(fx.thickness ?? 0) + 'px'"
+      [style.--opacity]="fx.opacity ?? 1"
+      [style.--duration]="(fx.duration ?? 0) + 'ms'"
+      (animationend)="remove(fx.id)"
+    ></div>
+  }
+</div>

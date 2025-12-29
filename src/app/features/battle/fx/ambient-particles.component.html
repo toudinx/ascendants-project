@@ -1,0 +1,16 @@
+<div class="ambient-layer" #layer>
+  @for (particle of particles(); track particle.id) {
+    <div
+      class="ambient-particle"
+      [ngClass]="['ambient-particle--' + particle.kind]"
+      [style.left.px]="particle.x"
+      [style.top.px]="particle.y"
+      [style.width.px]="particle.size"
+      [style.height.px]="particle.size"
+      [style.--dx]="particle.driftX + 'px'"
+      [style.--dy]="particle.driftY + 'px'"
+      [style.--duration]="particle.duration + 'ms'"
+      [style.--opacity]="particle.opacity"
+    ></div>
+  }
+</div>

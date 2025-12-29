@@ -36,9 +36,9 @@
                 <span class="panel-label">Resonance</span>
                 <span
                   class="panel-value"
-                  [class.panel-value--active]="state.resonanceActive"
+                  [class.panel-value--active]="resonanceActive(state)"
                 >
-                  {{ state.resonanceActive ? 'Active' : 'Inactive' }}
+                  {{ resonanceActive(state) ? 'Active' : 'Inactive' }}
                 </span>
               </div>
             </div>

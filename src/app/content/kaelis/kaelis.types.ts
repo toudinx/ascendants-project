@@ -20,7 +20,9 @@ export interface KaelisBaseTemplate {
 
 export interface KaelisKitDef {
   autoMultiplier: number;
+  autoHitCount?: number;
   skillMultiplier: number;
+  skillHitCount?: number;
   skillHits?: number;
   skillCooldownTurns: number;
   skillEnergyCost: number;

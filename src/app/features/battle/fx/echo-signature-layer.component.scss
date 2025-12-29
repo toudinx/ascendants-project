@@ -1,0 +1,270 @@
+:host {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.signature-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.signature {
+  position: absolute;
+  width: var(--sig-size, 170px);
+  height: var(--sig-size, 170px);
+  transform: translate3d(-50%, -50%, 0)
+    translate3d(0, var(--sig-offset-y, 0px), 0)
+    scale(var(--sig-scale, 1));
+  opacity: var(--sig-strength, 0.2);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.sig-ring,
+.sig-core,
+.sig-accent {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0.6;
+  mix-blend-mode: screen;
+}
+
+.sig-ring {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  -webkit-mask: radial-gradient(circle, transparent 52%, #000 56%);
+  mask: radial-gradient(circle, transparent 52%, #000 56%);
+}
+
+.sig-ring--stack {
+  transform: scale(0.88);
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+.sig-core {
+  transform: scale(0.78);
+}
+
+.sig-accent {
+  transform: scale(0.92);
+  animation: sig-pulse 3.2s ease-in-out infinite;
+}
+
+.signature--sentinel .sig-ring {
+  border-color: rgba(140, 208, 255, 0.4);
+  background:
+    repeating-linear-gradient(
+      60deg,
+      rgba(130, 200, 255, 0.14) 0px,
+      rgba(130, 200, 255, 0.14) 1px,
+      transparent 1px,
+      transparent 6px
+    ),
+    repeating-linear-gradient(
+      -60deg,
+      rgba(130, 200, 255, 0.14) 0px,
+      rgba(130, 200, 255, 0.14) 1px,
+      transparent 1px,
+      transparent 6px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(130, 200, 255, 0.14) 0px,
+      rgba(130, 200, 255, 0.14) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+}
+
+.signature--sentinel .sig-core {
+  border: 1px dashed rgba(180, 230, 255, 0.35);
+}
+
+.signature--sentinel.signature--shielded {
+  opacity: calc(var(--sig-strength, 0.2) + 0.1);
+}
+
+.signature--ruin .sig-ring {
+  border-color: rgba(120, 180, 140, 0.25);
+  background: radial-gradient(
+    circle,
+    rgba(90, 140, 110, 0.25),
+    transparent 70%
+  );
+  filter: blur(1px);
+  -webkit-mask: none;
+  mask: none;
+}
+
+.signature--ruin .sig-core {
+  transform: scale(0.9);
+  background: radial-gradient(
+    circle,
+    rgba(70, 90, 80, 0.35),
+    transparent 70%
+  );
+  animation: ruin-breath 4.2s ease-in-out infinite;
+}
+
+.signature--ruin .sig-accent {
+  transform: scale(0.7);
+  top: 62%;
+  height: 28%;
+  border-radius: 10px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(120, 160, 120, 0.4) 0px,
+    rgba(120, 160, 120, 0.4) 2px,
+    transparent 2px,
+    transparent 10px
+  );
+  animation: ruin-crack 2.8s ease-in-out infinite;
+  opacity: 0.4;
+}
+
+.signature--resonance .sig-ring {
+  border-color: rgba(255, 216, 140, 0.4);
+  background: conic-gradient(
+    from 90deg,
+    rgba(255, 210, 120, 0.2),
+    transparent 25%,
+    rgba(255, 210, 120, 0.25),
+    transparent 55%,
+    rgba(255, 210, 120, 0.18)
+  );
+}
+
+.signature--resonance .sig-core {
+  border: 1px solid rgba(255, 230, 170, 0.3);
+}
+
+.signature--resonance .sig-accent {
+  border: 1px dashed rgba(255, 230, 170, 0.3);
+  animation: sig-rotate 6s linear infinite;
+}
+
+.signature--fortune .sig-ring {
+  border-color: rgba(255, 220, 120, 0.35);
+  background: radial-gradient(
+    circle,
+    rgba(255, 230, 150, 0.18),
+    transparent 70%
+  );
+}
+
+.signature--fortune .sig-core {
+  border: 1px dashed rgba(255, 236, 180, 0.3);
+}
+
+.signature--fortune .sig-accent {
+  background: radial-gradient(
+    circle,
+    rgba(255, 240, 200, 0.4),
+    transparent 70%
+  );
+  animation: sig-pulse 2.6s ease-in-out infinite;
+}
+
+.signature--colossus .sig-ring {
+  border-color: rgba(255, 160, 110, 0.4);
+  background: radial-gradient(
+    circle,
+    rgba(255, 170, 120, 0.22),
+    transparent 68%
+  );
+}
+
+.signature--colossus .sig-core {
+  border: 2px solid rgba(255, 140, 90, 0.25);
+  transform: scale(0.7);
+}
+
+.signature--colossus .sig-accent {
+  border: 1px solid rgba(255, 130, 80, 0.25);
+  animation: sig-throb 3.6s ease-in-out infinite;
+}
+
+.signature--wrath .sig-ring {
+  border-color: rgba(255, 120, 90, 0.4);
+  background: conic-gradient(
+    from 180deg,
+    rgba(255, 120, 90, 0.2),
+    transparent 35%,
+    rgba(255, 120, 90, 0.3)
+  );
+}
+
+.signature--wrath .sig-core {
+  border: 1px solid rgba(255, 120, 90, 0.25);
+}
+
+.signature--wrath .sig-accent {
+  border: 1px dashed rgba(255, 140, 110, 0.3);
+  animation: sig-rotate 4.6s linear infinite;
+}
+
+@keyframes sig-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes sig-rotate {
+  0% {
+    transform: scale(0.9) rotate(0deg);
+  }
+  100% {
+    transform: scale(0.9) rotate(360deg);
+  }
+}
+
+@keyframes sig-throb {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.86);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes ruin-breath {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.88);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes ruin-crack {
+  0%,
+  100% {
+    opacity: 0.25;
+    filter: blur(0.4px);
+  }
+  50% {
+    opacity: 0.6;
+    filter: blur(0px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sig-accent {
+    animation: none;
+  }
+}

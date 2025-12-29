@@ -1,6 +1,7 @@
 export type EnemyState = 'normal' | 'preparing' | 'broken' | 'superbroken' | 'dead';
 
 export interface EnemyAttributes {
+  id?: string;
   name: string;
   maxHp: number;
   hp: number;
@@ -11,6 +12,7 @@ export interface EnemyAttributes {
   critChance: number;
   critDamage: number;
   multiHitChance: number;
+  baseHitCount?: number;
   dotChance: number;
   strongAttackReady: boolean;
 }

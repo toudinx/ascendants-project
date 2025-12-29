@@ -57,6 +57,7 @@ export class EnemyFactoryService {
 
     const enemy: Enemy = {
       attributes: {
+        id: def.id,
         name: def.name,
         maxHp: hp,
         hp,
@@ -67,6 +68,7 @@ export class EnemyFactoryService {
         critChance: def.combat.critChance,
         critDamage: def.combat.critDamage,
         multiHitChance: def.combat.multiHitChance,
+        baseHitCount: def.combat.baseHitCount ?? 1,
         dotChance: def.dot?.chance ?? def.combat.dotChance,
         strongAttackReady: false
       },

@@ -10,6 +10,7 @@ import { getEchoById } from '../../content/echoes';
 import { getResonanceById } from '../../content/resonances';
 import { AscensionRunStateService } from '../../state/ascension-run-state.service';
 import type { AscensionRunState } from '../../state/ascension-run-state.model';
+import { isResonanceActive } from '../../../../core/utils/resonance.utils';
 
 @Component({
   selector: 'app-ascension-summary-page',
@@ -54,8 +55,12 @@ export class AscensionSummaryPageComponent {
   }
 
   resonanceName(state: AscensionRunState): string {
-    if (!state.resonanceActive || !state.resonanceId) return 'None';
+    if (!isResonanceActive(state) || !state.resonanceId) return 'None';
     return getResonanceById(state.resonanceId)?.name ?? state.resonanceId;
+  }
+
+  resonanceActive(state: AscensionRunState): boolean {
+    return isResonanceActive(state);
   }
 
   pickedEchoes(state: AscensionRunState): Array<{ id: string; name: string; pathId: string }> {

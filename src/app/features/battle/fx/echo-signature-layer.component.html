@@ -1,0 +1,12 @@
+<div class="signature-layer" #layer>
+  @for (path of visiblePaths(); track path.id) {
+    <div [ngClass]="signatureClass(path)" [ngStyle]="signatureStyle(path)">
+      <span class="sig-ring"></span>
+      @if (showStack(path)) {
+        <span class="sig-ring sig-ring--stack"></span>
+      }
+      <span class="sig-core"></span>
+      <span class="sig-accent"></span>
+    </div>
+  }
+</div>

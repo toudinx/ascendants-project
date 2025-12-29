@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import {
+  AfterViewInit,
   Component,
   ElementRef,
   OnDestroy,
@@ -25,9 +26,29 @@ import {
   EvolutionVisual,
   EvolutionVisualKey,
 } from "../../../core/models/evolution-visual.model";
+import { ArenaContainerComponent } from "../../battle/arena/arena-container.component";
+import { ActorSpriteComponent } from "../../battle/actor-sprite/actor-sprite.component";
+import {
+  BattleUiEventBus,
+  ActorPose,
+} from "../../battle/ui/battle-ui-event-bus.service";
+import { VfxLayerComponent } from "../../battle/fx/vfx-layer.component";
+import { CombatTextLayerComponent } from "../../battle/fx/combat-text-layer.component";
+import { GroundRippleLayerComponent } from "../../battle/fx/ground-ripple-layer.component";
+import {
+  BattleFxAnchors,
+  Point,
+  AfterglowFieldKey
+} from "../../battle/fx/battle-fx.types";
+import { BattleFxBusService } from "../../battle/fx/battle-fx-bus.service";
+import { BattleVfxIntensityService } from "../../battle/fx/battle-vfx-intensity.service";
+import type { EchoSignaturePath } from "../../battle/fx/echo-signature-layer.component";
+import { VfxSequencerService } from "../../battle/fx/vfx-sequencer.service";
+import { resolveActionProfile } from "../../battle/fx/action-vfx-profiles";
+import { VfxSettingsService } from "../../battle/fx/vfx-settings.service";
+import { resolveActorHitCount } from "../../../core/utils/hit-count";
 
 type ActorKey = "player" | "enemy";
-type FxTone = "dmg" | "crit" | "dot" | "posture";
 type TimelineActor = "player" | "enemy" | "system";
 type LogTone = TimelineActor | LogKind;
 type ImpactTone =
@@ -38,12 +59,13 @@ type ImpactTone =
   | "crit-flare"
   | "break"
   | "superbreak";
+type HighlightVariant = "broken" | "superbroken";
 
-interface AttackFx {
-  id: string;
-  from: ActorKey;
-  to: ActorKey;
-  tone: FxTone;
+interface HighlightBox {
+  left: number;
+  top: number;
+  size: number;
+  variant: HighlightVariant;
 }
 
 interface TurnLogEvent {
@@ -82,19 +104,36 @@ interface TurnLogGroup {
 @Component({
   selector: "app-run-battle-page",
   standalone: true,
-  imports: [CommonModule, RunDebugPanelComponent],
+  imports: [
+    CommonModule,
+    ArenaContainerComponent,
+    ActorSpriteComponent,
+    VfxLayerComponent,
+    CombatTextLayerComponent,
+    GroundRippleLayerComponent,
+    RunDebugPanelComponent,
+  ],
   templateUrl: "./run-battle.page.html",
   styleUrls: ["./run-battle.page.scss"],
+  providers: [
+    BattleVfxIntensityService,
+    BattleFxBusService,
+    VfxSequencerService
+  ],
 })
-export class RunBattlePageComponent implements OnInit, OnDestroy {
+export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly run = inject(RunStateService);
   private readonly battle = inject(BattleEngineService);
+  private readonly actorUi = inject(BattleUiEventBus);
+  private readonly vfxSequencer = inject(VfxSequencerService);
+  private readonly vfxIntensity = inject(BattleVfxIntensityService);
+  readonly vfxSettings = inject(VfxSettingsService);
   readonly ui = inject(UiStateService);
   readonly player = inject(PlayerStateService);
   readonly enemy = inject(EnemyStateService);
+  readonly vfxIntensity$ = this.vfxIntensity.intensity$;
+  readonly echoSignaturePaths: EchoSignaturePath[] = [];
 
-  readonly attackFx = signal<AttackFx[]>([]);
-  readonly visibleFloats = signal<FloatEvent[]>([]);
   readonly dotStacks = signal<Record<ActorKey, number>>({
     player: 0,
     enemy: 0,
@@ -114,16 +153,26 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
   awaitingPlayer = false;
 
   private readonly processedFloatIds = new Set<string>();
+  private readonly hitTimers = new Set<ReturnType<typeof setTimeout>>();
+  private readonly maxExpandedLogs = 300;
   private lastTurnRef = "";
   private manualActionTurn = 0;
   private autoSkillQueuedForTurn: number | null = null;
   private lastLogId: string | null = null;
+  private skillFxWindowUntil = 0;
   prefersReducedMotion = false;
   private prevPlayerStatus = this.player.state().status;
   private prevEnemyState = this.enemy.enemy().state;
   private lastEvolutionKey: EvolutionVisualKey | null = null;
   @ViewChild("logBody") logBody?: ElementRef<HTMLDivElement>;
+  @ViewChild("arenaRoot", { read: ElementRef }) arenaRoot?: ElementRef<HTMLElement>;
+  @ViewChild("playerActor", { read: ElementRef })
+  playerActor?: ElementRef<HTMLElement>;
+  @ViewChild("enemyActor", { read: ElementRef })
+  enemyActor?: ElementRef<HTMLElement>;
   private collapsedTurns = new Set<string>();
+  private arenaFrame?: HTMLElement;
+  private readonly resizeHandler = () => this.updateFxAnchorsFromRects();
 
   private readonly actorPositions: Record<
     ActorKey,
@@ -132,6 +181,11 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
     player: { x: 24, y: 62, floatY: 44 },
     enemy: { x: 76, y: 62, floatY: 42 },
   };
+  fxAnchors: BattleFxAnchors = this.createFxAnchors();
+  readonly highlightBoxes = signal<Record<ActorKey, HighlightBox | null>>({
+    player: null,
+    enemy: null,
+  });
 
   private readonly turnWatcher = effect(
     () => {
@@ -162,6 +216,7 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
   private readonly breakWatcher = effect(
     () => {
       this.detectBreakChanges();
+      this.updateHighlightBoxes();
     },
     { allowSignalWrites: true }
   );
@@ -173,19 +228,47 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
     { allowSignalWrites: true }
   );
 
+  private readonly vfxIntensityWatcher = effect(
+    () => {
+      const total = this.totalRooms;
+      const floor = this.currentRoom;
+      const dotCount =
+        (this.dotStacks().player ?? 0) + (this.dotStacks().enemy ?? 0);
+
+      this.vfxIntensity.setContext({
+        floorProgress: total > 0 ? floor / total : 0,
+        dotCount,
+      });
+    },
+    { allowSignalWrites: true }
+  );
+
   ngOnInit(): void {
     this.awaitingPlayer = !this.autoplay;
     this.prefersReducedMotion = this.getPrefersReducedMotion();
+    this.actorUi.reset();
     this.ensureLoop();
+  }
+
+  ngAfterViewInit(): void {
+    this.arenaFrame = this.findArenaFrame();
+    this.updateFxAnchorsFromRects();
+    this.updateHighlightBoxes();
+    window.addEventListener("resize", this.resizeHandler);
   }
 
   ngOnDestroy(): void {
     this.battle.stopLoop();
+    this.actorUi.reset();
     this.turnWatcher.destroy();
     this.floatWatcher.destroy();
     this.logWatcher.destroy();
     this.breakWatcher.destroy();
     this.evolutionWatcher.destroy();
+    this.vfxIntensityWatcher.destroy();
+    this.hitTimers.forEach(timer => clearTimeout(timer));
+    this.hitTimers.clear();
+    window.removeEventListener("resize", this.resizeHandler);
   }
 
   get currentRoom(): number {
@@ -206,7 +289,7 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
 
   get turnTimeline(): TurnLogGroup[] {
     const map = new Map<number, TurnLogGroup>();
-    const logs = this.ui.state().logs;
+    const logs = this.expandLogEntries(this.ui.state().logs);
 
     for (const entry of logs) {
       if (entry.turn <= 0) continue;
@@ -259,6 +342,10 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
 
   get playerName(): string {
     return this.playerState.kaelisName || "Kaelis";
+  }
+
+  get playerHitCount(): number {
+    return resolveActorHitCount(this.player.state());
   }
 
   get playerSprite(): string {
@@ -314,6 +401,61 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
     return (
       !!this.player.state()?.attributes && !!this.enemy.enemy()?.attributes
     );
+  }
+
+  private expandLogEntries(entries: UiLogEntry[]): UiLogEntry[] {
+    if (!entries?.length) return [];
+    return entries.slice(0, this.maxExpandedLogs);
+  }
+
+  get enemySprite(): string {
+    return "assets/battle/creatures/enemy_generic_idle.png";
+  }
+
+  actorPose(side: ActorKey): ActorPose {
+    return this.actorUi.actorState()[side].pose;
+  }
+
+  actorHitToken(side: ActorKey): number {
+    return this.actorUi.actorState()[side].hitToken;
+  }
+
+  actorCritToken(side: ActorKey): number {
+    return this.actorUi.actorState()[side].critToken;
+  }
+
+  actorDotToken(side: ActorKey): number {
+    return this.actorUi.actorState()[side].dotToken;
+  }
+
+  impactFlagsFor(side: ActorKey): Partial<Record<ImpactTone, boolean>> {
+    return this.impactFlags()[side] ?? {};
+  }
+
+  echoCountFor(side: ActorKey): number {
+    if (!this.echoSignaturePaths.length) return 0;
+    return this.echoSignaturePaths.reduce((sum, path) => {
+      const isEnemyPath = path.id === "Ruin";
+      if (side === "enemy" ? isEnemyPath : !isEnemyPath) {
+        return sum + path.count;
+      }
+      return sum;
+    }, 0);
+  }
+
+  resonanceActiveFor(side: ActorKey): boolean {
+    return side === "player" && false;
+  }
+
+  hasBuff(side: ActorKey): boolean {
+    if (side !== "player") return false;
+    return this.playerState.buffs?.some((buff) => buff.type === "buff") ?? false;
+  }
+
+  energyFull(side: ActorKey): boolean {
+    if (side !== "player") return false;
+    const attrs = this.playerState.attributes;
+    return attrs.energy >= attrs.maxEnergy;
   }
 
   get manualActionReady(): boolean {
@@ -376,6 +518,7 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
   handleActiveSkill(): void {
     if (!this.skillButtonEnabled) return;
     this.battle.triggerActiveSkill();
+    this.armSkillFxWindow();
     if (!this.autoplay) {
       this.awaitingPlayer = false;
       this.manualActionTurn = this.battle.currentTurn().number;
@@ -419,14 +562,6 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
     this.clearImpactTone(actor, tone);
   }
 
-  trackFloat(_: number, item: FloatEvent): string {
-    return item.id;
-  }
-
-  trackFx(_: number, item: AttackFx): string {
-    return item.id;
-  }
-
   trackTurn(_: number, item: TurnLogGroup): string {
     return item.id;
   }
@@ -435,37 +570,6 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
     return item.id;
   }
 
-  positionFor(actor: ActorKey): { x: string; y: string } {
-    const pos = this.actorPositions[actor];
-    return { x: `${pos.x}%`, y: `${pos.y}%` };
-  }
-
-  floatTone(event: FloatEvent): string {
-    if (this.isHeal(event)) return "heal";
-    if (event.type === "crit") return "crit";
-    if (event.type === "dot") return "dot";
-    if (event.type === "posture") return "posture";
-    return "dmg";
-  }
-
-  floatPosition(event: FloatEvent): { x: string; y: string } {
-    const target: ActorKey = event.target === "player" ? "player" : "enemy";
-    const pos = this.actorPositions[target];
-    const offset = this.floatOffset(event, target);
-    const jitter = this.floatJitter(event.id);
-    return {
-      x: `calc(${pos.x}% + ${offset.x}px)`,
-      y: `calc(${pos.floatY + jitter}% + ${offset.y}px)`,
-    };
-  }
-
-  removeFloat(id: string): void {
-    this.visibleFloats.update((list) => list.filter((item) => item.id !== id));
-  }
-
-  removeFx(id: string): void {
-    this.attackFx.update((list) => list.filter((item) => item.id !== id));
-  }
 
   private scrollLogToLatest(): void {
     if (!this.logBody) return;
@@ -524,6 +628,7 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
     if (this.autoSkillQueuedForTurn === turn.number) return;
     this.autoSkillQueuedForTurn = turn.number;
     this.battle.triggerActiveSkill();
+    this.armSkillFxWindow();
   }
 
   private ensureLoop(): void {
@@ -537,14 +642,20 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
 
   private processFloatEvents(floats: FloatEvent[]): void {
     if (!floats?.length) return;
+    this.updateFxAnchorsFromRects();
     for (const event of floats) {
       if (!event?.id || !event.target) continue;
       const target = event.target as ActorKey;
       if (this.processedFloatIds.has(event.id)) continue;
       this.processedFloatIds.add(event.id);
-      this.spawnAttackFx(event);
-      this.visibleFloats.update((list) => [...list, event].slice(-10));
-      this.enqueueImpactFromFloat(event);
+      const amount = this.floatAmount(event.value);
+      const hitCount = Number.isFinite(event.hitCount)
+        ? Math.max(1, Math.floor(event.hitCount as number))
+        : 1;
+      const hitIndex = Number.isFinite(event.hitIndex)
+        ? Math.max(0, Math.floor(event.hitIndex as number))
+        : 0;
+      this.scheduleAtomicFloat(event, amount, hitIndex, hitCount);
       if (event.type === "dot") {
         this.dotStacks.update((state) => ({
           ...state,
@@ -554,24 +665,143 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
     }
   }
 
-  private spawnAttackFx(event: FloatEvent): void {
-    const to: ActorKey = event.target === "player" ? "player" : "enemy";
-    const from: ActorKey = to === "enemy" ? "player" : "enemy";
-    const tone = this.fxTone(event);
-    const entry: AttackFx = {
-      id: `${event.id}-fx`,
-      from,
-      to,
-      tone,
+  private scheduleAtomicFloat(
+    baseEvent: FloatEvent,
+    amount: number,
+    hitIndex: number,
+    hitCount: number,
+    intervalMs?: number
+  ): void {
+    const index = Math.max(0, Math.floor(hitIndex));
+    const total = Math.max(1, Math.floor(hitCount));
+    const step = intervalMs ?? this.hitIntervalMs(baseEvent);
+    const delay = total > 1 ? Math.max(0, index * step) : 0;
+    const value = `-${Math.max(0, Math.round(amount))}`;
+    const event: FloatEvent = {
+      ...baseEvent,
+      value,
+      hitCount: total,
+      hitIndex: index
     };
-    this.attackFx.update((list) => [...list, entry].slice(-12));
+    if (delay <= 0) {
+      this.emitFxForFloat(event);
+      this.queueActorPresentation(event);
+      this.enqueueImpactFromFloat(event);
+      return;
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    timer = setTimeout(() => {
+      if (timer) this.hitTimers.delete(timer);
+      this.emitFxForFloat(event);
+      this.queueActorPresentation(event);
+      this.enqueueImpactFromFloat(event);
+    }, delay);
+    this.hitTimers.add(timer);
   }
 
-  private fxTone(event: FloatEvent): FxTone {
-    if (event.type === "crit") return "crit";
-    if (event.type === "dot") return "dot";
-    if (event.type === "posture") return "posture";
-    return "dmg";
+  private hitIntervalMs(event?: FloatEvent): number {
+    if (this.prefersReducedMotion) {
+      return 50;
+    }
+    const actionKind = event?.actionKind;
+    if (actionKind === "dot") {
+      return 110;
+    }
+    if (actionKind === "enemyAttack" || actionKind === "enemySkill") {
+      return 90;
+    }
+    if (event?.target === "player") {
+      return 90;
+    }
+    return 70;
+  }
+
+  private queueActorPresentation(event: FloatEvent): void {
+    const target: ActorKey = event.target === "player" ? "player" : "enemy";
+    if (event.type === "dot") {
+      this.actorUi.triggerDotPulse(target);
+      return;
+    }
+  }
+
+  private emitFxForFloat(event: FloatEvent): void {
+    if (!event.target) return;
+    const target: ActorKey = event.target === "player" ? "player" : "enemy";
+    const attacker: ActorKey = target === "enemy" ? "player" : "enemy";
+    const impactPoint = this.impactPointFor(target);
+    const originPoint = this.originPointFor(attacker);
+    const amount = this.floatAmount(event.value);
+    const dot = event.type === "dot";
+    const crit = event.type === "crit";
+    const skillActive = this.isSkillFxActive(attacker);
+    const actionKind =
+      event.actionKind ??
+      (dot ? "dot" : skillActive ? "skill" : "auto");
+    const kind =
+      actionKind === "dot"
+        ? "dotTick"
+        : actionKind === "enemySkill"
+          ? "enemySkill"
+          : actionKind === "skill"
+            ? "skill"
+            : attacker === "enemy"
+              ? "enemy"
+              : "normal";
+    const style =
+      kind === "skill"
+        ? "cast"
+        : kind === "enemySkill"
+          ? "cast"
+          : "melee";
+    const profile = resolveActionProfile(kind, style);
+    const fieldKey = dot ? this.resolveDotFieldKey() : undefined;
+
+    this.vfxSequencer.run({
+      attacker,
+      target,
+      origin: originPoint,
+      impact: impactPoint,
+      amount,
+      crit,
+      dot,
+      profile,
+      fieldKey,
+      hitIndex: event.hitIndex,
+      hitCount: event.hitCount,
+      reduceMotion: this.prefersReducedMotion
+    });
+  }
+
+  private armSkillFxWindow(): void {
+    const windowMs = this.prefersReducedMotion ? 700 : 1200;
+    this.skillFxWindowUntil = Date.now() + windowMs;
+  }
+
+  private isSkillFxActive(attacker: ActorKey): boolean {
+    if (attacker !== "player") return false;
+    const now = Date.now();
+    if (now > this.skillFxWindowUntil) {
+      this.skillFxWindowUntil = 0;
+      return false;
+    }
+    return true;
+  }
+
+  private resolveDotFieldKey(): AfterglowFieldKey {
+    const logs = this.ui.state().logs ?? [];
+    const latestDot = logs.find((entry) => entry.kind === "dot");
+    if (!latestDot?.text) return "burn";
+    const lower = latestDot.text.toLowerCase();
+    if (lower.includes("poison") || lower.includes("toxic") || lower.includes("venom")) {
+      return "poison";
+    }
+    if (lower.includes("bleed") || lower.includes("blood")) {
+      return "bleed";
+    }
+    if (lower.includes("rune") || lower.includes("sigil")) {
+      return "rune";
+    }
+    return "burn";
   }
 
   private trackDotFromLog(logs: UiLogEntry[]): void {
@@ -718,27 +948,201 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
     this.triggerHitPause(3);
   }
 
-  private isHeal(event: FloatEvent): boolean {
-    return event.value?.trim().startsWith("+") ?? false;
+  private floatAmount(value: string | undefined): number {
+    if (!value) return 0;
+    const cleaned = value.replace(/[^0-9-]/g, "");
+    const parsed = Number(cleaned);
+    if (!Number.isFinite(parsed)) return 0;
+    return Math.abs(Math.round(parsed));
   }
 
-  private floatOffset(
-    event: FloatEvent,
-    target: ActorKey
-  ): { x: number; y: number } {
-    const heal = this.isHeal(event);
-    if (target === "player") {
-      return heal ? { x: 46, y: -10 } : { x: -48, y: -14 };
+  private updateFxAnchorsFromRects(): void {
+    const arenaRect = this.getArenaRect();
+    if (!arenaRect) {
+      this.highlightBoxes.set({ player: null, enemy: null });
+      return;
     }
-    if (event.type === "dot" || event.type === "posture") {
-      return { x: 0, y: -64 };
-    }
-    return heal ? { x: 48, y: -10 } : { x: 44, y: -14 };
+    const playerAnchors =
+      this.anchorFromRects("player", arenaRect) ?? this.anchorFor("player");
+    const enemyAnchors =
+      this.anchorFromRects("enemy", arenaRect) ?? this.anchorFor("enemy");
+    this.fxAnchors = {
+      player: playerAnchors,
+      enemy: enemyAnchors,
+    };
+    this.updateHighlightBoxes(arenaRect);
   }
 
-  private floatJitter(id: string | undefined): number {
-    if (!id?.length) return 0;
-    return (id.charCodeAt(0) % 7) - 3;
+  private updateHighlightBoxes(arenaRect?: DOMRect | null): void {
+    const rect = arenaRect ?? this.getArenaRect();
+    if (!rect) {
+      this.highlightBoxes.set({ player: null, enemy: null });
+      return;
+    }
+    const playerVariant = this.isPlayerSuperBroken
+      ? "superbroken"
+      : this.isPlayerBroken
+        ? "broken"
+        : null;
+    const enemyVariant = this.isEnemySuperBroken
+      ? "superbroken"
+      : this.isEnemyBroken
+        ? "broken"
+        : null;
+    this.highlightBoxes.set({
+      player: this.buildHighlightBox("player", rect, playerVariant),
+      enemy: this.buildHighlightBox("enemy", rect, enemyVariant),
+    });
+  }
+
+  private buildHighlightBox(
+    side: ActorKey,
+    arenaRect: DOMRect,
+    variant: HighlightVariant | null
+  ): HighlightBox | null {
+    if (!variant) return null;
+    const actorRect = this.getActorRect(side);
+    if (!actorRect) return null;
+    const baseSide = Math.max(actorRect.width, actorRect.height);
+    const pad = this.clampNumber(baseSide * 0.06, 8, 18);
+    const size = Math.round(baseSide + pad * 2);
+    const centerX = actorRect.left + actorRect.width / 2;
+    const centerY = actorRect.top + actorRect.height / 2;
+    const left = Math.round(centerX - size / 2 - arenaRect.left);
+    const top = Math.round(centerY - size / 2 - arenaRect.top);
+    return {
+      left,
+      top,
+      size,
+      variant,
+    };
+  }
+
+  private originPointFor(side: ActorKey): Point {
+    const arenaRect = this.getArenaRect();
+    const actorRect = this.getActorRect(side);
+    if (arenaRect && actorRect) {
+      return this.pointFromRect(actorRect, side, "origin", arenaRect);
+    }
+    return this.pointFromAnchor(side, "origin", arenaRect);
+  }
+
+  private impactPointFor(side: ActorKey): Point {
+    const arenaRect = this.getArenaRect();
+    const actorRect = this.getActorRect(side);
+    if (arenaRect && actorRect) {
+      return this.pointFromRect(actorRect, side, "impact", arenaRect);
+    }
+    return this.pointFromAnchor(side, "impact", arenaRect);
+  }
+
+  private pointFromRect(
+    actorRect: DOMRect,
+    side: ActorKey,
+    kind: "origin" | "impact" | "foot",
+    arenaRect: DOMRect
+  ): Point {
+    const xFactor =
+      kind === "origin" ? (side === "player" ? 0.65 : 0.35) : 0.5;
+    const x = actorRect.left + actorRect.width * xFactor;
+    const y =
+      kind === "foot"
+        ? actorRect.bottom - actorRect.height * 0.06
+        : actorRect.top + actorRect.height * 0.45;
+    return {
+      x: Math.round(x - arenaRect.left),
+      y: Math.round(y - arenaRect.top),
+    };
+  }
+
+  private pointFromAnchor(
+    side: ActorKey,
+    kind: "origin" | "impact" | "foot",
+    arenaRect?: DOMRect | null
+  ): Point {
+    if (!arenaRect) return { x: 50, y: 50 };
+    const anchor = this.fxAnchors?.[side]?.[kind] ?? { x: 50, y: 50 };
+    const x = Math.round((anchor.x / 100) * arenaRect.width);
+    const y = Math.round((anchor.y / 100) * arenaRect.height);
+    return { x, y };
+  }
+
+  private anchorFromRects(
+    side: ActorKey,
+    arenaRect: DOMRect
+  ): { origin: Point; impact: Point; foot: Point } | null {
+    const actorRect = this.getActorRect(side);
+    if (!actorRect) return null;
+    const origin = this.pointFromRect(actorRect, side, "origin", arenaRect);
+    const impact = this.pointFromRect(actorRect, side, "impact", arenaRect);
+    const foot = this.pointFromRect(actorRect, side, "foot", arenaRect);
+    return {
+      origin: this.pointToAnchor(origin, arenaRect),
+      impact: this.pointToAnchor(impact, arenaRect),
+      foot: this.pointToAnchor(foot, arenaRect),
+    };
+  }
+
+  private pointToAnchor(point: Point, arenaRect: DOMRect): Point {
+    const x = arenaRect.width ? (point.x / arenaRect.width) * 100 : 50;
+    const y = arenaRect.height ? (point.y / arenaRect.height) * 100 : 50;
+    return {
+      x: this.clampPercent(x),
+      y: this.clampPercent(y),
+    };
+  }
+
+  private createFxAnchors(): BattleFxAnchors {
+    return {
+      player: this.anchorFor("player"),
+      enemy: this.anchorFor("enemy"),
+    };
+  }
+
+  private anchorFor(side: ActorKey) {
+    const pos = this.actorPositions[side];
+    const direction = side === "player" ? 1 : -1;
+    return {
+      origin: {
+        x: this.clampPercent(pos.x + direction * 6),
+        y: this.clampPercent(pos.y - 14),
+      },
+      impact: {
+        x: this.clampPercent(pos.x + direction * 2),
+        y: this.clampPercent(pos.y - 12),
+      },
+      foot: {
+        x: this.clampPercent(pos.x),
+        y: this.clampPercent(pos.y),
+      },
+    };
+  }
+
+  private clampPercent(value: number): number {
+    return Math.max(0, Math.min(100, Math.round(value)));
+  }
+
+  private clampNumber(value: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  private findArenaFrame(): HTMLElement | undefined {
+    const host = this.arenaRoot?.nativeElement;
+    if (!(host instanceof HTMLElement)) return undefined;
+    const frame = host.querySelector(".arena-frame");
+    return frame instanceof HTMLElement ? frame : host;
+  }
+
+  private getArenaRect(): DOMRect | null {
+    if (!this.arenaFrame) {
+      this.arenaFrame = this.findArenaFrame();
+    }
+    return this.arenaFrame?.getBoundingClientRect() ?? null;
+  }
+
+  private getActorRect(side: ActorKey): DOMRect | null {
+    const ref = side === "player" ? this.playerActor : this.enemyActor;
+    return ref?.nativeElement.getBoundingClientRect() ?? null;
   }
 
   private actorLabel(actor: TimelineActor): string {
@@ -788,7 +1192,11 @@ export class RunBattlePageComponent implements OnInit, OnDestroy {
         const applied = lower.includes("apply") || lower.includes("stack");
         return {
           icon: "\u{2620}",
-          text: applied ? "DoT applied" : "DoT tick",
+          text: applied
+            ? "DoT applied"
+            : value !== undefined
+              ? `-${value} HP`
+              : "DoT tick",
           tone: "dot",
         };
       }

@@ -90,119 +90,128 @@
 
     <div
       class="battle-root"
-      [class.hit-pause]="hitPauseActive()"
-      [class.is-paused]="paused"
-      [class.reduce-motion]="prefersReducedMotion"
+  [class.hit-pause]="hitPauseActive()"
+  [class.is-paused]="paused"
+  [class.reduce-motion]="prefersReducedMotion"
+  [class.reduce-flash]="vfxSettings.reduceFlash()"
       [class.ruina-evolved]="activeEvolution?.cssClass === 'ruina-evolved'"
       [class.impacto-evolved]="activeEvolution?.cssClass === 'impacto-evolved'"
       [class.critico-evolved]="activeEvolution?.cssClass === 'critico-evolved'"
+      [style.--vfx-intensity]="(vfxIntensity$ | async) ?? 0"
     >
       @if (hasBattleActors) {
       <div class="battle-body">
         <div class="battle-card">
           <div class="battle-stage">
-            <div class="arena-wrapper">
-              <div class="arena-stage arena">
-                <img
-                  class="arena-bg"
-                  src="assets/battle/arena/arena_ruin_base.png"
-                  alt="Arena"
-                />
-
-                <div
-                  class="actor velvet"
-                  [class.hit-shake-sm]="hasImpact('player', 'hit-sm')"
-                  [class.hit-shake-lg]="hasImpact('player', 'hit-lg')"
-                  [class.hit-tick]="hasImpact('player', 'hit-dot')"
-                  [class.hit-posture]="hasImpact('player', 'hit-posture')"
-                  [class.crit-flare]="hasImpact('player', 'crit-flare')"
-                  [class.break-pulse]="hasImpact('player', 'break')"
-                  [class.superbreak-pulse]="hasImpact('player', 'superbreak')"
-                  [class.hit-flash]="ui.state().flashPlayer"
-                  [class.hit-shake]="ui.state().flashPlayer"
-                  [class.broken]="isPlayerBroken"
-                  [class.superbroken]="isPlayerSuperBroken"
-                  (animationend)="onImpactAnimationEnd('player', $event)"
-                >
-                  @if (hasDot('player')) {
-                  <div class="status-sigil dot">DoT</div>
-                  }
-                  <img
-                    class="shadow"
-                    src="assets/battle/fx/shadow_ground.png"
-                    alt=""
-                  />
-                  <img class="sprite" [src]="playerSprite" [alt]="playerName" />
-                </div>
-
-                <div
-                  class="actor enemy"
-                  [class.hit-shake-sm]="hasImpact('enemy', 'hit-sm')"
-                  [class.hit-shake-lg]="hasImpact('enemy', 'hit-lg')"
-                  [class.hit-tick]="hasImpact('enemy', 'hit-dot')"
-                  [class.hit-posture]="hasImpact('enemy', 'hit-posture')"
-                  [class.crit-flare]="hasImpact('enemy', 'crit-flare')"
-                  [class.break-pulse]="hasImpact('enemy', 'break')"
-                  [class.superbreak-pulse]="hasImpact('enemy', 'superbreak')"
-                  [class.hit-flash]="ui.state().flashEnemy"
-                  [class.hit-shake]="ui.state().flashEnemy"
-                  [class.broken]="isEnemyBroken"
-                  [class.superbroken]="isEnemySuperBroken"
-                  (animationend)="onImpactAnimationEnd('enemy', $event)"
-                >
-                  @if (enemyPreparing) {
-                  <div class="status-sigil alert">ALERT</div>
-                  } @if (hasDot('enemy')) {
-                  <div class="status-sigil dot">DoT</div>
-                  }
-                  <img
-                    class="shadow"
-                    src="assets/battle/fx/shadow_ground.png"
-                    alt=""
-                  />
-                  <img
-                    class="sprite"
-                    src="assets/battle/creatures/enemy_generic_idle.png"
-                    alt="Enemy"
-                  />
-                </div>
-
-                <div class="fx-layer">
-                  @for (fx of attackFx(); track fx.id) {
-                  <div
-                    class="attack-fx"
-                    [ngClass]="fx.tone"
-                    [style.--from-x]="positionFor(fx.from).x"
-                    [style.--from-y]="positionFor(fx.from).y"
-                    [style.--to-x]="positionFor(fx.to).x"
-                    [style.--to-y]="positionFor(fx.to).y"
-                    (animationend)="removeFx(fx.id)"
-                  ></div>
-                  } @for (float of visibleFloats(); track float.id) {
-                  <div
-                    class="float-chip"
-                    [ngClass]="floatTone(float)"
-                    [style.left]="floatPosition(float).x"
-                    [style.top]="floatPosition(float).y"
-                    (animationend)="removeFloat(float.id)"
-                  >
-                    {{ float.value }}
-                  </div>
-                  }
-                </div>
-
-                @if (paused) {
-                <div class="pause-veil">
-                  <div class="pause-copy">
-                    <span class="pause-icon">PAUSE</span>
-                    <span>Combat paused</span>
-                  </div>
-                </div>
-                }
-              </div>
-            </div>
+            <app-arena-container #arenaRoot>
+          <div arena-background>
+            <img
+              class="arena-bg"
+              src="assets/battle/arena/arena_ruin_base.png"
+              alt="Arena"
+            />
+            <app-ground-ripple-layer
+              [anchors]="fxAnchors"
+              [reduceMotion]="prefersReducedMotion"
+            ></app-ground-ripple-layer>
           </div>
 
+              <div arena-actors>
+                <app-actor-sprite
+                  #playerActor
+                  side="player"
+                  [pose]="actorPose('player')"
+                  [spriteKey]="playerSprite"
+                  [impactFlags]="impactFlagsFor('player')"
+                  [flash]="ui.state().flashPlayer"
+                  [showDot]="hasDot('player')"
+                  [hasBuff]="hasBuff('player')"
+                  [energyFull]="energyFull('player')"
+                  [isBroken]="isPlayerBroken"
+                  [isSuperBroken]="isPlayerSuperBroken"
+                  [echoCount]="echoCountFor('player')"
+                  [resonanceActive]="resonanceActiveFor('player')"
+                  [reduceMotion]="prefersReducedMotion"
+                  [hitToken]="actorHitToken('player')"
+                  [critToken]="actorCritToken('player')"
+                  [dotPulseToken]="actorDotToken('player')"
+                  [altText]="playerName"
+                  (impactAnimationEnd)="onImpactAnimationEnd('player', $event)"
+                ></app-actor-sprite>
+
+                <app-actor-sprite
+                  #enemyActor
+                  side="enemy"
+                  [pose]="actorPose('enemy')"
+                  [spriteKey]="enemySprite"
+                  [impactFlags]="impactFlagsFor('enemy')"
+                  [flash]="ui.state().flashEnemy"
+                  [showAlert]="enemyPreparing"
+                  [showDot]="hasDot('enemy')"
+                  [hasBuff]="hasBuff('enemy')"
+                  [energyFull]="energyFull('enemy')"
+                  [isBroken]="isEnemyBroken"
+                  [isSuperBroken]="isEnemySuperBroken"
+                  [echoCount]="echoCountFor('enemy')"
+                  [resonanceActive]="resonanceActiveFor('enemy')"
+                  [reduceMotion]="prefersReducedMotion"
+                  [hitToken]="actorHitToken('enemy')"
+                  [critToken]="actorCritToken('enemy')"
+                  [dotPulseToken]="actorDotToken('enemy')"
+                  altText="Enemy"
+                  (impactAnimationEnd)="onImpactAnimationEnd('enemy', $event)"
+                ></app-actor-sprite>
+              </div>
+
+              <div arena-vfx>
+                <app-vfx-layer
+                  [anchors]="fxAnchors"
+                  [echoPaths]="echoSignaturePaths"
+                  [reduceMotion]="prefersReducedMotion"
+                ></app-vfx-layer>
+              </div>
+
+              <div arena-ui>
+                <div class="target-highlight-layer">
+                  @if (highlightBoxes().player; as box) {
+                    <div
+                      class="target-highlight"
+                      [class.superbroken]="box.variant === 'superbroken'"
+                      [class.broken]="box.variant === 'broken'"
+                      [style.left.px]="box.left"
+                      [style.top.px]="box.top"
+                      [style.width.px]="box.size"
+                      [style.height.px]="box.size"
+                    ></div>
+                  }
+                  @if (highlightBoxes().enemy; as box) {
+                    <div
+                      class="target-highlight"
+                      [class.superbroken]="box.variant === 'superbroken'"
+                      [class.broken]="box.variant === 'broken'"
+                      [style.left.px]="box.left"
+                      [style.top.px]="box.top"
+                      [style.width.px]="box.size"
+                      [style.height.px]="box.size"
+                    ></div>
+                  }
+                </div>
+                <app-combat-text-layer
+                  [anchors]="fxAnchors"
+                  [reduceMotion]="prefersReducedMotion"
+                ></app-combat-text-layer>
+
+                @if (paused) {
+                  <div class="pause-veil">
+                    <div class="pause-copy">
+                      <span class="pause-icon">PAUSE</span>
+                      <span>Combat paused</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </app-arena-container>
+          </div>
           <div class="battle-hud">
             @if (activeEvolution) {
             <div class="evolution-banner">
@@ -228,6 +237,9 @@
                     <span class="subtitle">Ascendant</span>
                   </div>
                   <div class="state-pills">
+                    @if (playerHitCount > 1) {
+                    <span class="status-pill hit">HIT x{{ playerHitCount }}</span>
+                    }
                     @if (hasDot('player')) {
                     <span
                       class="status-pill dot"

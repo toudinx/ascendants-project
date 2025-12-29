@@ -1,0 +1,17 @@
+<div class="arena-shell">
+  <div class="arena-frame" #cameraTarget>
+    <div class="arena-layer arena-layer--background">
+      <ng-content select="[arena-background]"></ng-content>
+    </div>
+    <div class="arena-layer arena-layer--actors">
+      <ng-content select="[arena-actors]"></ng-content>
+    </div>
+    <div class="arena-layer arena-layer--vfx">
+      <ng-content select="[arena-vfx]"></ng-content>
+    </div>
+    <div class="arena-layer arena-layer--ui">
+      <ng-content select="[arena-ui]"></ng-content>
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

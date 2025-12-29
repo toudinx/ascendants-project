@@ -1,0 +1,78 @@
+<div class="actor-sprite__scale">
+  <div class="actor-sprite__rig">
+    <div
+      class="actor-sprite__recoil"
+      [class.hit-pulse]="hitPulse"
+      [class.crit-pulse]="critPulse"
+    >
+      <div
+        class="actor-sprite__shake"
+        [class.hit-shake-sm]="impactFlags['hit-sm']"
+        [class.hit-shake-lg]="impactFlags['hit-lg']"
+        [class.hit-tick]="impactFlags['hit-dot']"
+        [class.hit-posture]="impactFlags['hit-posture']"
+        [class.crit-flare]="impactFlags['crit-flare']"
+        [class.break-pulse]="impactFlags['break']"
+        [class.superbreak-pulse]="impactFlags['superbreak']"
+        [class.broken]="isBroken"
+        [class.superbroken]="isSuperBroken"
+        (animationend)="onImpactAnimationEnd($event)"
+      >
+        <span
+          class="actor-sprite__aura actor-sprite__aura--buff"
+          [class.active]="hasBuff"
+        ></span>
+        <span
+          class="actor-sprite__aura actor-sprite__aura--dot"
+          [class.active]="showDot"
+          [class.pulse]="dotPulse"
+        ></span>
+        <span
+          class="actor-sprite__aura actor-sprite__aura--energy"
+          [class.active]="energyFull"
+        ></span>
+        <div
+          class="actor-orbiters"
+          [class.is-active]="orbiters.length > 0 || showResonanceRing"
+          [class.is-static]="orbitersStatic"
+          [style.--orbiter-opacity]="orbiterOpacity"
+          [style.--orbiter-speed]="orbiterSpeed + 's'"
+        >
+          <span class="actor-orbiters__ring"></span>
+          @if (showResonanceRing) {
+            <span class="actor-orbiters__ring actor-orbiters__ring--resonance"></span>
+          }
+          @for (orbiter of orbiters; track orbiter.id) {
+            <span
+              class="actor-orbiter"
+              [style.--orbiter-angle]="orbiter.angle + 'deg'"
+              [style.--orbiter-radius]="orbiter.radius + 'px'"
+              [style.--orbiter-size]="orbiter.size + 'px'"
+            ></span>
+          }
+        </div>
+        <span class="actor-sprite__ground-ripple"></span>
+        <span class="actor-sprite__ground-crack"></span>
+        <span class="actor-sprite__life"></span>
+        <span class="actor-sprite__cast-ring"></span>
+        @if (showAlert) {
+          <div class="status-sigil alert">ALERT</div>
+        }
+        <img
+          class="actor-sprite__shadow"
+          src="assets/battle/fx/shadow_ground.png"
+          alt=""
+        />
+        <img
+          class="actor-sprite__image"
+          [class.hit-flash]="flash"
+          [class.hit-shake]="flash"
+          [class.blink]="blinkActive"
+          [src]="spriteKey"
+          [alt]="altText"
+        />
+        <span class="actor-sprite__flash"></span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -224,13 +224,9 @@
 }
 
 .battle-stage,
-.arena-wrapper {
+app-arena-container {
   position: relative;
   z-index: 1;
-}
-
-.arena-stage {
-  z-index: 0;
 }
 
 .actor.velvet .shadow {

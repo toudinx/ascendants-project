@@ -93,6 +93,11 @@ export const BALANCE_CONFIG: BalanceConfig = {
   }
 };
 
+export const MULTI_HIT_HP_SCALARS = [1.0, 0.4, 0.3, 0.2, 0.15];
+export const MULTI_HIT_HP_SCALAR_MIN = 0.15;
+export const MULTI_HIT_POSTURE_SCALARS = [1.0, 0.9, 0.75, 0.6, 0.5];
+export const POSTURE_OVERKILL_CAP_FRACTION_PER_ACTION = 0.35;
+
 export function clampDamageReduction(value: number): number {
   return Math.min(BALANCE_CONFIG.damageReductionCap, Math.max(0, value));
 }

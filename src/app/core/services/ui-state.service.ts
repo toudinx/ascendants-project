@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { HitActionKind } from '../models/hit-count.model';
 
 export type LogActor = 'player' | 'enemy' | 'system';
 
@@ -10,6 +11,9 @@ export interface UiLogEntry {
   kind?: LogKind;
   value?: number;
   target?: 'player' | 'enemy';
+  hitCount?: number;
+  hitIndex?: number;
+  actionKind?: HitActionKind;
 }
 
 export interface UiState {
@@ -30,6 +34,9 @@ export interface FloatEvent {
   type: 'dmg' | 'crit' | 'dot' | 'posture';
   target?: 'player' | 'enemy';
   pos?: { x: number; y: number };
+  hitCount?: number;
+  hitIndex?: number;
+  actionKind?: HitActionKind;
 }
 
 export type LogKind =
@@ -47,6 +54,8 @@ export type LogKind =
 export class UiStateService {
   private logCounter = 0;
   private floatCounter = 0;
+  private readonly maxLogs = 300;
+  private readonly maxFloatEvents = 32;
 
   readonly state = signal<UiState>({
     logs: [],
@@ -74,18 +83,21 @@ export class UiStateService {
       turn,
       kind: meta?.kind ?? 'system',
       value: meta?.value,
-      target: meta?.target
+      target: meta?.target,
+      hitCount: meta?.hitCount,
+      hitIndex: meta?.hitIndex,
+      actionKind: meta?.actionKind
     };
     this.state.update(current => ({
       ...current,
-      logs: [entry, ...current.logs].slice(0, 50)
+      logs: [entry, ...current.logs].slice(0, this.maxLogs)
     }));
     return entry;
   }
 
   setLogs(entries: UiLogEntry[]): void {
     this.logCounter = entries.length;
-    const trimmed = [...entries].slice(-50).reverse();
+    const trimmed = [...entries].slice(-this.maxLogs).reverse();
     this.state.update(current => ({
       ...current,
       logs: trimmed
@@ -119,7 +131,7 @@ export class UiStateService {
     const id = `float-${++this.floatCounter}`;
     this.state.update(current => ({
       ...current,
-      floatEvents: [{ id, ...event }, ...current.floatEvents].slice(0, 8)
+      floatEvents: [{ id, ...event }, ...current.floatEvents].slice(0, this.maxFloatEvents)
     }));
   }
 

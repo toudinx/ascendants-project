@@ -19,7 +19,9 @@ export interface KaelisBaseStats {
 
 export interface KaelisKitConfig {
   autoMultiplier: number;
+  autoHitCount?: number;
   skillMultiplier: number;
+  skillHitCount?: number;
   skillHits?: number;
   skillCooldownTurns: number;
   skillEnergyCost: number;

@@ -1,0 +1,53 @@
+:host {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ambient-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ambient-particle {
+  position: absolute;
+  border-radius: 999px;
+  opacity: var(--opacity, 0.2);
+  transform: translate3d(0, 0, 0);
+  animation: ambient-drift var(--duration, 6000ms) linear forwards;
+  will-change: transform, opacity;
+  image-rendering: pixelated;
+}
+
+.ambient-particle--ember {
+  background: radial-gradient(circle, rgba(255, 204, 140, 0.9), transparent 70%);
+  box-shadow: 0 0 8px rgba(255, 180, 120, 0.35);
+  z-index: 2;
+}
+
+.ambient-particle--ash {
+  background: rgba(210, 220, 235, 0.5);
+  box-shadow: 0 0 4px rgba(190, 200, 210, 0.25);
+  z-index: 1;
+}
+
+@keyframes ambient-drift {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    opacity: var(--opacity, 0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx, 0px), var(--dy, 0px), 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-particle {
+    animation-duration: 9000ms;
+  }
+}

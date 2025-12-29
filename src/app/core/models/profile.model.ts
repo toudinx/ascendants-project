@@ -23,6 +23,9 @@ export interface ProfileSettings {
   autoScrollLog: boolean;
   followTurns: boolean;
   showDamageFloaters: boolean;
+  vfxDensity: 'low' | 'med' | 'high';
+  screenShake: boolean;
+  reducedFlash: boolean;
 }
 
 export interface ProfilePersistedState {
@@ -103,7 +106,10 @@ export function createDefaultProfileState(): ProfilePersistedState {
       battleSpeed: 'normal',
       autoScrollLog: true,
       followTurns: true,
-      showDamageFloaters: true
+      showDamageFloaters: true,
+      vfxDensity: 'med',
+      screenShake: true,
+      reducedFlash: false
     }
   };
 }

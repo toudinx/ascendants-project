@@ -53,7 +53,7 @@
           <div class="card-header">
             <span>Resonance</span>
             <span class="card-header__meta">
-              {{ state.resonanceActive ? 'Active' : 'Inactive' }}
+              {{ resonanceActive(state) ? 'Active' : 'Inactive' }}
             </span>
           </div>
           <div class="resonance-name">{{ resonanceName(state) }}</div>

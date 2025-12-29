@@ -1,7 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { AppHeaderComponent } from '../../../../shared/components';
 import { ASCENSION_CONFIG } from '../../content/configs/ascension.config';
 import { ASCENSION_PATHS } from '../../content/configs/ascension-paths';
 import { AscensionEchoDraftService } from '../../services/ascension-echo-draft.service';
@@ -11,6 +10,7 @@ import {
   AscensionEchoDraftOption
 } from '../../models/ascension-draft-option.model';
 import type { AscensionRunState } from '../../state/ascension-run-state.model';
+import { isResonanceActive } from '../../../../core/utils/resonance.utils';
 
 type SourceRole = 'origin' | 'run' | 'flex';
 
@@ -25,7 +25,7 @@ interface ResonanceImpactPreview {
 @Component({
   selector: 'app-ascension-draft-page',
   standalone: true,
-  imports: [CommonModule, AppHeaderComponent],
+  imports: [CommonModule],
   templateUrl: './ascension-draft.page.html',
   styleUrls: ['./ascension-draft.page.scss']
 })
@@ -107,6 +107,10 @@ export class AscensionDraftPageComponent implements OnInit, OnDestroy {
       after: 0,
       max: 0
     };
+  }
+
+  resonanceActive(state: AscensionRunState): boolean {
+    return isResonanceActive(state);
   }
 
   @HostListener('window:keydown', ['$event'])

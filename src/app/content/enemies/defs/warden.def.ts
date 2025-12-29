@@ -14,6 +14,7 @@ export const SIEGE_WARDEN_DEF: EnemyDef = {
     critChance: 0.18,
     critDamage: 1.55,
     multiHitChance: 0.22,
+    baseHitCount: 1,
     dotChance: 0.18
   },
   abilities: {

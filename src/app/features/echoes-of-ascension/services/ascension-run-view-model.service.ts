@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ASCENSION_CONFIG } from '../content/configs/ascension.config';
 import { ASCENSION_PATHS } from '../content/configs/ascension-paths';
+import { isResonanceActive } from '../../../core/utils/resonance.utils';
 import { getAscensionPotionById } from '../content/configs/ascension-potions';
 import { getEchoById } from '../content/echoes';
 import { getResonanceById } from '../content/resonances';
@@ -56,7 +57,7 @@ export class AscensionRunViewModelService {
       echoFragments: state.echoFragments,
       potionName: potion?.name ?? 'None',
       potionEffect: potion?.effectText ?? 'No active potion.',
-      resonanceActive: state.resonanceActive,
+      resonanceActive: isResonanceActive(state),
       resonanceName: resonance?.name ?? `${originPathName} x ${runPathName}`,
       resonanceEffect: resonance?.description ?? 'Resonance not yet unlocked.',
       originEchoesCollected: state.originEchoCount,

@@ -1,0 +1,14 @@
+<div class="ground-ripple-layer" #layer>
+  @for (ripple of ripples(); track ripple.id) {
+    <div
+      class="ground-ripple"
+      [class.ground-ripple--crack]="ripple.crack"
+      [style.left.px]="ripple.x"
+      [style.top.px]="ripple.y"
+      [style.--size]="ripple.size + 'px'"
+      [style.--opacity]="ripple.opacity"
+      [style.--duration]="ripple.duration + 'ms'"
+      (animationend)="remove(ripple.id)"
+    ></div>
+  }
+</div>

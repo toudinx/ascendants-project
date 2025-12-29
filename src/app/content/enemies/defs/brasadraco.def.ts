@@ -14,6 +14,7 @@ export const BRASADRACO_DEF: EnemyDef = {
     critChance: 0.2,
     critDamage: 1.6,
     multiHitChance: 0.24,
+    baseHitCount: 2,
     dotChance: 0.22
   },
   abilities: {

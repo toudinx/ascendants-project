@@ -1,6 +1,7 @@
 import { EnemyAttributes, EnemyState } from './enemy.model';
 import { PlayerAttributes, PlayerBuff, PlayerRingSkillBuff, PlayerState } from './player.model';
 import { LogActor, LogKind, UiLogEntry } from '../services/ui-state.service';
+import { HitActionKind } from './hit-count.model';
 import { KaelisKitConfig } from './kaelis.model';
 import { WeaponId } from './weapon.model';
 import { RingSetKey } from './ring.model';
@@ -47,6 +48,9 @@ export interface BattleEvent {
   kind?: LogKind;
   value?: number;
   target?: 'player' | 'enemy';
+  hitCount?: number;
+  hitIndex?: number;
+  actionKind?: HitActionKind;
 }
 
 export interface BattleSnapshot {
@@ -68,7 +72,10 @@ export function buildLogFromSnapshots(snapshots: BattleSnapshot[]): UiLogEntry[]
         turn: evt.turn,
         kind: evt.kind,
         value: evt.value,
-        target: evt.target
+        target: evt.target,
+        hitCount: evt.hitCount,
+        hitIndex: evt.hitIndex,
+        actionKind: evt.actionKind
       });
     });
   });

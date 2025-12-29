@@ -142,7 +142,19 @@ export class StorageService {
       showDamageFloaters:
         typeof raw.settings?.showDamageFloaters === 'boolean'
           ? raw.settings.showDamageFloaters
-          : defaults.settings.showDamageFloaters
+          : defaults.settings.showDamageFloaters,
+      vfxDensity:
+        raw.settings?.vfxDensity === 'low' || raw.settings?.vfxDensity === 'high'
+          ? raw.settings.vfxDensity
+          : defaults.settings.vfxDensity,
+      screenShake:
+        typeof raw.settings?.screenShake === 'boolean'
+          ? raw.settings.screenShake
+          : defaults.settings.screenShake,
+      reducedFlash:
+        typeof raw.settings?.reducedFlash === 'boolean'
+          ? raw.settings.reducedFlash
+          : defaults.settings.reducedFlash
     };
 
     const ringInventory = Array.isArray(raw.rings?.inventory)

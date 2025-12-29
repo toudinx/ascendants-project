@@ -1,0 +1,42 @@
+<div class="combat-text-layer" #layer>
+  @for (entry of entries(); track entry.id) {
+    <div
+      class="combat-text"
+      [ngClass]="['combat-text--' + entry.tone]"
+      [style.left.px]="entry.x"
+      [style.top.px]="entry.y"
+      [style.--duration]="entry.duration + 'ms'"
+      [style.--pop-scale]="entry.popScale"
+      [style.--pop-overshoot]="entry.popOvershoot"
+      [style.--pop-y]="entry.popY + 'px'"
+      [style.--mid-y]="entry.midY + 'px'"
+      [style.--fall-y]="entry.fallY + 'px'"
+      [style.--font-size]="entry.fontSize + 'px'"
+      [style.--line-height]="entry.lineHeight + 'px'"
+      [style.--pad-x]="entry.padX + 'px'"
+      [style.--pad-y]="entry.padY + 'px'"
+      [style.--tag-font-size]="entry.tagFontSize + 'px'"
+      [style.--tag-pad-x]="entry.tagPadX + 'px'"
+      [style.--tag-pad-y]="entry.tagPadY + 'px'"
+      [style.--tag-gap]="entry.tagGap + 'px'"
+      [style.--tag-chip-gap]="entry.tagChipGap + 'px'"
+      (animationend)="remove(entry.id)"
+    >
+      <div class="combat-text__stack">
+        @if (entry.tone === "dot" || entry.stacks) {
+          <div class="combat-text__tags">
+            @if (entry.stacks) {
+              <span class="combat-text__count">x{{ entry.stacks }}</span>
+            }
+          </div>
+        }
+        <span class="combat-text__value">
+          @if (entry.tone === "dot") {
+            <span class="combat-text__dot-badge" aria-hidden="true"></span>
+          }
+          <span class="combat-text__label">{{ labelFor(entry) }}</span>
+        </span>
+      </div>
+    </div>
+  }
+</div>
