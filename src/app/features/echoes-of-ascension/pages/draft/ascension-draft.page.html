@@ -68,7 +68,7 @@
               <button
                 type="button"
                 class="echo-card"
-                (click)="selectOption(option)"
+                (click)="selectOption(option, index)"
                 [disabled]="isResolving"
                 [class.echo-card--selected]="selectedOptionId === option.id"
                 [attr.aria-label]="'Select ' + (option.kind === 'echo' ? option.echo.name : option.name)"

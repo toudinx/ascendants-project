@@ -12,7 +12,7 @@ import { AppTagComponent } from "../app-tag/app-tag.component";
     <div
       class="card-surface relative flex h-full flex-col gap-2 border border-white/10 p-3 transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
       [ngClass]="{
-        'ring-2 ring-[#8A7CFF] ring-offset-2 ring-offset-[#0B0B16]': skin.isNew,
+        'outline outline-2 outline-[#8A7CFF] outline-offset-2': skin.isNew,
         'skin-ssr': skin.rarity === 'SSR',
         'skin-sr': skin.rarity === 'SR',
       }"

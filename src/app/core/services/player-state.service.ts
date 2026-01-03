@@ -1,23 +1,23 @@
 import { Injectable, effect, inject, signal } from '@angular/core';
-import { PlayerAttributes, PlayerBuff, PlayerRingSkillBuff, PlayerState } from '../models/player.model';
+import { PlayerAttributes, PlayerBuff, PlayerSigilSkillBuff, PlayerState } from '../models/player.model';
 import { RunKaelisSnapshot } from '../models/kaelis.model';
 import { ProfileStateService } from './profile-state.service';
 import { WeaponDefinition } from '../models/weapon.model';
 import { SIGIL_SETS } from '../../content/equipment/sigils';
-import { RingDefinition, RingSetKey, RingStat } from '../models/ring.model';
+import { SigilDefinition, SigilSetKey, SigilStat } from '../models/sigil.model';
 import { BALANCE_CONFIG } from '../../content/balance/balance.config';
 import { resolveBattleSpriteId, spriteIdToAssetPath } from '../../content/battle-sprites';
 
 interface BuildAttributesResult {
   attributes: PlayerAttributes;
-  ringSetCounts: Record<RingSetKey, number>;
-  ringSkillBuffs: PlayerRingSkillBuff[];
+  sigilSetCounts: Record<SigilSetKey, number>;
+  sigilSkillBuffs: PlayerSigilSkillBuff[];
 }
 
-interface RingBuffState {
+interface SigilBuffState {
   percent: number;
   turns: number;
-  source?: RingSetKey;
+  source?: SigilSetKey;
 }
 
 interface AttributeAccumulator {
@@ -56,7 +56,7 @@ export class PlayerStateService {
   private readonly loadoutLocked = signal(false);
   private lastKaelis?: RunKaelisSnapshot;
   private lastWeapon?: WeaponDefinition;
-  private lastRings: RingDefinition[] = [];
+  private lastSigils: SigilDefinition[] = [];
   private currentModifiers: PlayerAttributeModifierSet = {};
 
   readonly state = signal<PlayerState>(this.buildStateFromProfile());
@@ -68,9 +68,9 @@ export class PlayerStateService {
       }
       const snapshot = this.profile.getActiveSnapshot();
       const weapon = this.profile.getEquippedWeapon(snapshot.id);
-      const rings = this.profile.getEquippedRings(snapshot.id);
+      const sigils = this.profile.getEquippedSigils(snapshot.id);
       const equippedSkinId = this.profile.getActiveSkinFor(snapshot.id);
-      this.applyEquipment(snapshot, weapon, rings, undefined, equippedSkinId);
+      this.applyEquipment(snapshot, weapon, sigils, undefined, equippedSkinId);
     });
   }
 
@@ -89,27 +89,27 @@ export class PlayerStateService {
   resetForNewRun(
     kaelis: RunKaelisSnapshot,
     weapon: WeaponDefinition,
-    rings: RingDefinition[],
+    sigils: SigilDefinition[],
     modifiers?: PlayerAttributeModifierSet
   ): void {
     this.lastKaelis = { ...kaelis, baseStats: { ...kaelis.baseStats }, kit: { ...kaelis.kit } };
     this.lastWeapon = { ...weapon };
-    this.lastRings = rings.map(ring => ({
-      ...ring,
-      mainStat: { ...ring.mainStat },
-      subStats: ring.subStats.map(stat => ({ ...stat }))
+    this.lastSigils = sigils.map(sigil => ({
+      ...sigil,
+      mainStat: { ...sigil.mainStat },
+      subStats: sigil.subStats.map(stat => ({ ...stat }))
     }));
     this.currentModifiers = modifiers ? { ...modifiers } : {};
     const equippedSkinId = this.profile.getActiveSkinFor(kaelis.id);
     this.state.set(
-      buildPlayerState(this.lastKaelis, this.lastWeapon, this.lastRings, this.currentModifiers, equippedSkinId)
+      buildPlayerState(this.lastKaelis, this.lastWeapon, this.lastSigils, this.currentModifiers, equippedSkinId)
     );
   }
 
   applyRunAttributeModifiers(modifiers: PlayerAttributeModifierSet): void {
     this.currentModifiers = { ...modifiers };
     if (!this.lastKaelis || !this.lastWeapon) return;
-    this.applyEquipment(this.lastKaelis, this.lastWeapon, this.lastRings, this.currentModifiers);
+    this.applyEquipment(this.lastKaelis, this.lastWeapon, this.lastSigils, this.currentModifiers);
   }
 
   applyBattleStartBonuses(bonuses: PlayerBattleStartBonuses): void {
@@ -135,16 +135,16 @@ export class PlayerStateService {
   applyEquipment(
     kaelis: RunKaelisSnapshot,
     weapon: WeaponDefinition,
-    rings: RingDefinition[],
+    sigils: SigilDefinition[],
     modifiers?: PlayerAttributeModifierSet,
     equippedSkinId?: string | null
   ): void {
     this.lastKaelis = { ...kaelis, baseStats: { ...kaelis.baseStats }, kit: { ...kaelis.kit } };
     this.lastWeapon = { ...weapon };
-    this.lastRings = rings.map(ring => ({
-      ...ring,
-      mainStat: { ...ring.mainStat },
-      subStats: ring.subStats.map(stat => ({ ...stat }))
+    this.lastSigils = sigils.map(sigil => ({
+      ...sigil,
+      mainStat: { ...sigil.mainStat },
+      subStats: sigil.subStats.map(stat => ({ ...stat }))
     }));
     if (modifiers) {
       this.currentModifiers = { ...modifiers };
@@ -156,8 +156,8 @@ export class PlayerStateService {
       const hpRatio = prev.maxHp > 0 ? prev.hp / prev.maxHp : 1;
       const postureRatio = prev.maxPosture > 0 ? prev.posture / prev.maxPosture : 1;
       const energyRatio = prev.maxEnergy > 0 ? prev.energy / prev.maxEnergy : 1;
-      const rebuilt = buildPlayerAttributes(this.lastKaelis!, this.lastWeapon!, this.lastRings, this.currentModifiers);
-      const preservedBuff = this.preserveRingBuff(current, rebuilt.ringSkillBuffs);
+      const rebuilt = buildPlayerAttributes(this.lastKaelis!, this.lastWeapon!, this.lastSigils, this.currentModifiers);
+      const preservedBuff = this.preserveSigilBuff(current, rebuilt.sigilSkillBuffs);
 
       return {
         ...current,
@@ -175,11 +175,11 @@ export class PlayerStateService {
         },
         kaelisSprite: battleSprite,
         weaponId: this.lastWeapon!.id,
-        ringSetCounts: rebuilt.ringSetCounts,
-        ringSkillBuffs: rebuilt.ringSkillBuffs,
-        ringDamageBuffPercent: preservedBuff.percent,
-        ringDamageBuffTurns: preservedBuff.turns,
-        ringDamageBuffSource: preservedBuff.source
+        sigilSetCounts: rebuilt.sigilSetCounts,
+        sigilSkillBuffs: rebuilt.sigilSkillBuffs,
+        sigilDamageBuffPercent: preservedBuff.percent,
+        sigilDamageBuffTurns: preservedBuff.turns,
+        sigilDamageBuffSource: preservedBuff.source
       };
     });
   }
@@ -193,9 +193,9 @@ export class PlayerStateService {
       },
       status: 'normal',
       breakTurns: 0,
-      ringDamageBuffPercent: 0,
-      ringDamageBuffTurns: 0,
-      ringDamageBuffSource: undefined
+      sigilDamageBuffPercent: 0,
+      sigilDamageBuffTurns: 0,
+      sigilDamageBuffSource: undefined
     }));
   }
 
@@ -303,12 +303,12 @@ export class PlayerStateService {
     });
   }
 
-  activateRingDamageBuff(source: RingSetKey, percent: number, turns: number): 'activated' | 'refreshed' | 'none' {
+  activateSigilDamageBuff(source: SigilSetKey, percent: number, turns: number): 'activated' | 'refreshed' | 'none' {
     if (percent <= 0 || turns <= 0) return 'none';
     let result: 'activated' | 'refreshed' | 'none' = 'activated';
     this.state.update(current => {
-      const existingPercent = current.ringDamageBuffPercent ?? 0;
-      const existingSource = current.ringDamageBuffSource;
+      const existingPercent = current.sigilDamageBuffPercent ?? 0;
+      const existingSource = current.sigilDamageBuffSource;
       if (existingPercent > 0 && existingSource === source) {
         result = 'refreshed';
       } else if (existingPercent > 0 && existingSource !== source) {
@@ -316,19 +316,19 @@ export class PlayerStateService {
       }
       return {
         ...current,
-        ringDamageBuffPercent: percent,
-        ringDamageBuffTurns: turns,
-        ringDamageBuffSource: source
+        sigilDamageBuffPercent: percent,
+        sigilDamageBuffTurns: turns,
+        sigilDamageBuffSource: source
       };
     });
     return result;
   }
 
-  tickRingDamageBuff(): 'expired' | 'active' | 'none' {
+  tickSigilDamageBuff(): 'expired' | 'active' | 'none' {
     let result: 'expired' | 'active' | 'none' = 'none';
     this.state.update(current => {
-      const turns = current.ringDamageBuffTurns ?? 0;
-      const percent = current.ringDamageBuffPercent ?? 0;
+      const turns = current.sigilDamageBuffTurns ?? 0;
+      const percent = current.sigilDamageBuffPercent ?? 0;
       if (percent <= 0 || turns <= 0) {
         return current;
       }
@@ -336,56 +336,56 @@ export class PlayerStateService {
         result = 'expired';
         return {
           ...current,
-          ringDamageBuffPercent: 0,
-          ringDamageBuffTurns: 0,
-          ringDamageBuffSource: undefined
+          sigilDamageBuffPercent: 0,
+          sigilDamageBuffTurns: 0,
+          sigilDamageBuffSource: undefined
         };
       }
       result = 'active';
-      return { ...current, ringDamageBuffTurns: turns - 1 };
+      return { ...current, sigilDamageBuffTurns: turns - 1 };
     });
     return result;
   }
 
-  clearRingDamageBuff(): void {
+  clearSigilDamageBuff(): void {
     this.state.update(current => ({
       ...current,
-      ringDamageBuffPercent: 0,
-      ringDamageBuffTurns: 0,
-      ringDamageBuffSource: undefined
+      sigilDamageBuffPercent: 0,
+      sigilDamageBuffTurns: 0,
+      sigilDamageBuffSource: undefined
     }));
   }
 
-  getRingDamageBuffPercent(): number {
-    return this.state().ringDamageBuffPercent ?? 0;
+  getSigilDamageBuffPercent(): number {
+    return this.state().sigilDamageBuffPercent ?? 0;
   }
 
-  getRingDamageBuffSource(): RingSetKey | undefined {
-    return this.state().ringDamageBuffSource;
+  getSigilDamageBuffSource(): SigilSetKey | undefined {
+    return this.state().sigilDamageBuffSource;
   }
 
-  getRingSkillBuffs(): PlayerRingSkillBuff[] {
-    return this.state().ringSkillBuffs ?? [];
+  getSigilSkillBuffs(): PlayerSigilSkillBuff[] {
+    return this.state().sigilSkillBuffs ?? [];
   }
 
   private buildStateFromProfile(): PlayerState {
     const snapshot = this.profile.getActiveSnapshot();
     const weapon = this.profile.getEquippedWeapon(snapshot.id);
-    const rings = this.profile.getEquippedRings(snapshot.id);
+    const sigils = this.profile.getEquippedSigils(snapshot.id);
     this.lastKaelis = { ...snapshot, baseStats: { ...snapshot.baseStats }, kit: { ...snapshot.kit } };
     this.lastWeapon = { ...weapon };
-    this.lastRings = rings.map(ring => ({
-      ...ring,
-      mainStat: { ...ring.mainStat },
-      subStats: ring.subStats.map(stat => ({ ...stat }))
+    this.lastSigils = sigils.map(sigil => ({
+      ...sigil,
+      mainStat: { ...sigil.mainStat },
+      subStats: sigil.subStats.map(stat => ({ ...stat }))
     }));
     const equippedSkinId = this.profile.getActiveSkinFor(snapshot.id);
-    return buildPlayerState(this.lastKaelis, this.lastWeapon, this.lastRings, this.currentModifiers, equippedSkinId);
+    return buildPlayerState(this.lastKaelis, this.lastWeapon, this.lastSigils, this.currentModifiers, equippedSkinId);
   }
 
-  private preserveRingBuff(current: PlayerState, buffs: PlayerRingSkillBuff[]): RingBuffState {
-    const source = current.ringDamageBuffSource;
-    if (!source || !current.ringDamageBuffPercent) {
+  private preserveSigilBuff(current: PlayerState, buffs: PlayerSigilSkillBuff[]): SigilBuffState {
+    const source = current.sigilDamageBuffSource;
+    if (!source || !current.sigilDamageBuffPercent) {
       return { percent: 0, turns: 0 };
     }
     const stillValid = buffs.some(buff => buff.setKey === source);
@@ -393,8 +393,8 @@ export class PlayerStateService {
       return { percent: 0, turns: 0 };
     }
     return {
-      percent: current.ringDamageBuffPercent ?? 0,
-      turns: current.ringDamageBuffTurns ?? 0,
+      percent: current.sigilDamageBuffPercent ?? 0,
+      turns: current.sigilDamageBuffTurns ?? 0,
       source
     };
   }
@@ -415,11 +415,11 @@ function resolveBattleSpritePath(kaelisId: RunKaelisSnapshot['id'], equippedSkin
 function buildPlayerState(
   kaelis: RunKaelisSnapshot,
   weapon: WeaponDefinition,
-  rings: RingDefinition[],
+  sigils: SigilDefinition[],
   modifiers: PlayerAttributeModifierSet = {},
   equippedSkinId?: string | null
 ): PlayerState {
-  const result = buildPlayerAttributes(kaelis, weapon, rings, modifiers);
+  const result = buildPlayerAttributes(kaelis, weapon, sigils, modifiers);
   return {
     attributes: result.attributes,
     buffs: mockBuffs(),
@@ -432,18 +432,18 @@ function buildPlayerState(
     kaelisSprite: resolveBattleSpritePath(kaelis.id, equippedSkinId),
     kit: { ...kaelis.kit },
     weaponId: weapon.id,
-    ringSetCounts: result.ringSetCounts,
-    ringSkillBuffs: result.ringSkillBuffs,
-    ringDamageBuffPercent: 0,
-    ringDamageBuffTurns: 0,
-    ringDamageBuffSource: undefined
+    sigilSetCounts: result.sigilSetCounts,
+    sigilSkillBuffs: result.sigilSkillBuffs,
+    sigilDamageBuffPercent: 0,
+    sigilDamageBuffTurns: 0,
+    sigilDamageBuffSource: undefined
   };
 }
 
 function buildPlayerAttributes(
   kaelis: RunKaelisSnapshot,
   weapon: WeaponDefinition,
-  rings: RingDefinition[],
+  sigils: SigilDefinition[],
   modifiers: PlayerAttributeModifierSet = {}
 ): BuildAttributesResult {
   const stats = kaelis.baseStats;
@@ -467,11 +467,11 @@ function buildPlayerAttributes(
       break;
   }
 
-  const ringSetCounts: Partial<Record<RingSetKey, number>> = {};
-  rings.forEach(ring => {
-    ringSetCounts[ring.setKey] = (ringSetCounts[ring.setKey] ?? 0) + 1;
-    applyRingStat(ring.mainStat, totals);
-    ring.subStats.forEach(stat => applyRingStat(stat, totals));
+  const sigilSetCounts: Partial<Record<SigilSetKey, number>> = {};
+  sigils.forEach(sigil => {
+    sigilSetCounts[sigil.setKey] = (sigilSetCounts[sigil.setKey] ?? 0) + 1;
+    applySigilStat(sigil.mainStat, totals);
+    sigil.subStats.forEach(stat => applySigilStat(stat, totals));
   });
 
   totals.hpFlat += modifiers.hpFlat ?? 0;
@@ -489,16 +489,16 @@ function buildPlayerAttributes(
     BALANCE_CONFIG.damageReductionCap * 100,
     Math.max(0, damageReductionPercentRaw)
   );
-  const ringSkillBuffs: PlayerRingSkillBuff[] = [];
+  const sigilSkillBuffs: PlayerSigilSkillBuff[] = [];
 
   Object.values(SIGIL_SETS).forEach(set => {
-    const key = set.key as RingSetKey;
-    const equipped = ringSetCounts[key] ?? 0;
+    const key = set.key as SigilSetKey;
+    const equipped = sigilSetCounts[key] ?? 0;
     if (set.threePieceBonus && equipped >= 3 && set.threePieceBonus.type === 'damage_percent') {
       damageBonusPercent += set.threePieceBonus.value;
     }
     if (set.fivePieceSkillBuff && equipped >= 5) {
-      ringSkillBuffs.push({
+      sigilSkillBuffs.push({
         setKey: key,
         trigger: set.fivePieceSkillBuff.trigger,
         damagePercent: set.fivePieceSkillBuff.damagePercent,
@@ -536,8 +536,8 @@ function buildPlayerAttributes(
 
   return {
     attributes,
-    ringSetCounts: ringSetCounts as Record<RingSetKey, number>,
-    ringSkillBuffs
+    sigilSetCounts: sigilSetCounts as Record<SigilSetKey, number>,
+    sigilSkillBuffs
   };
 }
 
@@ -557,7 +557,7 @@ function createAccumulator(): AttributeAccumulator {
   };
 }
 
-function applyRingStat(stat: RingStat, totals: AttributeAccumulator): void {
+function applySigilStat(stat: SigilStat, totals: AttributeAccumulator): void {
   switch (stat.type) {
     case 'hp_flat':
       totals.hpFlat += stat.value;
@@ -593,3 +593,5 @@ function applyRingStat(stat: RingStat, totals: AttributeAccumulator): void {
       return;
   }
 }
+
+

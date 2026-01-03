@@ -1,16 +1,19 @@
-import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ASCENSION_CONFIG } from '../../content/configs/ascension.config';
 import { ASCENSION_PATHS } from '../../content/configs/ascension-paths';
 import { AscensionEchoDraftService } from '../../services/ascension-echo-draft.service';
 import { AscensionRunStateService } from '../../state/ascension-run-state.service';
+import { ReplayLogService } from '../../../../core/services/replay-log.service';
+import { roomToStage } from '../../../../content/balance/balance.config';
 import {
   AscensionDraftOption,
   AscensionEchoDraftOption
 } from '../../models/ascension-draft-option.model';
 import type { AscensionRunState } from '../../state/ascension-run-state.model';
 import { isResonanceActive } from '../../../../core/utils/resonance.utils';
+import { HotkeyService } from '../../../../core/services/hotkey.service';
 
 type SourceRole = 'origin' | 'run' | 'flex';
 
@@ -32,7 +35,9 @@ interface ResonanceImpactPreview {
 export class AscensionDraftPageComponent implements OnInit, OnDestroy {
   private readonly runState = inject(AscensionRunStateService);
   private readonly draftService = inject(AscensionEchoDraftService);
+  private readonly replayLog = inject(ReplayLogService);
   private readonly router = inject(Router);
+  private readonly hotkeys = inject(HotkeyService);
 
   protected readonly totalFloors = ASCENSION_CONFIG.totalFloors;
   protected readonly state$ = this.runState.getState();
@@ -44,12 +49,18 @@ export class AscensionDraftPageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.offer = this.draftService.generateOffer();
+    this.hotkeys.register({
+      '1': () => this.pickByIndex(0),
+      '2': () => this.pickByIndex(1),
+      '3': () => this.pickByIndex(2)
+    });
   }
 
   ngOnDestroy(): void {
     if (this.bannerTimer) {
       window.clearTimeout(this.bannerTimer);
     }
+    this.hotkeys.unregisterAll();
   }
 
   pathName(pathId: string | null): string {
@@ -113,22 +124,21 @@ export class AscensionDraftPageComponent implements OnInit, OnDestroy {
     return isResonanceActive(state);
   }
 
-  @HostListener('window:keydown', ['$event'])
-  handleHotkeys(event: KeyboardEvent): void {
-    if (this.isResolving) return;
-    if (this.isEditableTarget(event.target)) return;
-    const index = this.mapDigitToIndex(event.code, 3);
-    if (index === null) return;
-    const option = this.offer[index];
-    if (!option) return;
-    event.preventDefault();
-    this.selectOption(option);
-  }
-
-  selectOption(option: AscensionDraftOption): void {
+  selectOption(option: AscensionDraftOption, optionIndex?: number): void {
     if (this.isResolving) return;
     this.isResolving = true;
     this.selectedOptionId = option.id;
+    const index =
+      typeof optionIndex === 'number' ? optionIndex : this.offer.indexOf(option);
+    const pickedId = this.isEchoOption(option) ? option.echo.id : option.id;
+    this.replayLog.append({
+      v: 1,
+      t: 'draftPick',
+      payload: {
+        optionIndex: Math.max(0, index),
+        pickedId
+      }
+    });
 
     if (this.isEchoOption(option)) {
       const result = this.draftService.applyEchoPick(option.echo.id);
@@ -157,11 +167,29 @@ export class AscensionDraftPageComponent implements OnInit, OnDestroy {
         floorIndex: ASCENSION_CONFIG.totalFloors,
         roomType: 'summary'
       });
+      this.replayLog.append({
+        v: 1,
+        t: 'enterRoom',
+        payload: {
+          roomIndex: ASCENSION_CONFIG.totalFloors,
+          roomType: 'summary',
+          stage: roomToStage(ASCENSION_CONFIG.totalFloors)
+        }
+      });
       this.router.navigateByUrl('/ascension/summary');
       return;
     }
 
     this.runState.patchState({ floorIndex: nextFloor, roomType: 'battle' });
+    this.replayLog.append({
+      v: 1,
+      t: 'enterRoom',
+      payload: {
+        roomIndex: nextFloor,
+        roomType: 'battle',
+        stage: roomToStage(nextFloor)
+      }
+    });
     this.router.navigateByUrl('/ascension/battle');
   }
 
@@ -171,41 +199,11 @@ export class AscensionDraftPageComponent implements OnInit, OnDestroy {
     return `Resonance Unlocked: ${origin} x ${run} (3+2)`;
   }
 
-  private mapDigitToIndex(
-    code: string,
-    count: number,
-    offset = 1
-  ): number | null {
-    const digit = this.digitFromCode(code);
-    if (digit === null) return null;
-    const index = digit - offset;
-    if (index < 0 || index >= count) return null;
-    return index;
-  }
-
-  private digitFromCode(code: string): number | null {
-    switch (code) {
-      case 'Digit1':
-      case 'Numpad1':
-        return 1;
-      case 'Digit2':
-      case 'Numpad2':
-        return 2;
-      case 'Digit3':
-      case 'Numpad3':
-        return 3;
-      default:
-        return null;
-    }
-  }
-
-  private isEditableTarget(target: EventTarget | null): boolean {
-    if (!(target instanceof HTMLElement)) return false;
-    const tag = target.tagName.toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') {
-      return true;
-    }
-    return target.isContentEditable;
+  private pickByIndex(index: number): void {
+    if (this.isResolving) return;
+    const option = this.offer[index];
+    if (!option) return;
+    this.selectOption(option, index);
   }
 
   protected isEchoOption(

@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   Input,
@@ -12,8 +13,11 @@ import { CommonModule } from "@angular/common";
 import { Subscription } from "rxjs";
 import { BattleVfxIntensityService } from "./battle-vfx-intensity.service";
 import { VfxBudgetService } from "./vfx-budget.service";
+import { RngService } from "../../../core/services/rng.service";
 
 type AmbientKind = "ember" | "ash";
+
+declare const ngDevMode: boolean;
 
 interface AmbientParticle {
   id: string;
@@ -33,7 +37,8 @@ interface AmbientParticle {
   standalone: true,
   imports: [CommonModule],
   templateUrl: "./ambient-particles.component.html",
-  styleUrls: ["./ambient-particles.component.scss"]
+  styleUrls: ["./ambient-particles.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AmbientParticlesComponent implements AfterViewInit, OnDestroy {
   @Input() reduceMotion = false;
@@ -45,9 +50,19 @@ export class AmbientParticlesComponent implements AfterViewInit, OnDestroy {
   private readonly intensityService = inject(BattleVfxIntensityService, {
     optional: true
   });
+  private readonly vfxRng = inject(RngService).fork("vfx-ambient");
   private intensity = 0;
   private intensitySub?: Subscription;
-  private tickTimer?: ReturnType<typeof setInterval>;
+  private frameHandle?: number;
+  private frameTimer?: ReturnType<typeof setTimeout>;
+  private lastTick = 0;
+  private tickIntervalMs = 120;
+  private running = false;
+  private fpsWindowStart = 0;
+  private framesInWindow = 0;
+  private lastFpsWarning = 0;
+  private readonly showPerfWarnings =
+    typeof ngDevMode === "undefined" || !!ngDevMode;
   private particleCounter = 0;
   private readonly budget = inject(VfxBudgetService);
 
@@ -57,13 +72,72 @@ export class AmbientParticlesComponent implements AfterViewInit, OnDestroy {
         this.intensity = this.clamp01(value);
       });
     }
-    const tickRate = this.reduceMotion ? 200 : 120;
-    this.tickTimer = setInterval(() => this.tick(), tickRate);
+    this.tickIntervalMs = this.reduceMotion ? 200 : 120;
+    this.startLoop();
   }
 
   ngOnDestroy(): void {
-    if (this.tickTimer) clearInterval(this.tickTimer);
+    this.stopLoop();
     this.intensitySub?.unsubscribe();
+  }
+
+  private startLoop(): void {
+    if (this.running) return;
+    this.running = true;
+    const now =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    this.lastTick = now;
+    this.fpsWindowStart = now;
+    const step = (timestamp: number) => {
+      if (!this.running) return;
+      const time = Number.isFinite(timestamp) ? timestamp : Date.now();
+      if (time - this.lastTick >= this.tickIntervalMs) {
+        this.lastTick = time;
+        this.tick();
+      }
+      this.trackFps(time);
+      this.scheduleFrame(step);
+    };
+    this.scheduleFrame(step);
+  }
+
+  private stopLoop(): void {
+    this.running = false;
+    if (this.frameHandle && typeof cancelAnimationFrame === "function") {
+      cancelAnimationFrame(this.frameHandle);
+    }
+    if (this.frameTimer) {
+      clearTimeout(this.frameTimer);
+    }
+    this.frameHandle = undefined;
+    this.frameTimer = undefined;
+  }
+
+  private scheduleFrame(callback: FrameRequestCallback): void {
+    if (typeof requestAnimationFrame === "function") {
+      this.frameHandle = requestAnimationFrame(callback);
+      return;
+    }
+    this.frameTimer = setTimeout(
+      () => callback(Date.now()),
+      this.tickIntervalMs
+    );
+  }
+
+  private trackFps(now: number): void {
+    if (!this.showPerfWarnings) return;
+    this.framesInWindow += 1;
+    const elapsed = now - this.fpsWindowStart;
+    if (elapsed < 2000) return;
+    const fps = (this.framesInWindow / elapsed) * 1000;
+    if (fps < 30 && now - this.lastFpsWarning > 5000) {
+      console.warn(
+        `[ambient-particles] Low FPS detected: ${fps.toFixed(1)}`
+      );
+      this.lastFpsWarning = now;
+    }
+    this.framesInWindow = 0;
+    this.fpsWindowStart = now;
   }
 
   private tick(): void {
@@ -129,7 +203,7 @@ export class AmbientParticlesComponent implements AfterViewInit, OnDestroy {
 
   private chooseKind(): AmbientKind {
     const emberChance = 0.25 + this.intensity * 0.25;
-    return Math.random() < emberChance ? "ember" : "ash";
+    return this.vfxRng.nextFloat() < emberChance ? "ember" : "ash";
   }
 
   private targetCount(cap: number): number {
@@ -159,6 +233,6 @@ export class AmbientParticlesComponent implements AfterViewInit, OnDestroy {
   }
 
   private randomFloat(min: number, max: number): number {
-    return min + Math.random() * (max - min);
+    return min + this.vfxRng.nextFloat() * (max - min);
   }
 }

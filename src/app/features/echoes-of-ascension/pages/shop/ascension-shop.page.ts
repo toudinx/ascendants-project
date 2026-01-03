@@ -1,16 +1,19 @@
-import { Component, HostListener, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AppHeaderComponent } from '../../../../shared/components';
 import { ASCENSION_CONFIG } from '../../content/configs/ascension.config';
 import { AscensionShopService } from '../../services/ascension-shop.service';
 import { AscensionRunStateService } from '../../state/ascension-run-state.service';
+import { ReplayLogService } from '../../../../core/services/replay-log.service';
+import { roomToStage } from '../../../../content/balance/balance.config';
 import {
   AscensionShopEchoOffer,
   AscensionShopInventory,
   AscensionShopServiceOffer
 } from '../../models/ascension-shop.model';
 import type { AscensionRunState } from '../../state/ascension-run-state.model';
+import { HotkeyService } from '../../../../core/services/hotkey.service';
 
 @Component({
   selector: 'app-ascension-shop-page',
@@ -19,10 +22,12 @@ import type { AscensionRunState } from '../../state/ascension-run-state.model';
   templateUrl: './ascension-shop.page.html',
   styleUrls: ['./ascension-shop.page.scss']
 })
-export class AscensionShopPageComponent implements OnInit {
+export class AscensionShopPageComponent implements OnInit, OnDestroy {
   private readonly runState = inject(AscensionRunStateService);
   private readonly shopService = inject(AscensionShopService);
+  private readonly replayLog = inject(ReplayLogService);
   private readonly router = inject(Router);
+  private readonly hotkeys = inject(HotkeyService);
 
   protected readonly state$ = this.runState.getState();
   protected inventory: AscensionShopInventory | null = null;
@@ -32,6 +37,20 @@ export class AscensionShopPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.inventory = this.shopService.generateShopInventory(this.runState.getSnapshot());
+    this.hotkeys.register({
+      '1': () => this.tryBuyEchoByIndex(0),
+      '2': () => this.tryBuyEchoByIndex(1),
+      '3': () => this.tryBuyEchoByIndex(2),
+      q: () => this.tryBuyServiceByIndex(0),
+      w: () => this.tryBuyServiceByIndex(1),
+      e: () => this.tryBuyServiceByIndex(2),
+      space: () => this.continue(),
+      enter: () => this.continue()
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.hotkeys.unregisterAll();
   }
 
   canBuyEcho(offer: AscensionShopEchoOffer, state: AscensionRunState): boolean {
@@ -42,36 +61,44 @@ export class AscensionShopPageComponent implements OnInit {
     return this.shopService.canBuyService(offer, state);
   }
 
-  @HostListener('window:keydown', ['$event'])
-  handleHotkeys(event: KeyboardEvent): void {
-    if (event.repeat || this.isTransitioning || !this.inventory) return;
-    if (this.isEditableTarget(event.target)) return;
-
-    if (event.code === 'Space') {
-      event.preventDefault();
-      this.continue();
-      return;
-    }
-
-    const echoIndex = this.echoHotkeyIndex(event.code);
-    if (echoIndex !== null) {
-      this.tryBuyEchoByIndex(echoIndex, event);
-      return;
-    }
-
-    const serviceIndex = this.serviceHotkeyIndex(event.code);
-    if (serviceIndex !== null) {
-      this.tryBuyServiceByIndex(serviceIndex, event);
-    }
-  }
-
-  buyEcho(offer: AscensionShopEchoOffer): void {
+  buyEcho(offer: AscensionShopEchoOffer, optionIndex?: number): void {
     if (offer.sold) return;
+    const index =
+      typeof optionIndex === 'number'
+        ? optionIndex
+        : this.inventory?.echoesForSale.indexOf(offer) ?? -1;
+    const boughtId = offer.kind === 'echo' ? offer.echo.id : offer.id;
+    if (index >= 0) {
+      this.replayLog.append({
+        v: 1,
+        t: 'shopBuy',
+        payload: {
+          optionIndex: index,
+          boughtId
+        }
+      });
+    }
     this.shopService.buyEcho(offer);
   }
 
-  buyService(offer: AscensionShopServiceOffer): void {
+  buyService(offer: AscensionShopServiceOffer, optionIndex?: number): void {
     if (offer.purchased) return;
+    const index =
+      typeof optionIndex === 'number'
+        ? optionIndex
+        : this.inventory?.servicesForSale.indexOf(offer) ?? -1;
+    const key = this.serviceKeyForIndex(index);
+    if (key) {
+      this.replayLog.append({
+        v: 1,
+        t: 'serviceUse',
+        payload: {
+          key,
+          serviceId: offer.service.id,
+          optionIndex: index
+        }
+      });
+    }
     this.shopService.buyService(offer.service.id);
   }
 
@@ -85,69 +112,57 @@ export class AscensionShopPageComponent implements OnInit {
         floorIndex: ASCENSION_CONFIG.totalFloors,
         roomType: 'summary'
       });
+      this.replayLog.append({
+        v: 1,
+        t: 'enterRoom',
+        payload: {
+          roomIndex: ASCENSION_CONFIG.totalFloors,
+          roomType: 'summary',
+          stage: roomToStage(ASCENSION_CONFIG.totalFloors)
+        }
+      });
       this.shopService.clearShop();
       this.router.navigateByUrl('/ascension/summary');
       return;
     }
 
     this.runState.patchState({ floorIndex: nextFloor, roomType: 'battle' });
+    this.replayLog.append({
+      v: 1,
+      t: 'enterRoom',
+      payload: {
+        roomIndex: nextFloor,
+        roomType: 'battle',
+        stage: roomToStage(nextFloor)
+      }
+    });
     this.shopService.clearShop();
     this.router.navigateByUrl('/ascension/battle');
   }
 
-  private tryBuyEchoByIndex(index: number, event: KeyboardEvent): void {
+  private tryBuyEchoByIndex(index: number): void {
+    if (this.isTransitioning || !this.inventory) return;
     const offer = this.inventory?.echoesForSale?.[index];
     if (!offer) return;
     const snapshot = this.runState.getSnapshot();
     if (!this.canBuyEcho(offer, snapshot)) return;
-    event.preventDefault();
-    this.buyEcho(offer);
+    this.buyEcho(offer, index);
   }
 
-  private tryBuyServiceByIndex(index: number, event: KeyboardEvent): void {
+  private tryBuyServiceByIndex(index: number): void {
+    if (this.isTransitioning || !this.inventory) return;
     const offer = this.inventory?.servicesForSale?.[index];
     if (!offer) return;
     const snapshot = this.runState.getSnapshot();
     if (!this.canBuyService(offer, snapshot)) return;
-    event.preventDefault();
-    this.buyService(offer);
+    this.buyService(offer, index);
   }
 
-  private echoHotkeyIndex(code: string): number | null {
-    switch (code) {
-      case 'Digit1':
-      case 'Numpad1':
-        return 0;
-      case 'Digit2':
-      case 'Numpad2':
-        return 1;
-      case 'Digit3':
-      case 'Numpad3':
-        return 2;
-      default:
-        return null;
-    }
+  private serviceKeyForIndex(index: number): 'q' | 'w' | 'e' | null {
+    if (index === 0) return 'q';
+    if (index === 1) return 'w';
+    if (index === 2) return 'e';
+    return null;
   }
 
-  private serviceHotkeyIndex(code: string): number | null {
-    switch (code) {
-      case 'KeyQ':
-        return 0;
-      case 'KeyW':
-        return 1;
-      case 'KeyE':
-        return 2;
-      default:
-        return null;
-    }
-  }
-
-  private isEditableTarget(target: EventTarget | null): boolean {
-    if (!(target instanceof HTMLElement)) return false;
-    const tag = target.tagName.toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') {
-      return true;
-    }
-    return target.isContentEditable;
-  }
 }

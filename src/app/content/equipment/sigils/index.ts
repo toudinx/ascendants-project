@@ -1,4 +1,4 @@
-import { RingDefinition, RingSetDefinition } from '../../../core/models/ring.model';
+import { SigilDefinition, SigilSetDefinition } from '../../../core/models/sigil.model';
 import { SigilDef } from './sigil.types';
 import { AGGRESSION_CREST_I_DEF } from './defs/aggression-crest-i.sigil';
 import { AGGRESSION_CREST_II_DEF } from './defs/aggression-crest-ii.sigil';
@@ -16,7 +16,7 @@ const RAW_SIGILS: SigilDef[] = [
   AGGRESSION_RESERVE_DEF
 ];
 
-function mapSigil(def: SigilDef): RingDefinition {
+function mapSigil(def: SigilDef): SigilDefinition {
   return {
     id: def.id,
     name: def.name,
@@ -30,16 +30,16 @@ function mapSigil(def: SigilDef): RingDefinition {
   };
 }
 
-export const SIGIL_CATALOG: Record<string, RingDefinition> = RAW_SIGILS.reduce<
-  Record<string, RingDefinition>
+export const SIGIL_CATALOG: Record<string, SigilDefinition> = RAW_SIGILS.reduce<
+  Record<string, SigilDefinition>
 >((acc, def) => {
   acc[def.id] = mapSigil(def);
   return acc;
 }, {});
 
-export const SIGIL_LIST: RingDefinition[] = Object.values(SIGIL_CATALOG);
+export const SIGIL_LIST: SigilDefinition[] = Object.values(SIGIL_CATALOG);
 
-export const SIGIL_SETS: Record<string, RingSetDefinition> = {
+export const SIGIL_SETS: Record<string, SigilSetDefinition> = {
   agressao: {
     key: 'agressao',
     name: 'Aggression',
@@ -55,6 +55,8 @@ export const SIGIL_SETS: Record<string, RingSetDefinition> = {
   }
 };
 
-export function getSigilDefinition(id: string): RingDefinition | undefined {
+export function getSigilDefinition(id: string): SigilDefinition | undefined {
   return SIGIL_CATALOG[id];
 }
+
+

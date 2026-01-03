@@ -7,8 +7,8 @@ export type HitActionKind =
   | "break"
   | "unknown";
 
-export type HitContext = {
+export interface HitContext {
   sourceId: string;
   actionKind: HitActionKind;
   declaredHitCount?: number;
-};
+}

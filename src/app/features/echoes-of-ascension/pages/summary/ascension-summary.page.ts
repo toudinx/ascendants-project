@@ -63,7 +63,7 @@ export class AscensionSummaryPageComponent {
     return isResonanceActive(state);
   }
 
-  pickedEchoes(state: AscensionRunState): Array<{ id: string; name: string; pathId: string }> {
+  pickedEchoes(state: AscensionRunState): { id: string; name: string; pathId: string }[] {
     return state.pickedEchoIds.map(id => {
       const def = getEchoById(id);
       return {

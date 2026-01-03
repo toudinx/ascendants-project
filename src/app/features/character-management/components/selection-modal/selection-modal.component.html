@@ -69,7 +69,7 @@
                   <div class="item-sub">
                     {{ setLabel($any(item).setKey) }} -
                     {{ statFilterLabel($any(item).mainStat.type) }}
-                    {{ ringStatLabel($any(item).mainStat.type, $any(item).mainStat.value) }}
+                    {{ sigilStatLabel($any(item).mainStat.type, $any(item).mainStat.value) }}
                   </div>
                 }
               </div>
@@ -110,7 +110,7 @@
               <div class="stat-row">
                 <span class="stat-label">{{ statFilterLabel($any(activeItem).mainStat.type) }}</span>
                 <span class="stat-value">
-                  {{ ringStatLabel($any(activeItem).mainStat.type, $any(activeItem).mainStat.value) }}
+                  {{ sigilStatLabel($any(activeItem).mainStat.type, $any(activeItem).mainStat.value) }}
                 </span>
               </div>
 
@@ -119,7 +119,7 @@
                 @for (stat of $any(activeItem).subStats; track stat.type) {
                   <div class="stat-row">
                     <span class="stat-label">{{ statFilterLabel(stat.type) }}</span>
-                    <span class="stat-value">{{ ringStatLabel(stat.type, stat.value) }}</span>
+                    <span class="stat-value">{{ sigilStatLabel(stat.type, stat.value) }}</span>
                   </div>
                 }
               </div>
@@ -142,3 +142,4 @@
     </div>
   </div>
 }
+

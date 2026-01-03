@@ -6,7 +6,11 @@
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "e2e": "playwright test",
+    "check:no-random": "node tools/check-no-random.mjs",
+    "validate:assets": "node tools/validate-assets.mjs",
+    "validate:catalog": "node tools/validate-catalog.mjs"
   },
   "dependencies": {
     "@angular/animations": "^21.0.4",
@@ -26,6 +30,7 @@
     "@angular/cli": "^21.0.3",
     "@angular/compiler-cli": "^21.0.4",
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.57.0",
     "@types/jasmine": "~4.3.0",
     "angular-eslint": "21.1.0",
     "autoprefixer": "^10.4.14",

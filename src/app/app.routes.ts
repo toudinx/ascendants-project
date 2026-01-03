@@ -19,6 +19,7 @@ import { runActiveCanActivate, runActiveCanMatch } from './core/guards/run-activ
 import { LoadoutPageComponent } from './features/loadout/loadout.page';
 import { CharacterManagementPageComponent } from './features/character-management/character-management.page';
 import { ContentWorkshopPageComponent } from './features/dev/content-workshop/content-workshop.page';
+import { ReplayPageComponent } from './features/dev/replay/replay.page';
 import { devOnlyCanActivate, devOnlyCanMatch } from './core/guards/dev-only.guard';
 import { ASCENSION_ROUTES } from './features/echoes-of-ascension/echoes-of-ascension.routes';
 
@@ -85,6 +86,12 @@ export const appRoutes: Routes = [
   {
     path: 'dev/content',
     component: ContentWorkshopPageComponent,
+    canActivate: [devOnlyCanActivate],
+    canMatch: [devOnlyCanMatch]
+  },
+  {
+    path: 'dev/replay',
+    component: ReplayPageComponent,
     canActivate: [devOnlyCanActivate],
     canMatch: [devOnlyCanMatch]
   },

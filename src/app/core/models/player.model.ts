@@ -1,7 +1,7 @@
 import { KaelisRouteType } from './kaelis-route.model';
 import { KaelisKitConfig } from './kaelis.model';
 import { WeaponId } from './weapon.model';
-import { RingSetKey, RingSkillBuffEffect } from './ring.model';
+import { SigilSetKey, SigilSkillBuffEffect } from './sigil.model';
 
 export type BuffType = 'buff' | 'debuff';
 
@@ -46,13 +46,15 @@ export interface PlayerState {
   kaelisSprite: string;
   kit: KaelisKitConfig;
   weaponId: WeaponId;
-  ringSetCounts?: Record<RingSetKey, number>;
-  ringSkillBuffs?: PlayerRingSkillBuff[];
-  ringDamageBuffPercent?: number;
-  ringDamageBuffTurns?: number;
-  ringDamageBuffSource?: RingSetKey;
+  sigilSetCounts?: Record<SigilSetKey, number>;
+  sigilSkillBuffs?: PlayerSigilSkillBuff[];
+  sigilDamageBuffPercent?: number;
+  sigilDamageBuffTurns?: number;
+  sigilDamageBuffSource?: SigilSetKey;
 }
 
-export interface PlayerRingSkillBuff extends RingSkillBuffEffect {
-  setKey: RingSetKey;
+export interface PlayerSigilSkillBuff extends SigilSkillBuffEffect {
+  setKey: SigilSetKey;
 }
+
+

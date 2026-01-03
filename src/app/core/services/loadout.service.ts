@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ProfileStateService } from './profile-state.service';
 import { KaelisDefinition, KaelisId } from '../models/kaelis.model';
 import { WeaponDefinition, WeaponId } from '../models/weapon.model';
-import { RingDefinition, RingId, RingSlot, RING_SLOTS } from '../models/ring.model';
+import { SigilDefinition, SigilId, SigilSlot, SIGIL_SLOTS } from '../models/sigil.model';
 import { SkinDefinition } from '../models/skin.model';
 import { DEFAULT_SKIN_BY_KAELIS, getSkinDefinition, getSkinsForKaelis } from '../../content/equipment/skins';
 
@@ -18,12 +18,12 @@ export class LoadoutService {
     return this.profile.weaponList();
   }
 
-  sigilInventory(): RingDefinition[] {
-    return this.profile.ringInventory();
+  sigilInventory(): SigilDefinition[] {
+    return this.profile.sigilInventory();
   }
 
-  getSigilsForKaelis(kaelisId: KaelisId): Array<RingId | null> {
-    return this.profile.getEquippedRingSlots(kaelisId).map(entry => entry.ring?.id ?? null);
+  getSigilsForKaelis(kaelisId: KaelisId): (SigilId | null)[] {
+    return this.profile.getEquippedSigilSlots(kaelisId).map(entry => entry.sigil?.id ?? null);
   }
 
   getEquippedWeapon(kaelisId: KaelisId): WeaponDefinition {
@@ -34,22 +34,22 @@ export class LoadoutService {
     this.profile.setEquippedWeapon(kaelisId, weaponId);
   }
 
-  getSigilSlots(kaelisId: KaelisId): { slot: RingSlot; ring: RingDefinition | null }[] {
+  getSigilSlots(kaelisId: KaelisId): { slot: SigilSlot; sigil: SigilDefinition | null }[] {
     const sigils = this.getSigilsForKaelis(kaelisId);
     return sigils.map((id, index) => ({
-      slot: RING_SLOTS[index],
-      ring: id ? this.profile.getRingById(id) ?? null : null
+      slot: SIGIL_SLOTS[index],
+      sigil: id ? this.profile.getSigilById(id) ?? null : null
     }));
   }
 
-  equipSigilSlot(kaelisId: KaelisId, slot: RingSlot, ringId: RingId | null): void {
-    this.profile.equipRing(kaelisId, slot, ringId);
+  equipSigilSlot(kaelisId: KaelisId, slot: SigilSlot, sigilId: SigilId | null): void {
+    this.profile.equipSigil(kaelisId, slot, sigilId);
   }
 
-  setSigilSlot(kaelisId: KaelisId, slotIndex: number, ringId: RingId | null): void {
-    const slot = RING_SLOTS[slotIndex];
+  setSigilSlot(kaelisId: KaelisId, slotIndex: number, sigilId: SigilId | null): void {
+    const slot = SIGIL_SLOTS[slotIndex];
     if (!slot) return;
-    this.profile.equipRing(kaelisId, slot, ringId);
+    this.profile.equipSigil(kaelisId, slot, sigilId);
   }
 
   getSkinsForKaelis(kaelisId: KaelisId): SkinDefinition[] {
@@ -78,3 +78,5 @@ export class LoadoutService {
     return DEFAULT_SKIN_BY_KAELIS[kaelisId] ?? this.getSkinsForKaelis(kaelisId)[0]?.id ?? 'default';
   }
 }
+
+

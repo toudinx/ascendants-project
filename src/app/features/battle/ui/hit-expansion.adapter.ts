@@ -1,6 +1,6 @@
 export type HitActor = "player" | "enemy";
 
-export type AtomicHit = {
+export interface AtomicHit {
   source: HitActor;
   target: HitActor;
   amount: number;
@@ -9,7 +9,7 @@ export type AtomicHit = {
   timestamp: number;
   hitIndex?: number;
   hitCount?: number;
-};
+}
 
 export function splitAmount(total: number, count: number): number[] {
   const hits = Math.max(1, Math.floor(count));

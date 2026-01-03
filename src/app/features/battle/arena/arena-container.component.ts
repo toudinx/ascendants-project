@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   OnDestroy,
@@ -13,6 +14,7 @@ import { BattleCameraService } from "./battle-camera.service";
   standalone: true,
   templateUrl: "./arena-container.component.html",
   styleUrls: ["./arena-container.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ArenaContainerComponent implements AfterViewInit, OnDestroy {
   @ViewChild("cameraTarget", { static: true })

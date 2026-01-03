@@ -1,12 +1,15 @@
-import { Component, HostListener, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AppHeaderComponent } from '../../../../shared/components';
 import { ASCENSION_CONFIG } from '../../content/configs/ascension.config';
 import { AscensionBargainService } from '../../services/ascension-bargain.service';
 import { AscensionRunStateService } from '../../state/ascension-run-state.service';
+import { ReplayLogService } from '../../../../core/services/replay-log.service';
+import { roomToStage } from '../../../../content/balance/balance.config';
 import { ResonanceDefinition, ResonanceUpgradeOption } from '../../models/resonance.model';
 import type { AscensionRunState } from '../../state/ascension-run-state.model';
+import { HotkeyService } from '../../../../core/services/hotkey.service';
 
 @Component({
   selector: 'app-ascension-bargain-page',
@@ -15,10 +18,12 @@ import type { AscensionRunState } from '../../state/ascension-run-state.model';
   templateUrl: './ascension-bargain.page.html',
   styleUrls: ['./ascension-bargain.page.scss']
 })
-export class AscensionBargainPageComponent implements OnInit {
+export class AscensionBargainPageComponent implements OnInit, OnDestroy {
   private readonly runState = inject(AscensionRunStateService);
   private readonly bargainService = inject(AscensionBargainService);
+  private readonly replayLog = inject(ReplayLogService);
   private readonly router = inject(Router);
+  private readonly hotkeys = inject(HotkeyService);
 
   protected readonly state$ = this.runState.getState();
   protected resonance: ResonanceDefinition | null = null;
@@ -30,12 +35,23 @@ export class AscensionBargainPageComponent implements OnInit {
     const snapshot = this.runState.getSnapshot();
     this.resonance = this.bargainService.getActiveResonance(snapshot);
     this.options = this.bargainService.generateBargainOptions(snapshot);
+    this.hotkeys.register({
+      '1': () => this.pickByIndex(0),
+      '2': () => this.pickByIndex(1),
+      '3': () => this.pickByIndex(2),
+      space: () => this.decline(),
+      enter: () => this.decline()
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.hotkeys.unregisterAll();
   }
 
   resonanceSummary(
     resonance: ResonanceDefinition,
     state: AscensionRunState
-  ): Array<{ label: string; value: string }> {
+  ): { label: string; value: string }[] {
     const upgrades = state.resonanceUpgradeIds ?? [];
     const deltaByKey = new Map<string, number>();
 
@@ -67,9 +83,21 @@ export class AscensionBargainPageComponent implements OnInit {
     );
   }
 
-  selectOption(option: ResonanceUpgradeOption): void {
+  selectOption(option: ResonanceUpgradeOption, optionIndex?: number): void {
     if (this.isResolving) return;
     this.isResolving = true;
+    const index =
+      typeof optionIndex === 'number'
+        ? optionIndex
+        : this.options.indexOf(option);
+    this.replayLog.append({
+      v: 1,
+      t: 'bargainPick',
+      payload: {
+        optionIndex: Math.max(0, index),
+        pickedId: option.id
+      }
+    });
     const applied = this.bargainService.applyBargainOption(option.id);
     if (!applied) {
       this.isResolving = false;
@@ -81,27 +109,23 @@ export class AscensionBargainPageComponent implements OnInit {
   decline(): void {
     if (this.isResolving) return;
     this.isResolving = true;
+    this.replayLog.append({
+      v: 1,
+      t: 'bargainPick',
+      payload: {
+        optionIndex: -1,
+        pickedId: null
+      }
+    });
     this.bargainService.declineBargain();
     this.advanceToBattle();
   }
 
-  @HostListener('window:keydown', ['$event'])
-  handleHotkeys(event: KeyboardEvent): void {
-    if (event.repeat || this.isResolving) return;
-    if (this.isEditableTarget(event.target)) return;
-
-    if (event.code === 'Space') {
-      event.preventDefault();
-      this.decline();
-      return;
-    }
-
-    const optionIndex = this.offerHotkeyIndex(event.code);
-    if (optionIndex === null) return;
-    const option = this.options[optionIndex];
+  private pickByIndex(index: number): void {
+    if (this.isResolving) return;
+    const option = this.options[index];
     if (!option) return;
-    event.preventDefault();
-    this.selectOption(option);
+    this.selectOption(option, index);
   }
 
   private advanceToBattle(): void {
@@ -113,36 +137,30 @@ export class AscensionBargainPageComponent implements OnInit {
         floorIndex: ASCENSION_CONFIG.totalFloors,
         roomType: 'summary'
       });
+      this.replayLog.append({
+        v: 1,
+        t: 'enterRoom',
+        payload: {
+          roomIndex: ASCENSION_CONFIG.totalFloors,
+          roomType: 'summary',
+          stage: roomToStage(ASCENSION_CONFIG.totalFloors)
+        }
+      });
       this.router.navigateByUrl('/ascension/summary');
       return;
     }
 
     this.runState.patchState({ floorIndex: nextFloor, roomType: 'battle' });
+    this.replayLog.append({
+      v: 1,
+      t: 'enterRoom',
+      payload: {
+        roomIndex: nextFloor,
+        roomType: 'battle',
+        stage: roomToStage(nextFloor)
+      }
+    });
     this.router.navigateByUrl('/ascension/battle');
   }
 
-  private offerHotkeyIndex(code: string): number | null {
-    switch (code) {
-      case 'Digit1':
-      case 'Numpad1':
-        return 0;
-      case 'Digit2':
-      case 'Numpad2':
-        return 1;
-      case 'Digit3':
-      case 'Numpad3':
-        return 2;
-      default:
-        return null;
-    }
-  }
-
-  private isEditableTarget(target: EventTarget | null): boolean {
-    if (!(target instanceof HTMLElement)) return false;
-    const tag = target.tagName.toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') {
-      return true;
-    }
-    return target.isContentEditable;
-  }
 }

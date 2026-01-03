@@ -16,7 +16,7 @@ import { SigilPentagonComponent } from '../sigil-pentagon/sigil-pentagon.compone
 export class CenterPreviewComponent {
   @Input() activeTab: CharacterManagementTab = 'details';
   @Input() kaelis?: KaelisDefinition;
-  @Input() slots: Array<string | null> = [];
+  @Input() slots: (string | null)[] = [];
   @Input() selectedIndex = 0;
   @Input() previewSkin?: SkinDefinition | null;
   @Input() equippedSkin?: SkinDefinition | null;

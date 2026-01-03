@@ -4,10 +4,12 @@ import { EchoDefinition } from '../models/echo.model';
 import { ResonanceDefinition } from '../models/resonance.model';
 import { BargainDefinition } from '../models/bargain.model';
 import { AscensionRandomService } from './ascension-random.service';
+import { RngService } from '../../../core/services/rng.service';
 
 @Injectable({ providedIn: 'root' })
 export class AscensionGeneratorService {
   private readonly random = inject(AscensionRandomService);
+  private readonly rng = inject(RngService);
 
   getEchoDraft(count = 3, seed?: number): EchoDefinition[] {
     const pool = getEchoes();
@@ -38,13 +40,7 @@ export class AscensionGeneratorService {
     if (typeof seed !== 'number' || Number.isNaN(seed)) {
       return () => this.random.nextFloat();
     }
-    let state = seed >>> 0;
-    return () => {
-      state += 0x6d2b79f5;
-      let t = state;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
+    const stream = this.rng.fork('ascension-generator', seed);
+    return () => stream.nextFloat();
   }
 }

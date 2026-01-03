@@ -1,6 +1,7 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { RunLoadoutSnapshot, RunPhase, RunResult, RunState, RoomType, RunUpgrade } from '../models/run.model';
+import { RUN_SNAPSHOT_VERSION, RunSnapshot } from '../models/run-snapshot.model';
 import { TrackKey, TrackProgress } from '../models/tracks.model';
 import { UpgradeOption } from '../models/upgrades.model';
 import { PlayerBattleStartBonuses, PlayerAttributeModifierSet, PlayerStateService } from './player-state.service';
@@ -11,12 +12,14 @@ import { EvolutionVisualKey } from '../models/evolution-visual.model';
 import { ProfileStateService } from './profile-state.service';
 import { RunKaelisSnapshot } from '../models/kaelis.model';
 import { WeaponDefinition } from '../models/weapon.model';
-import { RingDefinition } from '../models/ring.model';
+import { SigilDefinition } from '../models/sigil.model';
 import { EnemyFactoryService } from './enemy-factory.service';
+import { RngService } from './rng.service';
 import { BALANCE_CONFIG } from '../../content/balance/balance.config';
 import { getUpgradesByTrack, validateUpgradeCatalog } from '../../content/upgrades';
 import { UpgradeDef, UpgradeModifiers, UpgradeRarity, UpgradeTrack } from '../../content/upgrades/upgrade.types';
-import { roomToStage } from '../config/balance.config';
+import { roomToStage } from '../../content/balance/balance.config';
+import { SerializedEnemyState, SerializedPlayerState } from '../models/battle-snapshot.model';
 
 const RUN_TUNING = BALANCE_CONFIG.run;
 const POTION_CAP = RUN_TUNING.potionCap;
@@ -34,6 +37,7 @@ export class RunStateService {
   private readonly ui = inject(UiStateService);
   private readonly profile = inject(ProfileStateService);
   private readonly enemyFactory = inject(EnemyFactoryService);
+  private readonly rng = inject(RngService);
   private upgradeRoll = 0;
 
   private readonly baseTracks: TrackProgress[] = [
@@ -68,6 +72,7 @@ export class RunStateService {
   );
 
   readonly state = computed<RunState>(() => ({
+    runSeed: this.runSeed(),
     phase: this.phase(),
     currentRoom: this.currentRoom(),
     totalRooms: this.totalRooms(),
@@ -121,9 +126,125 @@ export class RunStateService {
     return this.collectNextFightBonuses();
   }
 
+  exportRunSnapshot(): RunSnapshot {
+    const phase = this.phase();
+    const playerState = this.clone(this.battle.serializePlayerState());
+    if (phase !== 'battle' && playerState) {
+      playerState.dots = [];
+    }
+
+    return {
+      snapshotVersion: RUN_SNAPSHOT_VERSION,
+      runSeed: this.runSeed(),
+      phase,
+      currentRoom: this.currentRoom(),
+      totalRooms: this.totalRooms(),
+      roomType: this.roomType(),
+      trackLevels: this.clone(this.trackLevels()),
+      initialTrackChoice: this.initialTrackChoice(),
+      availableUpgrades: this.clone(this.availableUpgrades()),
+      evolutions: this.clone(this.evolutions()),
+      rerollsAvailable: this.rerollsAvailable(),
+      potions: this.potions(),
+      result: this.result(),
+      isFinalEvolution: this.isFinalEvolution(),
+      activeEvolutionVisual: this.activeEvolutionVisual(),
+      kaelis: this.clone(this.currentKaelis()),
+      loadout: this.clone(this.loadoutSnapshot()),
+      runUpgrades: this.clone(this.runUpgradesSignal()),
+      upgradeRoll: this.upgradeRoll,
+      battleSeed: this.battleSeed(),
+      playerState,
+      enemyState: phase === 'battle' ? this.clone(this.battle.serializeEnemyState()) : undefined,
+      battleSnapshots: phase === 'battle' ? this.clone(this.battle.snapshots()) : undefined
+    };
+  }
+
+  importRunSnapshot(snapshot: RunSnapshot): void {
+    if (!snapshot || snapshot.snapshotVersion !== RUN_SNAPSHOT_VERSION) {
+      throw new Error('Unsupported run snapshot version.');
+    }
+
+    this.battle.stopLoop();
+    this.ui.startTransition('Importing run snapshot...');
+
+    const runSeed = typeof snapshot.runSeed === 'number' ? snapshot.runSeed : null;
+    if (typeof runSeed === 'number') {
+      this.rng.setSeed(runSeed);
+    }
+    this.runSeed.set(runSeed);
+
+    const totalRooms = typeof snapshot.totalRooms === 'number' ? snapshot.totalRooms : TOTAL_ROOMS;
+    const currentRoom = typeof snapshot.currentRoom === 'number' ? snapshot.currentRoom : 0;
+    this.totalRooms.set(totalRooms);
+    this.currentRoom.set(currentRoom);
+    this.roomType.set(snapshot.roomType ?? this.calculateRoomType(currentRoom, totalRooms));
+
+    this.trackLevels.set(this.normalizeTrackLevels(snapshot.trackLevels));
+    this.initialTrackChoice.set(snapshot.initialTrackChoice);
+    this.availableUpgrades.set(this.clone(snapshot.availableUpgrades ?? []));
+    this.evolutions.set(this.clone(snapshot.evolutions ?? []));
+    this.rerollsAvailable.set(typeof snapshot.rerollsAvailable === 'number' ? snapshot.rerollsAvailable : 0);
+    this.persistPotionCount(typeof snapshot.potions === 'number' ? snapshot.potions : 0);
+    this.result.set(snapshot.result ?? 'none');
+    this.isFinalEvolution.set(!!snapshot.isFinalEvolution);
+    this.activeEvolutionVisual.set(snapshot.activeEvolutionVisual ?? null);
+    this.upgradeRoll = typeof snapshot.upgradeRoll === 'number' ? snapshot.upgradeRoll : 0;
+    this.battleSeed.set(typeof snapshot.battleSeed === 'number' ? snapshot.battleSeed : null);
+
+    const kaelis = snapshot.kaelis ? this.clone(snapshot.kaelis) : null;
+    const loadout = snapshot.loadout ? this.clone(snapshot.loadout) : null;
+    this.currentKaelis.set(kaelis);
+    this.loadoutSnapshot.set(loadout);
+    this.runUpgradesSignal.set(this.clone(snapshot.runUpgrades ?? []));
+
+    const modifiers = this.aggregatePersistentModifiers();
+    if (kaelis && loadout) {
+      this.player.resetForNewRun(kaelis, loadout.weapon, loadout.sigils, modifiers);
+      this.player.lockLoadout();
+    } else {
+      this.player.reset();
+      this.player.unlockLoadout();
+    }
+
+    const playerState = snapshot.playerState ? this.clone(snapshot.playerState) : null;
+    if (playerState) {
+      this.applySerializedPlayer(playerState);
+    }
+
+    const phase = snapshot.phase ?? 'idle';
+    this.phase.set(phase);
+
+    if (phase === 'battle') {
+      const battleSnapshots = this.clone(snapshot.battleSnapshots ?? []);
+      if (battleSnapshots.length) {
+        this.battle.replayBattle(battleSnapshots);
+        const seed = battleSnapshots[0]?.seed;
+        if (typeof seed === 'number') {
+          this.battleSeed.set(seed);
+        }
+      } else {
+        const seed = typeof snapshot.battleSeed === 'number' ? snapshot.battleSeed : this.deriveBattleSeed();
+        const battleSeed = this.battle.startBattle({ seed });
+        this.battleSeed.set(battleSeed);
+        if (snapshot.enemyState) {
+          this.applySerializedEnemy(this.clone(snapshot.enemyState));
+        }
+      }
+      this.battle.startLoop();
+    } else {
+      this.battle.stopLoop();
+      this.battle.snapshots.set([]);
+      this.enemy.reset();
+    }
+
+    this.ui.endTransition();
+  }
+
   startRun(initialTrack: TrackKey, seed?: number): void {
     this.ui.startTransition('Starting run...');
     const baseSeed = typeof seed === 'number' ? seed : this.randomSeed();
+    this.rng.setSeed(baseSeed);
     this.runSeed.set(baseSeed);
     this.trackLevels.set({ A: 0, B: 0, C: 0 });
     this.trackLevels.update(levels => ({ ...levels, [initialTrack]: levels[initialTrack] + 1 }));
@@ -140,8 +261,8 @@ export class RunStateService {
     const kaelis = this.profile.getActiveSnapshot();
     this.currentKaelis.set(kaelis);
     const weapon = this.profile.getEquippedWeapon(kaelis.id);
-    const rings = this.profile.getEquippedRings(kaelis.id);
-    const loadout = this.buildLoadoutSnapshot(weapon, rings);
+    const sigils = this.profile.getEquippedSigils(kaelis.id);
+    const loadout = this.buildLoadoutSnapshot(weapon, sigils);
     this.loadoutSnapshot.set(loadout);
     this.runUpgradesSignal.set([]);
     this.upgradeRoll = 0;
@@ -412,7 +533,7 @@ export class RunStateService {
   }
 
   private tryPotionDrop(): void {
-    if (Math.random() >= POTION_DROP_CHANCE) return;
+    if (!this.rng.chance(POTION_DROP_CHANCE)) return;
     const current = this.potions();
     if (current >= POTION_CAP) {
       this.ui.pushLog('Potion drop wasted (cap reached).');
@@ -424,11 +545,11 @@ export class RunStateService {
   }
 
   private uid(): string {
-    return Math.random().toString(36).slice(2, 10);
+    return this.rng.nextFloat().toString(36).slice(2, 10);
   }
 
   private randomSeed(): number {
-    return Math.floor(Math.random() * 1_000_000_000);
+    return this.rng.nextInt(0, 1_000_000_000);
   }
 
   private syncPotionsFromProfile(): void {
@@ -441,10 +562,10 @@ export class RunStateService {
     this.profile.setPotionCount(clamped);
   }
 
-  private buildLoadoutSnapshot(weapon: WeaponDefinition, rings: RingDefinition[]): RunLoadoutSnapshot {
+  private buildLoadoutSnapshot(weapon: WeaponDefinition, sigils: SigilDefinition[]): RunLoadoutSnapshot {
     return {
       weapon: this.cloneWeapon(weapon),
-      sigils: rings.map(ring => this.cloneRing(ring))
+      sigils: sigils.map(sigil => this.cloneSigil(sigil))
     };
   }
 
@@ -456,12 +577,57 @@ export class RunStateService {
     };
   }
 
-  private cloneRing(ring: RingDefinition): RingDefinition {
+  private cloneSigil(sigil: SigilDefinition): SigilDefinition {
     return {
-      ...ring,
-      mainStat: { ...ring.mainStat },
-      subStats: ring.subStats.map(stat => ({ ...stat }))
+      ...sigil,
+      mainStat: { ...sigil.mainStat },
+      subStats: sigil.subStats.map(stat => ({ ...stat }))
     };
+  }
+
+  private clone<T>(value: T): T {
+    if (value === null || value === undefined) {
+      return value;
+    }
+    return JSON.parse(JSON.stringify(value)) as T;
+  }
+
+  private normalizeTrackLevels(input?: Record<TrackKey, number> | null): Record<TrackKey, number> {
+    return {
+      A: Math.max(0, Math.floor(input?.A ?? 0)),
+      B: Math.max(0, Math.floor(input?.B ?? 0)),
+      C: Math.max(0, Math.floor(input?.C ?? 0))
+    };
+  }
+
+  private applySerializedPlayer(state: SerializedPlayerState): void {
+    const current = this.player.state();
+    this.player.state.set({
+      attributes: { ...state.attributes },
+      buffs: state.buffs ?? [],
+      status: state.status,
+      breakTurns: state.breakTurns,
+      skillCooldown: state.skillCooldown,
+      kaelisRoute: state.kaelisRoute ?? current.kaelisRoute,
+      kaelisId: state.kaelisId ?? current.kaelisId,
+      kaelisName: state.kaelisName ?? current.kaelisName,
+      kaelisSprite: state.kaelisSprite ?? current.kaelisSprite,
+      kit: state.kit ?? current.kit,
+      weaponId: state.weaponId ?? current.weaponId,
+      sigilSetCounts: state.sigilSetCounts ?? current.sigilSetCounts,
+      sigilSkillBuffs: state.sigilSkillBuffs ?? current.sigilSkillBuffs,
+      sigilDamageBuffPercent: state.sigilDamageBuffPercent ?? 0,
+      sigilDamageBuffTurns: state.sigilDamageBuffTurns ?? 0,
+      sigilDamageBuffSource: state.sigilDamageBuffSource ?? undefined
+    });
+  }
+
+  private applySerializedEnemy(state: SerializedEnemyState): void {
+    this.enemy.enemy.set({
+      attributes: { ...state.attributes },
+      state: state.state,
+      breakTurns: state.breakTurns
+    });
   }
 
   private addRunUpgrade(option: UpgradeOption): void {
@@ -566,7 +732,13 @@ export class RunStateService {
     seed?: number,
     rollIndex = 0
   ): UpgradeOption[] {
-    const rng = this.createRng(typeof seed === 'number' ? seed + room * 9973 + rollIndex * 101 : undefined);
+    const seedOverride =
+      typeof seed === 'number' ? seed + room * 9973 + rollIndex * 101 : undefined;
+    const rngStream =
+      typeof seedOverride === 'number'
+        ? this.rng.fork('upgrades', seedOverride)
+        : this.rng.fork('upgrades');
+    const rng = () => rngStream.nextFloat();
     return UPGRADE_TRACKS.map(track => {
       const def = this.pickUpgradeForTrack(track, trackLevels, room, rng);
       const disabledReason = this.getUpgradeLockReason(def, trackLevels);
@@ -631,20 +803,6 @@ export class RunStateService {
     return undefined;
   }
 
-  private createRng(seed?: number): () => number {
-    if (typeof seed !== 'number' || Number.isNaN(seed)) {
-      return Math.random;
-    }
-    let state = seed >>> 0;
-    return () => {
-      state += 0x6d2b79f5;
-      let t = state;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-
   private fallbackUpgrade(track: UpgradeTrack): UpgradeDef {
     return {
       id: `fallback-${track}`,
@@ -657,4 +815,6 @@ export class RunStateService {
     };
   }
 }
+
+
 

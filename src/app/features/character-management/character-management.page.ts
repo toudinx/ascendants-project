@@ -7,11 +7,11 @@ import {
 import { LoadoutService } from "../../core/services/loadout.service";
 import { KaelisDefinition, KaelisId } from "../../core/models/kaelis.model";
 import {
-  RingDefinition,
-  RingSetDefinition,
-  RingStat,
-  RingStatType,
-} from "../../core/models/ring.model";
+  SigilDefinition,
+  SigilSetDefinition,
+  SigilStat,
+  SigilStatType,
+} from "../../core/models/sigil.model";
 import { WeaponDefinition } from "../../core/models/weapon.model";
 import { SkinDefinition } from "../../core/models/skin.model";
 import { SIGIL_SETS } from "../../content/equipment/sigils";
@@ -68,10 +68,10 @@ export class CharacterManagementPageComponent {
     () =>
       new Map(this.loadout.sigilInventory().map((sigil) => [sigil.id, sigil]))
   );
-  protected readonly equippedRings = computed(() =>
+  protected readonly equippedSigils = computed(() =>
     this.sigilIds()
       .map((id) => (id ? (this.sigilById().get(id) ?? null) : null))
-      .filter((ring): ring is RingDefinition => !!ring)
+      .filter((sigil): sigil is SigilDefinition => !!sigil)
   );
   protected readonly skins = computed(() =>
     this.loadout.getSkinsForKaelis(this.state.selectedKaelisId())
@@ -108,13 +108,13 @@ export class CharacterManagementPageComponent {
     this.buildWeaponStats(this.equippedWeapon())
   );
   protected readonly sigilStats = computed(() =>
-    this.buildSigilStats(this.equippedRings())
+    this.buildSigilStats(this.equippedSigils())
   );
   protected readonly sigilSetBonuses = computed(() =>
-    this.buildSigilSetBonuses(this.equippedRings())
+    this.buildSigilSetBonuses(this.equippedSigils())
   );
   protected readonly primarySigilBonus = computed(() =>
-    this.pickPrimarySetBonus(this.equippedRings())
+    this.pickPrimarySetBonus(this.equippedSigils())
   );
 
   protected readonly availableWeapons = computed(() =>
@@ -169,7 +169,7 @@ export class CharacterManagementPageComponent {
       this.modalOpen.set(false);
       return;
     }
-    this.state.equipSigilToSelectedSlot(id as RingDefinition["id"] | null);
+    this.state.equipSigilToSelectedSlot(id as SigilDefinition["id"] | null);
     this.modalOpen.set(false);
   }
 
@@ -225,15 +225,15 @@ export class CharacterManagementPageComponent {
     ];
   }
 
-  private buildSigilStats(rings: RingDefinition[]): InfoPanelStat[] {
-    if (!rings.length) return [];
-    const totals = new Map<RingStatType, number>();
-    rings.forEach((ring) => {
-      this.addStat(totals, ring.mainStat);
-      ring.subStats.forEach((stat) => this.addStat(totals, stat));
+  private buildSigilStats(sigils: SigilDefinition[]): InfoPanelStat[] {
+    if (!sigils.length) return [];
+    const totals = new Map<SigilStatType, number>();
+    sigils.forEach((sigil) => {
+      this.addStat(totals, sigil.mainStat);
+      sigil.subStats.forEach((stat) => this.addStat(totals, stat));
     });
 
-    const order: RingStatType[] = [
+    const order: SigilStatType[] = [
       "hp_flat",
       "hp_percent",
       "atk_flat",
@@ -249,22 +249,22 @@ export class CharacterManagementPageComponent {
     return order
       .filter((type) => (totals.get(type) ?? 0) !== 0)
       .map((type) => ({
-        label: this.ringStatLabel({ type, value: totals.get(type) ?? 0 }),
-        value: this.ringStatValue(type, totals.get(type) ?? 0),
+        label: this.sigilStatLabel({ type, value: totals.get(type) ?? 0 }),
+        value: this.sigilStatValue(type, totals.get(type) ?? 0),
       }));
   }
 
-  private buildSigilSetBonuses(rings: RingDefinition[]): SetBonusDisplay[] {
-    if (!rings.length) return [];
-    const counts = this.buildSetCounts(rings);
+  private buildSigilSetBonuses(sigils: SigilDefinition[]): SetBonusDisplay[] {
+    if (!sigils.length) return [];
+    const counts = this.buildSetCounts(sigils);
     return Object.values(SIGIL_SETS).flatMap((set) =>
       this.resolveSetBonuses(set, counts[set.key] ?? 0)
     );
   }
 
-  private pickPrimarySetBonus(rings: RingDefinition[]): SetBonusDisplay | null {
-    if (!rings.length) return null;
-    const counts = this.buildSetCounts(rings);
+  private pickPrimarySetBonus(sigils: SigilDefinition[]): SetBonusDisplay | null {
+    if (!sigils.length) return null;
+    const counts = this.buildSetCounts(sigils);
     const best = Object.entries(counts).reduce<{
       key: string;
       count: number;
@@ -280,15 +280,15 @@ export class CharacterManagementPageComponent {
     return options.length ? options[options.length - 1] : null;
   }
 
-  private buildSetCounts(rings: RingDefinition[]): Record<string, number> {
-    return rings.reduce<Record<string, number>>((acc, ring) => {
-      acc[ring.setKey] = (acc[ring.setKey] ?? 0) + 1;
+  private buildSetCounts(sigils: SigilDefinition[]): Record<string, number> {
+    return sigils.reduce<Record<string, number>>((acc, sigil) => {
+      acc[sigil.setKey] = (acc[sigil.setKey] ?? 0) + 1;
       return acc;
     }, {});
   }
 
   private resolveSetBonuses(
-    set: RingSetDefinition,
+    set: SigilSetDefinition,
     count: number
   ): SetBonusDisplay[] {
     const entries: SetBonusDisplay[] = [];
@@ -325,11 +325,11 @@ export class CharacterManagementPageComponent {
       : `Crit DMG +${percent}%`;
   }
 
-  private addStat(totals: Map<RingStatType, number>, stat: RingStat): void {
+  private addStat(totals: Map<SigilStatType, number>, stat: SigilStat): void {
     totals.set(stat.type, (totals.get(stat.type) ?? 0) + stat.value);
   }
 
-  private ringStatLabel(stat: RingStat): string {
+  private sigilStatLabel(stat: SigilStat): string {
     switch (stat.type) {
       case "hp_flat":
         return "HP";
@@ -356,7 +356,7 @@ export class CharacterManagementPageComponent {
     }
   }
 
-  private ringStatValue(type: RingStatType, value: number): string {
+  private sigilStatValue(type: SigilStatType, value: number): string {
     if (type === "crit_rate_percent" || type === "crit_damage_percent") {
       return `+${Math.round(value * 100)}%`;
     }
@@ -366,3 +366,5 @@ export class CharacterManagementPageComponent {
     return `+${value}`;
   }
 }
+
+

@@ -58,7 +58,7 @@ export class BattleVfxIntensityService implements OnDestroy {
     const energyRatio = this.playerEnergyRatio();
 
     const statusFactor = this.statusFactor(buffCount, dotCount);
-    const inputs: Array<{ value: number; weight: number }> = [];
+    const inputs: { value: number; weight: number }[] = [];
 
     if (floor !== null) inputs.push({ value: floor, weight: 0.25 });
     if (echo !== null) inputs.push({ value: echo, weight: 0.25 });

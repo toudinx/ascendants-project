@@ -19,7 +19,7 @@ import { SkinStateService, VelvetSkin } from '../../core/services/skin-state.ser
             [tag]="skin.tags?.join(' - ')"
             class="transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-95"
             [ngClass]="{
-              'ring-2 ring-[#8A7CFF] ring-offset-2 ring-offset-[#0B0B16]': skin.id === currentSkinId,
+              'outline outline-2 outline-[#8A7CFF] outline-offset-2': skin.id === currentSkinId,
               'opacity-60': !skin.unlocked,
               'skin-ssr': skin.rarity === 'SSR',
               'skin-sr': skin.rarity === 'SR'

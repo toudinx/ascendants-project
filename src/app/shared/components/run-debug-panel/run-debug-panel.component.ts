@@ -1,15 +1,16 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppButtonComponent, AppCardComponent } from '../index';
 import { RunStateService } from '../../../core/services/run-state.service';
 import { ProfileStateService } from '../../../core/services/profile-state.service';
 import { PlayerStateService } from '../../../core/services/player-state.service';
 import { EnemyStateService } from '../../../core/services/enemy-state.service';
-import { getPlayerPowerMultiplier, roomToStage } from '../../../core/config/balance.config';
+import { getPlayerPowerMultiplier, roomToStage } from '../../../content/balance/balance.config';
 
 declare const ngDevMode: boolean;
 
 const SHOW_DEBUG_PANEL = typeof ngDevMode === 'undefined' || !!ngDevMode;
+const UI_SCALE_OPTIONS = [0.85, 1, 1.15, 1.3] as const;
 
 @Component({
   selector: 'app-run-debug-panel',
@@ -29,6 +30,7 @@ const SHOW_DEBUG_PANEL = typeof ngDevMode === 'undefined' || !!ngDevMode;
         <app-card [interactive]="false" title="Power" [subtitle]="playerPowerLabel"></app-card>
         <app-card [interactive]="false" title="Trilhas" [subtitle]="'A ' + run.trackLevels().A + ' - B ' + run.trackLevels().B + ' - C ' + run.trackLevels().C"></app-card>
         <app-card [interactive]="false" title="Outcome" [subtitle]="run.result()"></app-card>
+        <app-card [interactive]="false" title="Seed" [subtitle]="runSeedLabel"></app-card>
       </div>
       <div class="rounded-[12px] border border-white/10 bg-white/5 p-2">
         <p class="text-[10px] uppercase tracking-[0.3em] text-[#7F7F95]">Kaelis Stats</p>
@@ -84,7 +86,60 @@ const SHOW_DEBUG_PANEL = typeof ngDevMode === 'undefined' || !!ngDevMode;
           >
             Flash: {{ flashLabel }}
           </button>
+          <button
+            type="button"
+            class="rounded-[10px] border border-white/10 bg-white/5 px-2 py-1 transition hover:border-white/30 hover:bg-white/10"
+            (click)="cycleUiScale()"
+          >
+            UI Scale: {{ uiScaleLabel }}
+          </button>
         </div>
+      </div>
+      <div class="rounded-[12px] border border-white/10 bg-white/5 p-2">
+        <p class="text-[10px] uppercase tracking-[0.3em] text-[#7F7F95]">Run Snapshot</p>
+        <div class="mt-2 grid grid-cols-2 gap-2 text-[11px] text-white/80">
+          <button
+            type="button"
+            class="rounded-[10px] border border-white/10 bg-white/5 px-2 py-1 transition hover:border-white/30 hover:bg-white/10"
+            (click)="copySnapshot()"
+          >
+            Copy Snapshot
+          </button>
+          <button
+            type="button"
+            class="rounded-[10px] border border-white/10 bg-white/5 px-2 py-1 transition hover:border-white/30 hover:bg-white/10"
+            (click)="openSnapshotImporter()"
+          >
+            Paste Snapshot
+          </button>
+        </div>
+        @if (showSnapshotInput()) {
+          <textarea
+            class="mt-2 h-24 w-full resize-none rounded-[10px] border border-white/10 bg-black/50 p-2 text-[11px] text-white/90 outline-none"
+            [value]="snapshotInput()"
+            (input)="onSnapshotInput($event)"
+            placeholder="Paste run snapshot JSON here..."
+          ></textarea>
+          <div class="mt-2 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              class="rounded-[10px] border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 transition hover:border-white/30 hover:bg-white/10"
+              (click)="importSnapshot()"
+            >
+              Import
+            </button>
+            <button
+              type="button"
+              class="rounded-[10px] border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 transition hover:border-white/30 hover:bg-white/10"
+              (click)="closeSnapshotImporter()"
+            >
+              Cancel
+            </button>
+          </div>
+        }
+        @if (snapshotError()) {
+          <p class="mt-2 text-[10px] text-[#ff9aaa]">{{ snapshotError() }}</p>
+        }
       </div>
       <div class="grid grid-cols-2 gap-2">
         <app-button label="Force Win" variant="secondary" (click)="enemy.forceKill()"></app-button>
@@ -101,6 +156,9 @@ export class RunDebugPanelComponent {
   protected readonly profile = inject(ProfileStateService);
   protected readonly player = inject(PlayerStateService);
   protected readonly enemy = inject(EnemyStateService);
+  protected readonly showSnapshotInput = signal(false);
+  protected readonly snapshotInput = signal('');
+  protected readonly snapshotError = signal<string | null>(null);
   readonly SHOW = SHOW_DEBUG_PANEL;
 
   get activeRunUpgrades() {
@@ -116,6 +174,11 @@ export class RunDebugPanelComponent {
     return `${Math.round(power * 100)}%`;
   }
 
+  get runSeedLabel(): string {
+    const seed = this.run.runSeed();
+    return typeof seed === 'number' ? seed.toString() : '--';
+  }
+
   get vfxDensityLabel(): string {
     const density = this.profile.settings().vfxDensity;
     return density.toUpperCase();
@@ -127,6 +190,11 @@ export class RunDebugPanelComponent {
 
   get flashLabel(): string {
     return this.profile.settings().reducedFlash ? 'LOW' : 'FULL';
+  }
+
+  get uiScaleLabel(): string {
+    const scale = this.profile.settings().uiScale ?? 1;
+    return `${Math.round(scale * 100)}%`;
   }
 
   cycleVfxDensity(): void {
@@ -143,5 +211,68 @@ export class RunDebugPanelComponent {
   toggleReducedFlash(): void {
     const current = this.profile.settings().reducedFlash;
     this.profile.setSetting('reducedFlash', !current);
+  }
+
+  cycleUiScale(): void {
+    const current = this.profile.settings().uiScale ?? 1;
+    const index = UI_SCALE_OPTIONS.indexOf(current as (typeof UI_SCALE_OPTIONS)[number]);
+    const nextIndex = index >= 0 ? (index + 1) % UI_SCALE_OPTIONS.length : 1;
+    this.profile.setSetting('uiScale', UI_SCALE_OPTIONS[nextIndex]);
+  }
+
+  copySnapshot(): void {
+    const snapshot = this.run.exportRunSnapshot();
+    const json = JSON.stringify(snapshot, null, 2);
+    this.snapshotInput.set(json);
+    this.snapshotError.set(null);
+    this.copyToClipboard(json);
+  }
+
+  openSnapshotImporter(): void {
+    this.snapshotError.set(null);
+    if (!this.showSnapshotInput()) {
+      this.snapshotInput.set('');
+    }
+    this.showSnapshotInput.set(true);
+  }
+
+  closeSnapshotImporter(): void {
+    this.showSnapshotInput.set(false);
+    this.snapshotError.set(null);
+  }
+
+  onSnapshotInput(event: Event): void {
+    const target = event.target as HTMLTextAreaElement | null;
+    this.snapshotInput.set(target?.value ?? '');
+  }
+
+  importSnapshot(): void {
+    const raw = this.snapshotInput().trim();
+    if (!raw) {
+      this.snapshotError.set('Paste a snapshot JSON first.');
+      return;
+    }
+    try {
+      const snapshot = JSON.parse(raw);
+      this.run.importRunSnapshot(snapshot);
+      this.snapshotError.set(null);
+      this.showSnapshotInput.set(false);
+    } catch (error) {
+      console.warn('Failed to import run snapshot', error);
+      this.snapshotError.set('Invalid snapshot JSON.');
+    }
+  }
+
+  private copyToClipboard(value: string): void {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(value);
+      return;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
   }
 }

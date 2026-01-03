@@ -10,7 +10,7 @@ import { UpgradeDef } from '../../../content/upgrades/upgrade.types';
     <div
       class="rounded-[16px] border border-white/10 bg-white/5 p-4 transition-transform duration-200 ease-out"
       [ngClass]="{
-        'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16] scale-[1.01]': selected,
+        'outline outline-2 outline-[var(--primary)] outline-offset-2 scale-[1.01]': selected,
         'opacity-60': isDisabled
       }"
     >

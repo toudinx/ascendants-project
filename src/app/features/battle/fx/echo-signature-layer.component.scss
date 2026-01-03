@@ -22,7 +22,7 @@
   pointer-events: none;
 }
 
-.sig-ring,
+.sigil-mark,
 .sig-core,
 .sig-accent {
   position: absolute;
@@ -32,13 +32,13 @@
   mix-blend-mode: screen;
 }
 
-.sig-ring {
+.sigil-mark {
   border: 1px solid rgba(255, 255, 255, 0.18);
   -webkit-mask: radial-gradient(circle, transparent 52%, #000 56%);
   mask: radial-gradient(circle, transparent 52%, #000 56%);
 }
 
-.sig-ring--stack {
+.sigil-mark--stack {
   transform: scale(0.88);
   opacity: 0.5;
   border-style: dashed;
@@ -53,7 +53,7 @@
   animation: sig-pulse 3.2s ease-in-out infinite;
 }
 
-.signature--sentinel .sig-ring {
+.signature--sentinel .sigil-mark {
   border-color: rgba(140, 208, 255, 0.4);
   background:
     repeating-linear-gradient(
@@ -87,7 +87,7 @@
   opacity: calc(var(--sig-strength, 0.2) + 0.1);
 }
 
-.signature--ruin .sig-ring {
+.signature--ruin .sigil-mark {
   border-color: rgba(120, 180, 140, 0.25);
   background: radial-gradient(
     circle,
@@ -125,7 +125,7 @@
   opacity: 0.4;
 }
 
-.signature--resonance .sig-ring {
+.signature--resonance .sigil-mark {
   border-color: rgba(255, 216, 140, 0.4);
   background: conic-gradient(
     from 90deg,
@@ -146,7 +146,7 @@
   animation: sig-rotate 6s linear infinite;
 }
 
-.signature--fortune .sig-ring {
+.signature--fortune .sigil-mark {
   border-color: rgba(255, 220, 120, 0.35);
   background: radial-gradient(
     circle,
@@ -168,7 +168,7 @@
   animation: sig-pulse 2.6s ease-in-out infinite;
 }
 
-.signature--colossus .sig-ring {
+.signature--colossus .sigil-mark {
   border-color: rgba(255, 160, 110, 0.4);
   background: radial-gradient(
     circle,
@@ -187,7 +187,7 @@
   animation: sig-throb 3.6s ease-in-out infinite;
 }
 
-.signature--wrath .sig-ring {
+.signature--wrath .sigil-mark {
   border-color: rgba(255, 120, 90, 0.4);
   background: conic-gradient(
     from 180deg,

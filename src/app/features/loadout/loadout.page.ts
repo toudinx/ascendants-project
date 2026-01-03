@@ -11,7 +11,7 @@ import { ProfileStateService } from '../../core/services/profile-state.service';
 import { PlayerStateService } from '../../core/services/player-state.service';
 import { RunStateService } from '../../core/services/run-state.service';
 import { WeaponDefinition, WeaponId } from '../../core/models/weapon.model';
-import { RingDefinition, RingId, RingSetKey, RingSlot, RingStat, RING_SLOTS } from '../../core/models/ring.model';
+import { SigilDefinition, SigilId, SigilSetKey, SigilSlot, SigilStat, SIGIL_SLOTS } from '../../core/models/sigil.model';
 import { SIGIL_SETS } from '../../content/equipment/sigils';
 
 @Component({
@@ -85,17 +85,17 @@ import { SIGIL_SETS } from '../../content/equipment/sigils';
         <div class="mt-3 grid gap-3 md:grid-cols-2">
           @for (slot of sigilSlots; track slot.slot) {
             <app-card
-              [title]="ringSlotLabel(slot.slot)"
-              [subtitle]="slot.ring ? slot.ring.name : 'Empty slot'"
+              [title]="sigilSlotLabel(slot.slot)"
+              [subtitle]="slot.sigil ? slot.sigil.name : 'Empty slot'"
               [interactive]="!loadoutLocked"
-              (click)="loadoutLocked ? null : openRingModal(slot.slot)"
+              (click)="loadoutLocked ? null : openSigilModal(slot.slot)"
             >
               <div class="flex flex-col gap-2 text-sm text-[#A4A4B5]">
-                @if (slot.ring; as ring) {
-                  <p class="text-xs text-[#7F7F95]">{{ ringStatLabel(ring.mainStat) }}</p>
+                @if (slot.sigil; as sigil) {
+                  <p class="text-xs text-[#7F7F95]">{{ sigilStatLabel(sigil.mainStat) }}</p>
                   <div class="grid grid-cols-2 gap-1 text-[11px] text-[#7F7F95]">
-                    @for (stat of ring.subStats; track stat.type) {
-                      <span>{{ ringStatLabel(stat) }}</span>
+                    @for (stat of sigil.subStats; track stat.type) {
+                      <span>{{ sigilStatLabel(stat) }}</span>
                     }
                   </div>
                 } @else {
@@ -104,10 +104,10 @@ import { SIGIL_SETS } from '../../content/equipment/sigils';
               </div>
               <div class="mt-3 flex justify-end">
                 <app-button
-                  [label]="slot.ring ? 'Change' : 'Equip'"
+                  [label]="slot.sigil ? 'Change' : 'Equip'"
                   variant="secondary"
                   size="sm"
-                  (click)="$event.stopPropagation(); openRingModal(slot.slot)"
+                  (click)="$event.stopPropagation(); openSigilModal(slot.slot)"
                   [disabled]="loadoutLocked"
                 ></app-button>
               </div>
@@ -148,7 +148,7 @@ import { SIGIL_SETS } from '../../content/equipment/sigils';
             [interactive]="true"
             (click)="equipWeapon(weapon.id)"
             [ngClass]="{
-              'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16]': isWeaponEquipped(weapon.id)
+              'outline outline-2 outline-[var(--primary)] outline-offset-2': isWeaponEquipped(weapon.id)
             }"
           >
             <div class="flex flex-col gap-1 text-xs text-[#A4A4B5]">
@@ -167,48 +167,48 @@ import { SIGIL_SETS } from '../../content/equipment/sigils';
     </app-modal>
 
     <app-modal
-      [open]="ringModal"
+      [open]="sigilModal"
       title="Select Sigil"
-      [subtitle]="ringModalSlot ? ringSlotLabel(ringModalSlot) : ''"
+      [subtitle]="sigilModalSlot ? sigilSlotLabel(sigilModalSlot) : ''"
       kicker="Sigils"
-      (closed)="closeRingModal()"
+      (closed)="closeSigilModal()"
     >
       <div class="grid gap-3">
         <app-card
           title="Unequip"
           subtitle="Clear this slot."
           [interactive]="true"
-          (click)="equipRingToSlot(null)"
+          (click)="equipSigilToSlot(null)"
         >
           <p class="text-xs text-[#7F7F95]">Remove any sigil assigned to this slot.</p>
         </app-card>
-        @for (ring of ringInventory; track ring.id) {
+        @for (sigil of sigilInventory; track sigil.id) {
           <app-card
-            [title]="ring.name"
-            [subtitle]="ring.description"
+            [title]="sigil.name"
+            [subtitle]="sigil.description"
             [interactive]="true"
-            (click)="equipRingToSlot(ring.id)"
+            (click)="equipSigilToSlot(sigil.id)"
             [ngClass]="{
-              'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16]':
-                ringModalSlot && isRingEquipped(ringModalSlot, ring.id)
+              'outline outline-2 outline-[var(--primary)] outline-offset-2':
+                sigilModalSlot && isSigilEquipped(sigilModalSlot, sigil.id)
             }"
           >
             <div class="text-xs text-[#A4A4B5] space-y-1">
-              <span>{{ ringStatLabel(ring.mainStat) }}</span>
+              <span>{{ sigilStatLabel(sigil.mainStat) }}</span>
               <div class="grid grid-cols-2 gap-1 text-[11px] text-[#7F7F95]">
-                @for (stat of ring.subStats; track stat.type) {
-                  <span>{{ ringStatLabel(stat) }}</span>
+                @for (stat of sigil.subStats; track stat.type) {
+                  <span>{{ sigilStatLabel(stat) }}</span>
                 }
               </div>
               <span class="text-[10px] uppercase tracking-[0.2em] text-white/60">
-                {{ ringSlotLabel(ring.slot) }} - {{ ringSetName(ring.setKey) }}
+                {{ sigilSlotLabel(sigil.slot) }} - {{ sigilSetName(sigil.setKey) }}
               </span>
             </div>
           </app-card>
         }
       </div>
       <div modal-actions class="mt-4 flex justify-end">
-        <app-button label="Close" variant="ghost" (click)="closeRingModal()"></app-button>
+        <app-button label="Close" variant="ghost" (click)="closeSigilModal()"></app-button>
       </div>
     </app-modal>
   `
@@ -219,8 +219,8 @@ export class LoadoutPageComponent {
   protected readonly run = inject(RunStateService);
 
   protected weaponModal = false;
-  protected ringModal = false;
-  protected ringModalSlot: RingSlot | null = null;
+  protected sigilModal = false;
+  protected sigilModalSlot: SigilSlot | null = null;
 
   get loadoutLocked(): boolean {
     return this.run.isLoadoutLocked();
@@ -239,18 +239,18 @@ export class LoadoutPageComponent {
     return this.profile.weaponList();
   }
 
-  get sigilSlots(): { slot: RingSlot; ring: RingDefinition | null }[] {
-    return this.profile.getEquippedRingSlots(this.activeKaelis.id);
+  get sigilSlots(): { slot: SigilSlot; sigil: SigilDefinition | null }[] {
+    return this.profile.getEquippedSigilSlots(this.activeKaelis.id);
   }
 
-  get ringInventory(): RingDefinition[] {
-    return this.profile.ringInventory();
+  get sigilInventory(): SigilDefinition[] {
+    return this.profile.sigilInventory();
   }
 
   get sigilSetStatus(): { key: string; label: string; tone: 'muted' | 'success' | 'accent' }[] {
-    const counts = this.profile.getRingSetCounts(this.activeKaelis.id);
+    const counts = this.profile.getSigilSetCounts(this.activeKaelis.id);
     return Object.entries(SIGIL_SETS).map(([key, def]) => {
-      const typedKey = key as RingSetKey;
+      const typedKey = key as SigilSetKey;
       const count = counts[typedKey] ?? 0;
       let tone: 'muted' | 'success' | 'accent' = 'muted';
       let suffix = '';
@@ -291,32 +291,32 @@ export class LoadoutPageComponent {
     return this.activeWeapon?.id === id;
   }
 
-  openRingModal(slot: RingSlot): void {
+  openSigilModal(slot: SigilSlot): void {
     if (this.loadoutLocked) return;
-    this.ringModalSlot = slot;
-    this.ringModal = true;
+    this.sigilModalSlot = slot;
+    this.sigilModal = true;
   }
 
-  closeRingModal(): void {
-    this.ringModal = false;
-    this.ringModalSlot = null;
+  closeSigilModal(): void {
+    this.sigilModal = false;
+    this.sigilModalSlot = null;
   }
 
-  equipRingToSlot(ringId: RingId | null): void {
+  equipSigilToSlot(sigilId: SigilId | null): void {
     if (this.loadoutLocked) return;
     const kaelis = this.activeKaelis;
-    const slot = this.ringModalSlot;
+    const slot = this.sigilModalSlot;
     if (!slot) {
-      this.closeRingModal();
+      this.closeSigilModal();
       return;
     }
-    this.profile.equipRing(kaelis.id, slot, ringId);
+    this.profile.equipSigil(kaelis.id, slot, sigilId);
     this.refreshPlayerEquipment();
-    this.closeRingModal();
+    this.closeSigilModal();
   }
 
-  isRingEquipped(slot: RingSlot, ringId: RingId): boolean {
-    return this.sigilSlots.some(entry => entry.slot === slot && entry.ring?.id === ringId);
+  isSigilEquipped(slot: SigilSlot, sigilId: SigilId): boolean {
+    return this.sigilSlots.some(entry => entry.slot === slot && entry.sigil?.id === sigilId);
   }
 
   weaponFlatLabel(weapon: WeaponDefinition): string {
@@ -335,12 +335,12 @@ export class LoadoutPageComponent {
       : `Crit DMG +${percent}%`;
   }
 
-  ringSlotLabel(slot: RingSlot): string {
-    const index = RING_SLOTS.indexOf(slot);
+  sigilSlotLabel(slot: SigilSlot): string {
+    const index = SIGIL_SLOTS.indexOf(slot);
     return index >= 0 ? `Slot ${index + 1}` : slot;
   }
 
-  ringStatLabel(stat: RingStat): string {
+  sigilStatLabel(stat: SigilStat): string {
     switch (stat.type) {
       case 'hp_flat':
         return `HP +${stat.value}`;
@@ -367,14 +367,16 @@ export class LoadoutPageComponent {
     }
   }
 
-  ringSetName(key: string): string {
+  sigilSetName(key: string): string {
     return SIGIL_SETS[key]?.name ?? 'Set';
   }
 
   private refreshPlayerEquipment(): void {
     const snapshot = this.profile.getActiveSnapshot();
     const weapon = this.profile.getEquippedWeapon(snapshot.id);
-    const rings = this.profile.getEquippedRings(snapshot.id);
-    this.player.applyEquipment(snapshot, weapon, rings);
+    const sigils = this.profile.getEquippedSigils(snapshot.id);
+    this.player.applyEquipment(snapshot, weapon, sigils);
   }
 }
+
+

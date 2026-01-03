@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   Input,
@@ -27,12 +28,13 @@ import { BattleVfxIntensityService } from "./battle-vfx-intensity.service";
 import { VfxBudgetService, VfxCaps } from "./vfx-budget.service";
 import { VfxSettingsService } from "./vfx-settings.service";
 import { VFX_HOLD_MS, VFX_TIMING } from "./vfx-timing.config";
+import { RngService } from "../../../core/services/rng.service";
 
 type VfxKind =
   | "projectile"
   | "slash"
   | "spark"
-  | "ring"
+  | "sigil"
   | "burst"
   | "trail"
   | "puff"
@@ -72,7 +74,8 @@ interface ImpactProfile {
   standalone: true,
   imports: [CommonModule, AmbientParticlesComponent, EchoSignatureLayerComponent],
   templateUrl: "./vfx-layer.component.html",
-  styleUrls: ["./vfx-layer.component.scss"]
+  styleUrls: ["./vfx-layer.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VfxLayerComponent implements OnDestroy {
   @Input({ required: true }) anchors!: BattleFxAnchors;
@@ -91,6 +94,7 @@ export class VfxLayerComponent implements OnDestroy {
   });
   private readonly budget = inject(VfxBudgetService);
   private readonly vfxSettings = inject(VfxSettingsService, { optional: true });
+  private readonly vfxRng = inject(RngService).fork("vfx-layer");
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly subscriptions = new Subscription();
   private readonly lastImpactPoints: Record<"player" | "enemy", Point | null> = {
@@ -179,7 +183,7 @@ export class VfxLayerComponent implements OnDestroy {
       this.triggerHold();
       this.spawnSparkCluster(impact, variant, profile);
       if (event.crit || isSkill || (event.tier ?? 1) >= 2) {
-        this.spawnRing(impact, variant, profile);
+        this.spawnSigil(impact, variant, profile);
       }
       if (!event.dot) {
         this.spawnSlash(impact, event.target, variant, profile);
@@ -293,14 +297,14 @@ export class VfxLayerComponent implements OnDestroy {
     });
   }
 
-  private spawnRing(impact: Point, variant: VfxVariant, profile: ImpactProfile): void {
-    if (!this.canSpawn("ring")) return;
+  private spawnSigil(impact: Point, variant: VfxVariant, profile: ImpactProfile): void {
+    if (!this.canSpawn("sigil")) return;
     const base = profile.isSkill ? 62 : 54;
     const size = Math.round(base * profile.scale);
     const duration = this.reduceDuration(profile.impactMs + 80);
     this.pushInstance({
       id: `vfx-${++this.instanceCounter}`,
-      kind: "ring",
+      kind: "sigil",
       variant,
       x: impact.x,
       y: impact.y,
@@ -433,15 +437,15 @@ export class VfxLayerComponent implements OnDestroy {
 
   private spawnChargePulse(origin: Point, baseDuration: number, size: number): void {
     const duration = Math.round(baseDuration * 1.1);
-    const ringSize = Math.round(size * 1.4);
-    if (this.canSpawn("ring")) {
+    const sigilSize = Math.round(size * 1.4);
+    if (this.canSpawn("sigil")) {
       this.pushInstance({
         id: `vfx-${++this.instanceCounter}`,
-        kind: "ring",
+        kind: "sigil",
         variant: "normal",
         x: origin.x,
         y: origin.y,
-        size: ringSize,
+        size: sigilSize,
         opacity: 0.7,
         duration,
         ttl: duration + 80
@@ -466,15 +470,15 @@ export class VfxLayerComponent implements OnDestroy {
 
   private spawnChargeSigil(origin: Point, baseDuration: number, size: number): void {
     const duration = Math.round(baseDuration * 1.2);
-    const ringSize = Math.round(size * 1.8);
-    if (!this.canSpawn("ring")) return;
+    const sigilSize = Math.round(size * 1.8);
+    if (!this.canSpawn("sigil")) return;
     this.pushInstance({
       id: `vfx-${++this.instanceCounter}`,
-      kind: "ring",
+      kind: "sigil",
       variant: "normal",
       x: origin.x,
       y: origin.y,
-      size: ringSize,
+      size: sigilSize,
       opacity: 0.65,
       duration,
       ttl: duration + 120
@@ -514,7 +518,7 @@ export class VfxLayerComponent implements OnDestroy {
       tier: 1
     };
 
-    this.spawnRing(impact, variant, procProfile);
+    this.spawnSigil(impact, variant, procProfile);
     if (this.shouldProc(0.2, 0.5)) {
       const sparkPoint = this.jitterPoint(impact, 6);
       this.spawnSpark(sparkPoint, variant, procProfile);
@@ -596,12 +600,12 @@ export class VfxLayerComponent implements OnDestroy {
   }
 
   private spawnDotPulse(impact: Point, profile: ImpactProfile): void {
-    if (!this.canSpawn("ring")) return;
+    if (!this.canSpawn("sigil")) return;
     const size = Math.round(32 * profile.scale);
     const duration = this.reduceDuration(profile.impactMs);
     this.pushInstance({
       id: `vfx-${++this.instanceCounter}`,
-      kind: "ring",
+      kind: "sigil",
       variant: "dot",
       x: impact.x,
       y: impact.y,
@@ -672,7 +676,7 @@ export class VfxLayerComponent implements OnDestroy {
   }
 
   private jitterPoint(origin: Point, radius: number): Point {
-    const angle = Math.random() * Math.PI * 2;
+    const angle = this.vfxRng.nextFloat() * Math.PI * 2;
     const dist = this.randomInt(0, radius);
     return {
       x: Math.round(origin.x + Math.cos(angle) * dist),
@@ -681,7 +685,7 @@ export class VfxLayerComponent implements OnDestroy {
   }
 
   private randomInt(min: number, max: number): number {
-    return Math.round(min + Math.random() * (max - min));
+    return Math.round(min + this.vfxRng.nextFloat() * (max - min));
   }
 
   private pushInstance(instance: VfxInstance): void {
@@ -788,12 +792,12 @@ export class VfxLayerComponent implements OnDestroy {
     const intensity = this.clamp01(this.intensity);
     const scaled = base + (max - base) * intensity;
     const adjusted = this.reduceMotion ? scaled * 0.35 : scaled;
-    return Math.random() < adjusted;
+    return this.vfxRng.nextFloat() < adjusted;
   }
 
   private shouldSpawnTrail(scale: number): boolean {
     if (this.intensity < 0.2) return false;
-    return this.shouldProc(0.12, 0.7) && Math.random() < scale;
+    return this.shouldProc(0.12, 0.7) && this.vfxRng.nextFloat() < scale;
   }
 
   private clearTimer(id: string): void {
@@ -808,3 +812,4 @@ export class VfxLayerComponent implements OnDestroy {
     return value;
   }
 }
+

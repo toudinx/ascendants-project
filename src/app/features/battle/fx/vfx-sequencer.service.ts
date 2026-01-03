@@ -7,8 +7,9 @@ import {
   ActionVfxStep,
   ENABLE_VISUAL_COMBOS
 } from "./action-vfx-profiles";
+import { RngService } from "../../../core/services/rng.service";
 
-export type VfxSequenceRequest = {
+export interface VfxSequenceRequest {
   attacker: ActorSide;
   target: ActorSide;
   origin: Point;
@@ -22,12 +23,13 @@ export type VfxSequenceRequest = {
   profile: ActionVfxProfile;
   fieldKey?: AfterglowFieldKey;
   reduceMotion?: boolean;
-};
+}
 
 @Injectable()
 export class VfxSequencerService implements OnDestroy {
   private readonly bus = inject(BattleFxBusService);
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
+  private readonly vfxRng = inject(RngService).fork("vfx-sequencer");
 
   run(request: VfxSequenceRequest): void {
     const hitIndex = this.resolveHitIndex(request.hitIndex);
@@ -487,7 +489,7 @@ export class VfxSequencerService implements OnDestroy {
   }
 
   private randomInt(min: number, max: number): number {
-    return Math.round(min + Math.random() * (max - min));
+    return Math.round(min + this.vfxRng.nextFloat() * (max - min));
   }
 
   private scaleValue(base: number | undefined, scale: number): number | undefined {
@@ -497,7 +499,7 @@ export class VfxSequencerService implements OnDestroy {
 
   private jitterPoint(origin: Point, radius: number): Point {
     if (radius <= 0) return { ...origin };
-    const angle = Math.random() * Math.PI * 2;
+    const angle = this.vfxRng.nextFloat() * Math.PI * 2;
     const dist = this.randomInt(0, radius);
     return {
       x: Math.round(origin.x + Math.cos(angle) * dist),

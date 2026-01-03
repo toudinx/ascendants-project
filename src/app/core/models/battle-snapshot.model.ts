@@ -1,16 +1,21 @@
 import { EnemyAttributes, EnemyState } from './enemy.model';
-import { PlayerAttributes, PlayerBuff, PlayerRingSkillBuff, PlayerState } from './player.model';
+import { PlayerAttributes, PlayerBuff, PlayerSigilSkillBuff, PlayerState } from './player.model';
 import { LogActor, LogKind, UiLogEntry } from '../services/ui-state.service';
 import { HitActionKind } from './hit-count.model';
 import { KaelisKitConfig } from './kaelis.model';
 import { WeaponId } from './weapon.model';
-import { RingSetKey } from './ring.model';
+import { SigilSetKey } from './sigil.model';
+
+export type ElementType = 'burn' | 'poison' | 'bleed' | 'rune';
 
 export interface SerializedDotStack {
-  source: 'player' | 'enemy';
-  ticksRemaining: number;
-  tickHp: number;
-  tickPosture: number;
+  id: string;
+  element: ElementType;
+  sourceId: string;
+  damagePerTick: number;
+  remainingTurns: number;
+  appliedTurn: number;
+  postureDamagePerTick?: number;
 }
 
 export interface SerializedPlayerState {
@@ -26,11 +31,11 @@ export interface SerializedPlayerState {
   kaelisSprite?: string;
   kit?: KaelisKitConfig;
   weaponId?: WeaponId;
-  ringSetCounts?: Record<RingSetKey, number>;
-  ringSkillBuffs?: PlayerRingSkillBuff[];
-  ringDamageBuffPercent?: number;
-  ringDamageBuffTurns?: number;
-  ringDamageBuffSource?: RingSetKey;
+  sigilSetCounts?: Record<SigilSetKey, number>;
+  sigilSkillBuffs?: PlayerSigilSkillBuff[];
+  sigilDamageBuffPercent?: number;
+  sigilDamageBuffTurns?: number;
+  sigilDamageBuffSource?: SigilSetKey;
 }
 
 export interface SerializedEnemyState {
@@ -81,3 +86,5 @@ export function buildLogFromSnapshots(snapshots: BattleSnapshot[]): UiLogEntry[]
   });
   return entries;
 }
+
+

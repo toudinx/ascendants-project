@@ -2,7 +2,7 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { ProfileStateService } from '../../core/services/profile-state.service';
 import { LoadoutService } from '../../core/services/loadout.service';
 import { KaelisId } from '../../core/models/kaelis.model';
-import { RingId, RING_SLOTS } from '../../core/models/ring.model';
+import { SigilId, SIGIL_SLOTS } from '../../core/models/sigil.model';
 
 export type CharacterManagementTab = 'details' | 'weapon' | 'sigils';
 
@@ -63,13 +63,13 @@ export class CharacterManagementStateService {
   }
 
   selectSigilSlot(index: number): void {
-    if (index < 0 || index >= RING_SLOTS.length) return;
+    if (index < 0 || index >= SIGIL_SLOTS.length) return;
     this.selectedSigilSlotIndex.set(index);
   }
 
-  equipSigilToSelectedSlot(ringId: RingId | null): void {
+  equipSigilToSelectedSlot(sigilId: SigilId | null): void {
     const slotIndex = this.selectedSigilSlotIndex();
-    this.loadout.setSigilSlot(this.selectedKaelisId(), slotIndex, ringId);
+    this.loadout.setSigilSlot(this.selectedKaelisId(), slotIndex, sigilId);
   }
 
   private selectRelativeKaelis(step: number): void {
@@ -82,3 +82,5 @@ export class CharacterManagementStateService {
     this.selectKaelis(roster[nextIndex].id);
   }
 }
+
+

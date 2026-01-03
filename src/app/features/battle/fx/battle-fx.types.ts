@@ -1,5 +1,8 @@
 export type ActorSide = "player" | "enemy";
-export type Point = { x: number; y: number };
+export interface Point {
+  x: number;
+  y: number;
+}
 export type AfterglowFieldKey = "burn" | "poison" | "bleed" | "rune";
 
 export type AnchorPoint = Point;

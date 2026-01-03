@@ -7,9 +7,11 @@ import { ProfileStateService } from '../profile-state.service';
 import { StorageService } from '../storage.service';
 import { DEV_COMBAT } from '../../config/dev-combat.config';
 import {
+  clampDamageReduction,
   MULTI_HIT_HP_SCALARS,
   POSTURE_OVERKILL_CAP_FRACTION_PER_ACTION
 } from '../../../content/balance/balance.config';
+import { createPrng } from '../../domain/rng/prng';
 import { PlayerAttributes, PlayerState } from '../../models/player.model';
 import { KaelisKitConfig } from '../../models/kaelis.model';
 import { Enemy, EnemyAttributes } from '../../models/enemy.model';
@@ -18,6 +20,7 @@ describe('BattleEngineService multi-hit tuning', () => {
   let engine: BattleEngineService;
   let playerState: PlayerStateService;
   let enemyState: EnemyStateService;
+  let engineHarness: EngineHarness;
 
   const originalHitCountBonusFromSets = DEV_COMBAT.hitCountBonusFromSets;
   const originalHitCountBonusFromResonance = DEV_COMBAT.hitCountBonusFromResonance;
@@ -37,6 +40,7 @@ describe('BattleEngineService multi-hit tuning', () => {
     engine = TestBed.inject(BattleEngineService);
     playerState = TestBed.inject(PlayerStateService);
     enemyState = TestBed.inject(EnemyStateService);
+    engineHarness = engine as unknown as EngineHarness;
 
     DEV_COMBAT.deterministic = true;
     DEV_COMBAT.hitCountBonusFromSets = 0;
@@ -46,8 +50,8 @@ describe('BattleEngineService multi-hit tuning', () => {
       getPhase: () => 'battle',
       getTrackLevels: () => ({ A: 0, B: 0, C: 0 }),
       getCurrentRoom: () => 0,
-      finishBattle: () => {},
-      tickTurnUpgrades: () => {}
+      finishBattle: () => undefined,
+      tickTurnUpgrades: () => undefined
     });
   });
 
@@ -71,14 +75,9 @@ describe('BattleEngineService multi-hit tuning', () => {
     setupEnemy({ defense: 0, maxHp: 10000, maxPosture: 100 });
 
     engine.startBattle({ seed: 1 });
-    (engine as any).autoAttackPlayer();
+    engineHarness.autoAttackPlayer();
 
-    const events = (engine as any).turnEvents as Array<{
-      kind?: string;
-      target?: string;
-      actionKind?: string;
-      value?: number;
-    }>;
+    const events = engineHarness.turnEvents as TurnEvent[];
     const damageEvents = events.filter(
       evt =>
         evt.kind === 'damage' && evt.target === 'enemy' && evt.actionKind === 'auto'
@@ -104,10 +103,9 @@ describe('BattleEngineService multi-hit tuning', () => {
     );
     setupEnemy({ defense: 0, maxPosture: 20, maxHp: 10000 });
 
-    const engineAny = engine as any;
     const appliedPosture: number[] = [];
-    const originalApplyHit = engineAny.applyHitToEnemy.bind(engineAny);
-    spyOn(engineAny, 'applyHitToEnemy').and.callFake(
+    const originalApplyHit = engineHarness.applyHitToEnemy.bind(engineHarness);
+    spyOn(engineHarness, 'applyHitToEnemy').and.callFake(
       (damage: number, postureDamage: number, type: string, hitMeta: unknown) => {
         appliedPosture.push(postureDamage);
         return originalApplyHit(damage, postureDamage, type, hitMeta);
@@ -115,7 +113,7 @@ describe('BattleEngineService multi-hit tuning', () => {
     );
 
     engine.startBattle({ seed: 1 });
-    engineAny.autoAttackPlayer();
+    engineHarness.autoAttackPlayer();
 
     const totalPosture = appliedPosture.reduce((sum, value) => sum + value, 0);
     const startPosture = 20;
@@ -139,10 +137,9 @@ describe('BattleEngineService multi-hit tuning', () => {
     );
     setupEnemy({ defense: 0, maxHp: 10000, maxPosture: 100 });
 
-    const engineAny = engine as any;
     const hitTypes: string[] = [];
-    const originalApplyHit = engineAny.applyHitToEnemy.bind(engineAny);
-    spyOn(engineAny, 'applyHitToEnemy').and.callFake(
+    const originalApplyHit = engineHarness.applyHitToEnemy.bind(engineHarness);
+    spyOn(engineHarness, 'applyHitToEnemy').and.callFake(
       (damage: number, postureDamage: number, type: string, hitMeta: unknown) => {
         hitTypes.push(type);
         return originalApplyHit(damage, postureDamage, type, hitMeta);
@@ -150,7 +147,7 @@ describe('BattleEngineService multi-hit tuning', () => {
     );
 
     engine.startBattle({ seed: 7 });
-    engineAny.autoAttackPlayer();
+    engineHarness.autoAttackPlayer();
 
     expect(hitTypes.length).toBe(4);
     hitTypes.forEach(type => expect(type).toBe('crit'));
@@ -169,10 +166,9 @@ describe('BattleEngineService multi-hit tuning', () => {
     );
     setupEnemy({ defense: 0, maxHp: 10000, maxPosture: 100 });
 
-    const engineAny = engine as any;
     const hitTypes: string[] = [];
-    const originalApplyHit = engineAny.applyHitToEnemy.bind(engineAny);
-    spyOn(engineAny, 'applyHitToEnemy').and.callFake(
+    const originalApplyHit = engineHarness.applyHitToEnemy.bind(engineHarness);
+    spyOn(engineHarness, 'applyHitToEnemy').and.callFake(
       (damage: number, postureDamage: number, type: string, hitMeta: unknown) => {
         hitTypes.push(type);
         return originalApplyHit(damage, postureDamage, type, hitMeta);
@@ -180,10 +176,80 @@ describe('BattleEngineService multi-hit tuning', () => {
     );
 
     engine.startBattle({ seed: 12345 });
-    engineAny.autoAttackPlayer();
+    engineHarness.autoAttackPlayer();
 
     expect(hitTypes.length).toBe(4);
     hitTypes.forEach(type => expect(type).toBe('dmg'));
+  });
+
+  it('replays a deterministic first damage event for a fixed seed', () => {
+    const seed = 4242;
+    setupPlayer(
+      {
+        attack: 100,
+        critChance: 0.5,
+        critDamage: 2,
+        dotChance: 0,
+        damageBonusPercent: 0
+      },
+      { autoMultiplier: 1 }
+    );
+    setupEnemy({ defense: 0, maxHp: 10000, maxPosture: 100 });
+
+    const rng = createPrng(seed);
+    const isCrit = rng() < 0.5;
+    const expectedDamage = Math.max(1, Math.floor(100 * (isCrit ? 2 : 1)));
+
+    engine.startBattle({ seed });
+    engineHarness.autoAttackPlayer();
+
+    const events = engineHarness.turnEvents as TurnEvent[];
+    expect(events.length).toBeGreaterThan(0);
+    expect(events[0]).toEqual(
+      jasmine.objectContaining({
+        kind: 'damage',
+        target: 'enemy',
+        actionKind: 'auto',
+        value: expectedDamage
+      })
+    );
+  });
+
+  it('applies damage reduction percent to incoming HP damage', () => {
+    setupPlayer(
+      {
+        maxHp: 100,
+        hp: 100,
+        damageReductionPercent: 50
+      },
+      { autoMultiplier: 1 }
+    );
+
+    const before = playerState.state().attributes.hp;
+    const taken = engineHarness.applyHitToPlayer(100, 0, 'dmg');
+    const after = playerState.state().attributes.hp;
+
+    expect(taken).toBe(50);
+    expect(before - after).toBe(50);
+  });
+
+  it('caps damage reduction percent at the balance limit', () => {
+    setupPlayer(
+      {
+        maxHp: 100,
+        hp: 100,
+        damageReductionPercent: 200
+      },
+      { autoMultiplier: 1 }
+    );
+
+    const before = playerState.state().attributes.hp;
+    const expected = Math.max(1, Math.floor(100 * (1 - clampDamageReduction(2))));
+    const taken = engineHarness.applyHitToPlayer(100, 0, 'dmg');
+    const after = playerState.state().attributes.hp;
+
+    expect(taken).toBe(expected);
+    expect(before - after).toBe(expected);
   });
 
   function setupPlayer(
@@ -253,11 +319,11 @@ describe('BattleEngineService multi-hit tuning', () => {
       kaelisSprite: 'test',
       kit,
       weaponId: 'test-weapon',
-      ringDamageBuffPercent: 0,
-      ringDamageBuffTurns: 0,
-      ringDamageBuffSource: undefined,
-      ringSetCounts: undefined,
-      ringSkillBuffs: undefined
+      sigilDamageBuffPercent: 0,
+      sigilDamageBuffTurns: 0,
+      sigilDamageBuffSource: undefined,
+      sigilSetCounts: undefined,
+      sigilSkillBuffs: undefined
     };
 
     playerState.state.set(state);
@@ -302,3 +368,18 @@ describe('BattleEngineService multi-hit tuning', () => {
     enemyState.spawnEncounter(enemy);
   }
 });
+
+interface TurnEvent {
+  kind?: string;
+  target?: string;
+  actionKind?: string;
+  value?: number;
+}
+
+interface EngineHarness {
+  autoAttackPlayer: () => void;
+  applyHitToPlayer: (damage: number, postureDamage: number, type: string, hitMeta?: unknown) => number;
+  turnEvents: TurnEvent[];
+  applyHitToEnemy: (damage: number, postureDamage: number, type: string, hitMeta: unknown) => number;
+}
+

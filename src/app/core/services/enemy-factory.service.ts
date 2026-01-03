@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Enemy } from '../models/enemy.model';
 import { RoomType } from '../models/run.model';
-import { BalanceStage, ENEMY_STAT_TABLE, EnemyEncounterKind, roomToStage } from '../config/balance.config';
+import { BalanceStage, ENEMY_STAT_TABLE, EnemyEncounterKind, roomToStage } from '../../content/balance/balance.config';
 import { getEnemyByKind } from '../../content/enemies';
 import { EnemyDef } from '../../content/enemies/enemies.types';
 import { EnemyAiPlan } from '../../content/enemies/enemies.types';

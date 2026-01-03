@@ -6,7 +6,7 @@ import { DEFAULT_SKIN_BY_KAELIS, SKIN_LIST } from '../../content/equipment/skins
 import { ProfilePersistedState, ProfileSettings, createDefaultProfileState } from '../models/profile.model';
 import { KaelisId } from '../models/kaelis.model';
 import { WeaponId } from '../models/weapon.model';
-import { RingId, RingSlot, RING_SLOTS } from '../models/ring.model';
+import { SigilId, SigilSlot, SIGIL_SLOTS } from '../models/sigil.model';
 
 interface StoredEnvelope {
   version: number;
@@ -14,8 +14,12 @@ interface StoredEnvelope {
 }
 
 const STORAGE_KEY = 'ascendants-profile';
-const STORAGE_VERSION = 2;
+const STORAGE_VERSION = 3;
 const SAVE_DEBOUNCE_MS = 250;
+const UI_SCALE_VALUES = [0.85, 1, 1.15, 1.3] as const;
+// Legacy storage keys retained to migrate pre-sigil profiles.
+const LEGACY_SIGIL_SLOTS_KEY = 'ringSlotsByKaelis';
+const LEGACY_SIGIL_INVENTORY_KEY = 'rings';
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
@@ -71,7 +75,7 @@ export class StorageService {
     if (version === STORAGE_VERSION) {
       return this.normalize(profile);
     }
-    // Future migrations could be handled here; for now default to normalized latest.
+    // v3 migration: legacy equipment/sigil storage keys normalized to sigil-based fields.
     return this.normalize(profile);
   }
 
@@ -125,15 +129,30 @@ export class StorageService {
       });
     }
 
-    const ringSlotsByKaelis = { ...defaults.equipment.ringSlotsByKaelis };
-    if (rawEquipment?.ringSlotsByKaelis && typeof rawEquipment.ringSlotsByKaelis === 'object') {
-      Object.entries(rawEquipment.ringSlotsByKaelis).forEach(([key, slots]) => {
+    const sigilSlotsByKaelis = { ...defaults.equipment.sigilSlotsByKaelis };
+    const rawSigilSlots =
+      rawEquipment?.sigilSlotsByKaelis && typeof rawEquipment.sigilSlotsByKaelis === 'object'
+        ? rawEquipment.sigilSlotsByKaelis
+        : undefined;
+    const legacySlotSource = rawEquipment
+      ? (rawEquipment as unknown as Record<string, unknown>)[LEGACY_SIGIL_SLOTS_KEY]
+      : undefined;
+    const legacySlotMap =
+      legacySlotSource && typeof legacySlotSource === 'object' ? (legacySlotSource as Record<string, unknown>) : undefined;
+    const slotSource = rawSigilSlots ?? legacySlotMap;
+    if (slotSource) {
+      Object.entries(slotSource).forEach(([key, slots]) => {
         if (!this.isKaelisId(key)) return;
-        ringSlotsByKaelis[key as KaelisId] = this.normalizeRingSlots(slots as Record<string, unknown> | unknown[]);
+        sigilSlotsByKaelis[key as KaelisId] = this.normalizeSigilSlots(slots as Record<string, unknown> | unknown[]);
       });
     }
 
     const potionCount = this.clampNumber(raw.potionCount, 0, 2, defaults.potionCount);
+
+    const rawUiScale = raw.settings?.uiScale;
+    const uiScale = UI_SCALE_VALUES.includes(rawUiScale as ProfileSettings['uiScale'])
+      ? (rawUiScale as ProfileSettings['uiScale'])
+      : defaults.settings.uiScale;
 
     const settings: ProfileSettings = {
       battleSpeed: raw.settings?.battleSpeed === 'fast' ? 'fast' : 'normal',
@@ -147,6 +166,7 @@ export class StorageService {
         raw.settings?.vfxDensity === 'low' || raw.settings?.vfxDensity === 'high'
           ? raw.settings.vfxDensity
           : defaults.settings.vfxDensity,
+      uiScale,
       screenShake:
         typeof raw.settings?.screenShake === 'boolean'
           ? raw.settings.screenShake
@@ -157,9 +177,13 @@ export class StorageService {
           : defaults.settings.reducedFlash
     };
 
-    const ringInventory = Array.isArray(raw.rings?.inventory)
-      ? raw.rings.inventory.filter(id => this.isRingId(id))
-      : [...defaults.rings.inventory];
+    const rawSigils = (raw as { sigils?: { inventory?: unknown } }).sigils;
+    const legacySigils = (raw as Record<string, { inventory?: unknown }>)[LEGACY_SIGIL_INVENTORY_KEY];
+    const sigilInventory = Array.isArray(rawSigils?.inventory)
+      ? rawSigils.inventory.filter(id => this.isSigilId(id))
+      : Array.isArray(legacySigils?.inventory)
+        ? legacySigils.inventory.filter(id => this.isSigilId(id))
+        : [...defaults.sigils.inventory];
 
     return {
       selectedKaelisId: selectedKaelis,
@@ -170,10 +194,10 @@ export class StorageService {
       },
       equipment: {
         weaponByKaelis,
-        ringSlotsByKaelis
+        sigilSlotsByKaelis
       },
-      rings: {
-        inventory: ringInventory.length ? ringInventory : [...defaults.rings.inventory]
+      sigils: {
+        inventory: sigilInventory.length ? sigilInventory : [...defaults.sigils.inventory]
       },
       potionCount,
       settings
@@ -200,7 +224,7 @@ export class StorageService {
     return typeof value === 'string' && WEAPON_LIST.some(w => w.id === value);
   }
 
-  private isRingId(value: unknown): value is RingId {
+  private isSigilId(value: unknown): value is SigilId {
     return typeof value === 'string' && SIGIL_LIST.some(r => r.id === value);
   }
 
@@ -212,12 +236,12 @@ export class StorageService {
     return SKIN_LIST.some(skin => skin.id === id && skin.kaelisId === kaelisId);
   }
 
-  private normalizeRingSlots(input: Record<string, unknown> | unknown[]): Array<RingId | null> {
-    const slots = Array.from({ length: RING_SLOTS.length }, () => null as RingId | null);
+  private normalizeSigilSlots(input: Record<string, unknown> | unknown[]): (SigilId | null)[] {
+    const slots = Array.from({ length: SIGIL_SLOTS.length }, () => null as SigilId | null);
     if (Array.isArray(input)) {
-      input.slice(0, RING_SLOTS.length).forEach((value, index) => {
-        if (this.isRingId(value) || value === null) {
-          slots[index] = (value as RingId) ?? null;
+      input.slice(0, SIGIL_SLOTS.length).forEach((value, index) => {
+        if (this.isSigilId(value) || value === null) {
+          slots[index] = (value as SigilId) ?? null;
         }
       });
       return slots;
@@ -226,9 +250,9 @@ export class StorageService {
       return slots;
     }
     Object.entries(input).forEach(([slotKey, value]) => {
-      const slotIndex = RING_SLOTS.indexOf(slotKey as RingSlot);
-      if (slotIndex >= 0 && (this.isRingId(value) || value === null)) {
-        slots[slotIndex] = (value as RingId) ?? null;
+      const slotIndex = SIGIL_SLOTS.indexOf(slotKey as SigilSlot);
+      if (slotIndex >= 0 && (this.isSigilId(value) || value === null)) {
+        slots[slotIndex] = (value as SigilId) ?? null;
       }
     });
     return slots;
@@ -238,3 +262,5 @@ export class StorageService {
     return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
   }
 }
+
+

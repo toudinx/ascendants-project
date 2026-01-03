@@ -1,6 +1,6 @@
 @if (open) {
   <div class="customize-root" role="dialog" aria-modal="true">
-    <div class="customize-scrim" (click)="closed.emit()"></div>
+    <button type="button" class="customize-scrim" (click)="closed.emit()" aria-label="Close"></button>
     <div class="customize-panel">
       <div class="panel-header">
         <div>

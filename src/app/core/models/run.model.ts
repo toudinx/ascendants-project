@@ -2,7 +2,7 @@ import { TrackKey } from './tracks.model';
 import { UpgradeOption } from './upgrades.model';
 import { RunKaelisSnapshot } from './kaelis.model';
 import { WeaponDefinition } from './weapon.model';
-import { RingDefinition } from './ring.model';
+import { SigilDefinition } from './sigil.model';
 import { UpgradeDuration, UpgradeEffectLine, UpgradeModifiers, UpgradeRarity, UpgradeTrack } from '../../content/upgrades/upgrade.types';
 
 export type RoomType = 'normal' | 'mini-boss' | 'boss';
@@ -10,6 +10,7 @@ export type RunPhase = 'idle' | 'start' | 'battle' | 'intermission' | 'reward' |
 export type RunResult = 'none' | 'victory' | 'defeat' | 'fled';
 
 export interface RunState {
+  runSeed: number | null;
   phase: RunPhase;
   currentRoom: number;
   totalRooms: number;
@@ -29,7 +30,7 @@ export interface RunState {
 
 export interface RunLoadoutSnapshot {
   weapon: WeaponDefinition;
-  sigils: RingDefinition[];
+  sigils: SigilDefinition[];
 }
 
 export interface RunUpgrade {
@@ -48,3 +49,5 @@ export interface RunBattleBonuses {
   energy?: number;
   postureShield?: number;
 }
+
+

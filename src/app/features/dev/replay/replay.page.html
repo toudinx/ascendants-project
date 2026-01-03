@@ -1,0 +1,53 @@
+<section class="replay-page">
+  <header class="replay-header">
+    <span>Dev //</span>
+    <strong>Replay Runner</strong>
+  </header>
+
+  <div class="replay-grid">
+    <div class="panel">
+      <div class="panel-title">Replay JSON</div>
+      <textarea
+        class="replay-input"
+        [value]="input()"
+        (input)="input.set($any($event.target).value)"
+        placeholder="Paste replay JSON here..."
+      ></textarea>
+      <div class="button-row">
+        <button type="button" class="btn" (click)="load()">Load</button>
+        <button type="button" class="btn" (click)="start()">Start</button>
+        <button type="button" class="btn" (click)="step()">Step</button>
+        <button type="button" class="btn" (click)="runAll()">Run All</button>
+        <button type="button" class="btn ghost" (click)="reset()">Reset</button>
+        <button type="button" class="btn ghost" (click)="exportCurrent()">
+          Export Current
+        </button>
+      </div>
+      <div class="status-row">
+        <span>Position {{ position }} / {{ total }}</span>
+        <span>Seed {{ seed }}</span>
+      </div>
+      @if (statusMessage()) {
+        <div class="status-note">{{ statusMessage() }}</div>
+      }
+      @if (loadError()) {
+        <div class="status-error">{{ loadError() }}</div>
+      }
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Replay State</div>
+      <div class="status-row">
+        <span>Floor {{ floorIndex }}</span>
+        <span>Room {{ roomType }}</span>
+      </div>
+      <div class="status-row">
+        <span>Last Event</span>
+      </div>
+      <pre class="event-json">{{ lastEventJson() }}</pre>
+      @if (error) {
+        <div class="status-error">{{ error }}</div>
+      }
+    </div>
+  </div>
+</section>

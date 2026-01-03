@@ -1,6 +1,8 @@
 import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   OnDestroy,
@@ -12,6 +14,7 @@ import {
 } from "@angular/core";
 import { RunStateService } from "../../../core/services/run-state.service";
 import { BattleEngineService } from "../../../core/services/battle-engine.service";
+import { ProfileStateService } from "../../../core/services/profile-state.service";
 import {
   UiStateService,
   FloatEvent,
@@ -47,6 +50,7 @@ import { VfxSequencerService } from "../../battle/fx/vfx-sequencer.service";
 import { resolveActionProfile } from "../../battle/fx/action-vfx-profiles";
 import { VfxSettingsService } from "../../battle/fx/vfx-settings.service";
 import { resolveActorHitCount } from "../../../core/utils/hit-count";
+import { ElementType, SerializedDotStack } from "../../../core/models/battle-snapshot.model";
 
 type ActorKey = "player" | "enemy";
 type TimelineActor = "player" | "enemy" | "system";
@@ -115,6 +119,7 @@ interface TurnLogGroup {
   ],
   templateUrl: "./run-battle.page.html",
   styleUrls: ["./run-battle.page.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     BattleVfxIntensityService,
     BattleFxBusService,
@@ -125,18 +130,24 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
   readonly run = inject(RunStateService);
   private readonly battle = inject(BattleEngineService);
   private readonly actorUi = inject(BattleUiEventBus);
+  private readonly profile = inject(ProfileStateService);
   private readonly vfxSequencer = inject(VfxSequencerService);
   private readonly vfxIntensity = inject(BattleVfxIntensityService);
   readonly vfxSettings = inject(VfxSettingsService);
   readonly ui = inject(UiStateService);
   readonly player = inject(PlayerStateService);
   readonly enemy = inject(EnemyStateService);
+  private readonly cdr = inject(ChangeDetectorRef);
   readonly vfxIntensity$ = this.vfxIntensity.intensity$;
   readonly echoSignaturePaths: EchoSignaturePath[] = [];
 
   readonly dotStacks = signal<Record<ActorKey, number>>({
     player: 0,
     enemy: 0,
+  });
+  readonly dotElements = signal<Record<ActorKey, ElementType[]>>({
+    player: [],
+    enemy: [],
   });
   readonly impactFlags = signal<
     Record<ActorKey, Partial<Record<ImpactTone, boolean>>>
@@ -158,7 +169,6 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
   private lastTurnRef = "";
   private manualActionTurn = 0;
   private autoSkillQueuedForTurn: number | null = null;
-  private lastLogId: string | null = null;
   private skillFxWindowUntil = 0;
   prefersReducedMotion = false;
   private prevPlayerStatus = this.player.state().status;
@@ -204,9 +214,26 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
     { allowSignalWrites: true }
   );
 
+  private readonly dotStackWatcher = effect(
+    () => {
+      const snapshots = this.battle.snapshots();
+      const latest = snapshots[snapshots.length - 1];
+      const playerDots = latest?.playerState.dots ?? [];
+      const enemyDots = latest?.enemyState.dots ?? [];
+      this.dotStacks.set({
+        player: playerDots.length,
+        enemy: enemyDots.length
+      });
+      this.dotElements.set({
+        player: this.collectDotElements(playerDots),
+        enemy: this.collectDotElements(enemyDots)
+      });
+    },
+    { allowSignalWrites: true }
+  );
+
   private readonly logWatcher = effect(
     () => {
-      this.trackDotFromLog(this.ui.state().logs);
       this.scrollLogToLatest();
       this.ensureLatestTurnExpanded();
     },
@@ -244,7 +271,7 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
   );
 
   ngOnInit(): void {
-    this.awaitingPlayer = !this.autoplay;
+    this.setAwaitingPlayer(!this.autoplay);
     this.prefersReducedMotion = this.getPrefersReducedMotion();
     this.actorUi.reset();
     this.ensureLoop();
@@ -262,6 +289,7 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
     this.actorUi.reset();
     this.turnWatcher.destroy();
     this.floatWatcher.destroy();
+    this.dotStackWatcher.destroy();
     this.logWatcher.destroy();
     this.breakWatcher.destroy();
     this.evolutionWatcher.destroy();
@@ -344,6 +372,10 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
     return this.playerState.kaelisName || "Kaelis";
   }
 
+  get uiScale(): number {
+    return this.profile.settings().uiScale ?? 1;
+  }
+
   get playerHitCount(): number {
     return resolveActorHitCount(this.player.state());
   }
@@ -408,9 +440,7 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
     return entries.slice(0, this.maxExpandedLogs);
   }
 
-  get enemySprite(): string {
-    return "assets/battle/creatures/enemy_generic_idle.png";
-  }
+  readonly enemySprite = "assets/battle/creatures/enemy_generic_idle.png";
 
   actorPose(side: ActorKey): ActorPose {
     return this.actorUi.actorState()[side].pose;
@@ -481,7 +511,7 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
     this.autoplay = !this.autoplay;
     const turn = this.battle.currentTurn();
     this.manualActionTurn = turn.number;
-    this.awaitingPlayer = !this.autoplay ? turn.actor === "player" : false;
+    this.setAwaitingPlayer(!this.autoplay ? turn.actor === "player" : false);
     if (this.paused) return;
     if (this.autoplay) {
       this.ensureLoop();
@@ -510,7 +540,7 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
 
   handleAutoAttack(): void {
     if (!this.manualActionReady) return;
-    this.awaitingPlayer = false;
+    this.setAwaitingPlayer(false);
     this.manualActionTurn = this.battle.currentTurn().number;
     this.ensureLoop();
   }
@@ -520,7 +550,7 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
     this.battle.triggerActiveSkill();
     this.armSkillFxWindow();
     if (!this.autoplay) {
-      this.awaitingPlayer = false;
+      this.setAwaitingPlayer(false);
       this.manualActionTurn = this.battle.currentTurn().number;
     }
     this.ensureLoop();
@@ -534,6 +564,14 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
 
   hasDot(target: ActorKey): boolean {
     return (this.dotStacks()[target] ?? 0) > 0;
+  }
+
+  dotCountFor(target: ActorKey): number {
+    return this.dotStacks()[target] ?? 0;
+  }
+
+  dotElementsFor(target: ActorKey): ElementType[] {
+    return this.dotElements()[target] ?? [];
   }
 
   meterWidth(current: number, max: number): string {
@@ -616,7 +654,7 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
       return;
     }
     if (turn.actor === "player" && turn.number > this.manualActionTurn) {
-      this.awaitingPlayer = true;
+      this.setAwaitingPlayer(true);
       this.battle.stopLoop();
     }
   }
@@ -645,7 +683,6 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
     this.updateFxAnchorsFromRects();
     for (const event of floats) {
       if (!event?.id || !event.target) continue;
-      const target = event.target as ActorKey;
       if (this.processedFloatIds.has(event.id)) continue;
       this.processedFloatIds.add(event.id);
       const amount = this.floatAmount(event.value);
@@ -656,12 +693,6 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
         ? Math.max(0, Math.floor(event.hitIndex as number))
         : 0;
       this.scheduleAtomicFloat(event, amount, hitIndex, hitCount);
-      if (event.type === "dot") {
-        this.dotStacks.update((state) => ({
-          ...state,
-          [target]: Math.max(0, (state[target] ?? 0) - 1),
-        }));
-      }
     }
   }
 
@@ -689,9 +720,8 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
       this.enqueueImpactFromFloat(event);
       return;
     }
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    timer = setTimeout(() => {
-      if (timer) this.hitTimers.delete(timer);
+    const timer = setTimeout(() => {
+      this.hitTimers.delete(timer);
       this.emitFxForFloat(event);
       this.queueActorPresentation(event);
       this.enqueueImpactFromFloat(event);
@@ -804,17 +834,13 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
     return "burn";
   }
 
-  private trackDotFromLog(logs: UiLogEntry[]): void {
-    const latest = logs.length ? logs[0] : undefined;
-    if (!latest || latest.id === this.lastLogId) return;
-    this.lastLogId = latest.id;
-    const lower = latest.text.toLowerCase();
-    if (lower.includes("dot applied")) {
-      this.dotStacks.update((state) => ({ ...state, enemy: 2 }));
-    }
-    if (lower.includes("suffered dot")) {
-      this.dotStacks.update((state) => ({ ...state, player: 2 }));
-    }
+  private collectDotElements(stacks: SerializedDotStack[]): ElementType[] {
+    if (!stacks.length) return [];
+    const unique = new Set<ElementType>();
+    stacks.forEach(stack => {
+      if (stack.element) unique.add(stack.element);
+    });
+    return Array.from(unique.values());
   }
 
   private enqueueImpactFromFloat(event: FloatEvent): void {
@@ -1314,5 +1340,11 @@ export class RunBattlePageComponent implements OnInit, AfterViewInit, OnDestroy 
 
   onEvolutionOverlayEnd(): void {
     this.evolutionOverlay.set(null);
+  }
+
+  private setAwaitingPlayer(value: boolean): void {
+    if (this.awaitingPlayer === value) return;
+    this.awaitingPlayer = value;
+    this.cdr.markForCheck();
   }
 }

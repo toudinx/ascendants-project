@@ -1,4 +1,6 @@
 import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   HostBinding,
@@ -15,6 +17,7 @@ import { BattleFxBusService } from "../fx/battle-fx-bus.service";
 import { BattleFxEvent } from "../fx/battle-fx.types";
 import { BattleVfxIntensityService } from "../fx/battle-vfx-intensity.service";
 import { VfxBudgetService } from "../fx/vfx-budget.service";
+import { RngService } from "../../../core/services/rng.service";
 
 export type ActorSide = "player" | "enemy";
 export type ActorPose =
@@ -45,7 +48,8 @@ interface OrbiterSpec {
   selector: "app-actor-sprite",
   standalone: true,
   templateUrl: "./actor-sprite.component.html",
-  styleUrls: ["./actor-sprite.component.scss"]
+  styleUrls: ["./actor-sprite.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
   @Input({ required: true }) side: ActorSide = "player";
@@ -100,6 +104,8 @@ export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
     optional: true
   });
   private readonly budget = inject(VfxBudgetService);
+  private readonly vfxRng = inject(RngService).fork("vfx-actor-sprite");
+  private readonly cdr = inject(ChangeDetectorRef);
   private orbiterCounter = 0;
   private vfxIntensity = 0;
   private systemReducedMotion = false;
@@ -226,7 +232,7 @@ export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
     this.impactAnimationEnd.emit(event);
   }
 
-  get showResonanceRing(): boolean {
+  get showResonanceSigil(): boolean {
     return this.resonanceActive;
   }
 
@@ -238,33 +244,42 @@ export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
     if (type === "dot") {
       this.dotPulse = false;
       if (this.dotTimer) clearTimeout(this.dotTimer);
+      this.markForCheck();
       this.raf(() => {
         this.dotPulse = true;
+        this.markForCheck();
       });
       this.dotTimer = setTimeout(() => {
         this.dotPulse = false;
+        this.markForCheck();
       }, 220);
       return;
     }
     if (type === "hit") {
       this.hitPulse = false;
       if (this.hitTimer) clearTimeout(this.hitTimer);
+      this.markForCheck();
       this.raf(() => {
         this.hitPulse = true;
+        this.markForCheck();
       });
       this.hitTimer = setTimeout(() => {
         this.hitPulse = false;
+        this.markForCheck();
       }, 140);
       return;
     }
 
     this.critPulse = false;
     if (this.critTimer) clearTimeout(this.critTimer);
+    this.markForCheck();
     this.raf(() => {
       this.critPulse = true;
+      this.markForCheck();
     });
     this.critTimer = setTimeout(() => {
       this.critPulse = false;
+      this.markForCheck();
     }, 180);
   }
 
@@ -285,22 +300,28 @@ export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
   private triggerAttack(): void {
     this.attackActive = false;
     if (this.attackTimer) clearTimeout(this.attackTimer);
+    this.markForCheck();
     this.raf(() => {
       this.attackActive = true;
+      this.markForCheck();
     });
     this.attackTimer = setTimeout(() => {
       this.attackActive = false;
+      this.markForCheck();
     }, 200);
   }
 
   private triggerCast(): void {
     this.castActive = false;
     if (this.castTimer) clearTimeout(this.castTimer);
+    this.markForCheck();
     this.raf(() => {
       this.castActive = true;
+      this.markForCheck();
     });
     this.castTimer = setTimeout(() => {
       this.castActive = false;
+      this.markForCheck();
     }, 220);
   }
 
@@ -309,11 +330,14 @@ export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
       if (this.hitReactActive) return;
       this.hitReactMicro = false;
       if (this.hitReactMicroTimer) clearTimeout(this.hitReactMicroTimer);
+      this.markForCheck();
       this.raf(() => {
         this.hitReactMicro = true;
+        this.markForCheck();
       });
       this.hitReactMicroTimer = setTimeout(() => {
         this.hitReactMicro = false;
+        this.markForCheck();
       }, 120);
       return;
     }
@@ -321,20 +345,25 @@ export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
     this.hitReactCrit = crit;
     this.hitReactMicro = false;
     if (this.hitReactTimer) clearTimeout(this.hitReactTimer);
+    this.markForCheck();
     this.raf(() => {
       this.hitReactActive = true;
+      this.markForCheck();
     });
     this.hitReactTimer = setTimeout(() => {
       this.hitReactActive = false;
       this.hitReactCrit = false;
+      this.markForCheck();
     }, crit ? 180 : 140);
   }
 
   private scheduleBlink(): void {
     this.blinkTimer = setTimeout(() => {
       this.blinkActive = true;
+      this.markForCheck();
       this.blinkDuration = setTimeout(() => {
         this.blinkActive = false;
+        this.markForCheck();
         this.scheduleBlink();
       }, 140);
     }, this.nextBlinkDelay());
@@ -342,7 +371,7 @@ export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
 
   private nextBlinkDelay(): number {
     const base = 2200;
-    const variance = Math.floor(Math.random() * 2200);
+    const variance = Math.floor(this.vfxRng.nextFloat() * 2200);
     return base + variance;
   }
 
@@ -389,6 +418,7 @@ export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
     this.orbiterOpacity = reduced ? opacityBase * 0.6 : opacityBase;
     const speedBase = 16 - intensity * 6;
     this.orbiterSpeed = reduced ? speedBase * 1.6 : speedBase;
+    this.markForCheck();
   }
 
   private buildOrbiters(count: number): OrbiterSpec[] {
@@ -396,8 +426,8 @@ export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
     const orbiters: OrbiterSpec[] = [];
     const step = 360 / count;
     for (let i = 0; i < count; i += 1) {
-      const angle = Math.round(i * step + Math.random() * 16);
-      const radius = Math.round(26 + i * 4 + Math.random() * 6);
+      const angle = Math.round(i * step + this.vfxRng.nextFloat() * 16);
+      const radius = Math.round(26 + i * 4 + this.vfxRng.nextFloat() * 6);
       const size = Math.round(3 + (i % 2));
       orbiters.push({
         id: `orb-${this.side}-${++this.orbiterCounter}`,
@@ -417,5 +447,9 @@ export class ActorSpriteComponent implements OnInit, OnDestroy, OnChanges {
     if (value < 0) return 0;
     if (value > 1) return 1;
     return value;
+  }
+
+  private markForCheck(): void {
+    this.cdr.markForCheck();
   }
 }

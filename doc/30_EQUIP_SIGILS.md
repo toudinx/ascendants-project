@@ -1,20 +1,20 @@
-# Equipamentos — Anéis (Guia do Jogador)
+# Equipamentos — Sigils (Guia do Jogador)
 
 **Authority:** Apoio (player-facing; deriva do doc numérico)  
 **Status:** Ativo  
-**Escopo:** Como anéis funcionam para o jogador. Valores exatos vivem no doc numérico.  
+**Escopo:** Como sigils funcionam para o jogador. Valores exatos vivem no doc numérico.  
 **Projeto:** KAEZAN: AWAKENING  
 **Última revisão:** 2025-12-17
 
 
-## 1) O que são Anéis
+## 1) O que são Sigils
 - Equipamento que adiciona atributos e ativa bônus de set.
 - No MVP:
   - atributos centrais: HP/ATK/Crítico/Energia (e alguns stats avançados como Dano%, DR%, Heal%)
   - **não existe DEF** como atributo base.
 
 ## 2) Estrutura (MVP)
-- Anéis rolam **atributos** (main/sub) e podem ativar **sets**.
+- Sigils rolam **atributos** (main/sub) e podem ativar **sets**.
 
 ### 2.1 Pool de atributos (MVP / já previsto nos números)
 - HP %

@@ -79,10 +79,11 @@ function buildPlayerState(): PlayerState {
     kaelisSprite: 'test',
     kit,
     weaponId: 'test-weapon',
-    ringDamageBuffPercent: 0,
-    ringDamageBuffTurns: 0,
-    ringDamageBuffSource: undefined,
-    ringSetCounts: undefined,
-    ringSkillBuffs: undefined
+    sigilDamageBuffPercent: 0,
+    sigilDamageBuffTurns: 0,
+    sigilDamageBuffSource: undefined,
+    sigilSetCounts: undefined,
+    sigilSkillBuffs: undefined
   };
 }
+

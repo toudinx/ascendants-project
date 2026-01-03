@@ -102,7 +102,7 @@ export class AscensionShopService {
     const resonanceUnlocked =
       !snapshot.resonanceActive && originEchoCount >= 3 && runEchoCount >= 2;
     const resonanceId = resonanceUnlocked
-      ? snapshot.resonanceId ?? this.pickResonanceId(snapshot)
+      ? snapshot.resonanceId ?? this.pickResonanceId()
       : snapshot.resonanceId ?? null;
 
     this.state.patchState({
@@ -382,7 +382,7 @@ export class AscensionShopService {
     return picks;
   }
 
-  private pickResonanceId(state: AscensionRunState): string | null {
+  private pickResonanceId(): string | null {
     const resonances = getResonances();
     if (!resonances.length) return null;
     const pick = resonances[this.random.nextInt(resonances.length)];

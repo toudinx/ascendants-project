@@ -5,7 +5,9 @@ import {
   OnChanges,
   OnDestroy,
   SimpleChanges,
+  inject,
 } from "@angular/core";
+import { RngService } from "../../../core/services/rng.service";
 
 @Component({
   selector: "app-wow-burst",
@@ -40,6 +42,7 @@ import {
   `,
 })
 export class WowBurstComponent implements OnChanges, OnDestroy {
+  private readonly vfxRng = inject(RngService).fork("vfx-wow-burst");
   @Input() trigger = false;
   @Input() duration = 1200;
 
@@ -48,8 +51,8 @@ export class WowBurstComponent implements OnChanges, OnDestroy {
   particles = Array.from({ length: 14 }, (_, i) => ({
     x: 10 + ((i * 6) % 70),
     y: 10 + ((i * 11) % 70),
-    tx: Math.random() * 120 - 60,
-    ty: Math.random() * 120 - 40,
+    tx: this.vfxRng.nextFloat() * 120 - 60,
+    ty: this.vfxRng.nextFloat() * 120 - 40,
   }));
   private timer?: ReturnType<typeof setTimeout>;
 

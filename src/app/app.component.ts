@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, signal } from "@angular/core";
+import { Component, inject, isDevMode, signal } from "@angular/core";
 import { NavigationEnd, Router, RouterOutlet } from "@angular/router";
 import {
   RunDebugPanelComponent,
@@ -7,6 +7,7 @@ import {
 } from "./shared/components";
 import { ProfileStateService } from "./core/services/profile-state.service";
 import { filter } from "rxjs/operators";
+import { validateCatalogs } from "./content/validators";
 
 @Component({
   selector: "app-root",
@@ -45,6 +46,9 @@ export class AppComponent {
   protected readonly isAscensionStartLayout = signal(false);
 
   constructor() {
+    if (isDevMode()) {
+      this.assertCatalogs();
+    }
     this.updateLayout(this.router.url);
     this.router.events
       .pipe(
@@ -53,6 +57,19 @@ export class AppComponent {
         )
       )
       .subscribe((event) => this.updateLayout(event.urlAfterRedirects));
+  }
+
+  private assertCatalogs(): void {
+    const report = validateCatalogs();
+    if (report.warnings.length) {
+      console.warn("Catalog validation warnings:", report.warnings);
+    }
+    if (report.errors.length) {
+      console.error("Catalog validation errors:", report.errors);
+      throw new Error(
+        `Catalog validation failed:\n${report.errors.join("\n")}`
+      );
+    }
   }
 
   private updateLayout(url: string): void {

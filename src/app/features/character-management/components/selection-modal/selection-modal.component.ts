@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WeaponDefinition } from '../../../../core/models/weapon.model';
-import { RingDefinition, RingStatType } from '../../../../core/models/ring.model';
+import { SigilDefinition, SigilStatType } from '../../../../core/models/sigil.model';
 import { AppButtonComponent } from '../../../../shared/components';
 import { SIGIL_SETS } from '../../../../content/equipment/sigils';
 
@@ -23,7 +23,7 @@ interface FilterOption {
 export class SelectionModalComponent implements OnChanges {
   @Input() open = false;
   @Input() mode: SelectionMode = 'weapon';
-  @Input() items: Array<WeaponDefinition | RingDefinition> = [];
+  @Input() items: (WeaponDefinition | SigilDefinition)[] = [];
   @Input() selectedId: string | null = null;
   @Input() slotIndex: number | null = null;
 
@@ -72,7 +72,7 @@ export class SelectionModalComponent implements OnChanges {
     );
   }
 
-  get filteredItems(): Array<WeaponDefinition | RingDefinition> {
+  get filteredItems(): (WeaponDefinition | SigilDefinition)[] {
     if (!this.isSigilMode) return this.items as WeaponDefinition[];
     return this.sigilItems().filter(item => {
       const setMatch = this.setFilter === 'all' || item.setKey === this.setFilter;
@@ -81,7 +81,7 @@ export class SelectionModalComponent implements OnChanges {
     });
   }
 
-  get activeItem(): WeaponDefinition | RingDefinition | null {
+  get activeItem(): WeaponDefinition | SigilDefinition | null {
     if (!this.activeId) return null;
     return this.items.find(item => item.id === this.activeId) ?? null;
   }
@@ -112,7 +112,7 @@ export class SelectionModalComponent implements OnChanges {
     return weapon.flatStat.type === 'atk' ? `ATK +${weapon.flatStat.value}` : `HP +${weapon.flatStat.value}`;
   }
 
-  ringStatLabel(type: RingStatType, value: number): string {
+  sigilStatLabel(type: SigilStatType, value: number): string {
     if (type === 'crit_rate_percent' || type === 'crit_damage_percent') {
       return `+${Math.round(value * 100)}%`;
     }
@@ -122,7 +122,7 @@ export class SelectionModalComponent implements OnChanges {
     return `+${value}`;
   }
 
-  statFilterLabel(type: RingStatType): string {
+  statFilterLabel(type: SigilStatType): string {
     switch (type) {
       case 'hp_flat':
       case 'hp_percent':
@@ -161,7 +161,9 @@ export class SelectionModalComponent implements OnChanges {
     this.statFilter = 'all';
   }
 
-  private sigilItems(): RingDefinition[] {
-    return (this.items as RingDefinition[]).filter(item => !!item?.setKey);
+  private sigilItems(): SigilDefinition[] {
+    return (this.items as SigilDefinition[]).filter(item => !!item?.setKey);
   }
 }
+
+

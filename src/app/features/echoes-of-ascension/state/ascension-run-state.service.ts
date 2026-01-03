@@ -1,7 +1,9 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Injectable, Injector, inject, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Observable } from 'rxjs';
 import { ASCENSION_CONFIG } from '../content/configs/ascension.config';
 import { AscensionRoomType, AscensionRunState } from './ascension-run-state.model';
+import { RngService } from '../../../core/services/rng.service';
 
 export interface AscensionRunInitOptions {
   seed?: number;
@@ -16,25 +18,26 @@ export interface AscensionRunInitOptions {
 
 @Injectable({ providedIn: 'root' })
 export class AscensionRunStateService {
-  private readonly stateSubject = new BehaviorSubject<AscensionRunState>(
-    this.createBaseState()
-  );
+  private readonly injector = inject(Injector);
+  private readonly state = signal<AscensionRunState>(this.createBaseState());
+  private readonly state$ = toObservable(this.state, { injector: this.injector });
+  private readonly rng = inject(RngService);
 
   getState(): Observable<AscensionRunState> {
-    return this.stateSubject.asObservable();
+    return this.state$;
   }
 
   getSnapshot(): AscensionRunState {
-    return this.stateSubject.value;
+    return this.state();
   }
 
   patchState(partial: Partial<AscensionRunState>): void {
-    const current = this.stateSubject.value;
-    this.stateSubject.next({ ...current, ...partial });
+    this.state.update((current) => ({ ...current, ...partial }));
   }
 
   createNewRun(options: AscensionRunInitOptions = {}): AscensionRunState {
     const seed = typeof options.seed === 'number' ? options.seed : this.randomSeed();
+    this.rng.setSeed(seed);
     const hpMax = options.hpMax ?? ASCENSION_CONFIG.baseHp;
     const hpCurrent = options.hpCurrent ?? hpMax;
     const nextState = this.createBaseState({
@@ -49,12 +52,12 @@ export class AscensionRunStateService {
       hpCurrent,
       bargainWindow: ASCENSION_CONFIG.defaultBargainWindow
     });
-    this.stateSubject.next(nextState);
+    this.state.set(nextState);
     return nextState;
   }
 
   resetRun(): void {
-    this.stateSubject.next(this.createBaseState());
+    this.state.set(this.createBaseState());
   }
 
   private createBaseState(overrides: Partial<AscensionRunState> = {}): AscensionRunState {
@@ -101,10 +104,10 @@ export class AscensionRunStateService {
   }
 
   private uid(): string {
-    return Math.random().toString(36).slice(2, 10);
+    return this.rng.nextFloat().toString(36).slice(2, 10);
   }
 
   private randomSeed(): number {
-    return Math.floor(Math.random() * 1_000_000_000);
+    return this.rng.nextInt(0, 1_000_000_000);
   }
 }

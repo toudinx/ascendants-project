@@ -1,4 +1,4 @@
-<section class="run-start">
+<section class="run-start" data-testid="run-start-page">
   <header class="run-start__header">
     <div class="header-title">Expedition // <strong>Select Phase</strong></div>
   </header>
@@ -110,6 +110,7 @@
             [class.active]="selectedTrack === trackOption.key"
             (click)="selectTrack(trackOption.key)"
             [attr.aria-pressed]="selectedTrack === trackOption.key"
+            data-testid="run-start-track"
           >
             <div class="path-badge">{{ trackOption.tag }}</div>
             <div class="path-content">
@@ -140,6 +141,7 @@
           class="btn btn-primary"
           [disabled]="!selectedTrack"
           (click)="confirm()"
+          data-testid="run-start-confirm"
         >
           Confirm &amp; Initiate
         </button>

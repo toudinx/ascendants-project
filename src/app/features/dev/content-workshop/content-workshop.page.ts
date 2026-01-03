@@ -28,7 +28,6 @@ import {
   WithScoresReport,
 } from "../../../content/validators";
 import { BALANCE_CONFIG } from "../../../content/balance/balance.config";
-import { KaelisDefinition } from "../../../core/models/kaelis.model";
 
 type WorkshopTab = "kaelis" | "enemy" | "validate";
 

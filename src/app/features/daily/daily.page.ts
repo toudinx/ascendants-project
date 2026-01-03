@@ -44,7 +44,7 @@ interface DailyReward {
             [subtitle]="reward.name"
             [interactive]="false"
             [ngClass]="{
-              'ring-2 ring-[#8A7CFF] ring-offset-2 ring-offset-[#0B0B16] scale-[1.01]':
+              'outline outline-2 outline-[#8A7CFF] outline-offset-2 scale-[1.01]':
                 reward.day === currentDay,
               'opacity-60': reward.claimed,
             }"

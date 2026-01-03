@@ -1,4 +1,4 @@
-﻿import { Component, inject, OnInit } from "@angular/core";
+import { Component, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { RunStateService } from "../../../core/services/run-state.service";
 import { PlayerStateService } from "../../../core/services/player-state.service";
@@ -112,14 +112,14 @@ export class RunStartPageComponent implements OnInit {
   }
 
   get sigilSetSummary(): SigilSetSummary {
-    const rings = this.profile.getEquippedRings(this.activeKaelis.id);
-    const counts = this.profile.getRingSetCounts(this.activeKaelis.id);
-    const entries = Object.entries(counts) as Array<[string, number]>;
+    const sigils = this.profile.getEquippedSigils(this.activeKaelis.id);
+    const counts = this.profile.getSigilSetCounts(this.activeKaelis.id);
+    const entries = Object.entries(counts) as [string, number][];
     if (!entries.length) {
       return {
         name: "None",
         bonus: "Bonus: (coming soon)",
-        iconUrl: rings[0]?.imageUrl,
+        iconUrl: sigils[0]?.imageUrl,
       };
     }
 
@@ -137,7 +137,7 @@ export class RunStartPageComponent implements OnInit {
     return {
       name,
       bonus,
-      iconUrl: rings[0]?.imageUrl,
+      iconUrl: sigils[0]?.imageUrl,
     };
   }
 
@@ -174,3 +174,4 @@ export class RunStartPageComponent implements OnInit {
     this.router.navigate(["/character-management"]);
   }
 }
+

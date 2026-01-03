@@ -4,6 +4,7 @@ import { AppHeaderComponent, AppButtonComponent, AppTagComponent, PremiumTeaseCo
 import { RunStateService } from '../../../core/services/run-state.service';
 import { TrackKey } from '../../../core/models/tracks.model';
 import { SkinStateService } from '../../../core/services/skin-state.service';
+import { RngService } from '../../../core/services/rng.service';
 
 @Component({
   selector: 'app-run-evolution-page',
@@ -70,6 +71,7 @@ import { SkinStateService } from '../../../core/services/skin-state.service';
 export class RunEvolutionPageComponent implements OnInit {
   protected readonly run = inject(RunStateService);
   protected readonly skinState = inject(SkinStateService);
+  protected readonly rng = inject(RngService);
   protected burst = false;
   private chosenTrack: TrackKey = 'A';
 
@@ -136,6 +138,6 @@ export class RunEvolutionPageComponent implements OnInit {
     const levels = this.run.trackLevels();
     const max = Math.max(levels.A, levels.B, levels.C);
     const candidates = (['A', 'B', 'C'] as TrackKey[]).filter(r => levels[r] === max);
-    return candidates[Math.floor(Math.random() * candidates.length)] as TrackKey;
+    return (this.rng.pick(candidates) ?? 'A') as TrackKey;
   }
 }

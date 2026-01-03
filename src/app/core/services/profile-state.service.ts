@@ -12,14 +12,14 @@ import {
 } from '../models/profile.model';
 import { StorageService } from './storage.service';
 import { WeaponDefinition, WeaponId } from '../models/weapon.model';
-import { RingDefinition, RingId, RingSetKey, RingSlot, RING_SLOTS } from '../models/ring.model';
+import { SigilDefinition, SigilId, SigilSetKey, SigilSlot, SIGIL_SLOTS } from '../models/sigil.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileStateService {
   private readonly storage = inject(StorageService);
   private readonly catalog = signal<KaelisDefinition[]>([...KAELIS_LIST]);
   private readonly weapons = signal<WeaponDefinition[]>([...WEAPON_LIST]);
-  private readonly rings = signal<RingDefinition[]>([...SIGIL_LIST]);
+  private readonly sigils = signal<SigilDefinition[]>([...SIGIL_LIST]);
   private readonly state = signal<ProfilePersistedState>(this.storage.load());
 
   readonly kaelisList = computed(() => this.catalog());
@@ -33,10 +33,10 @@ export class ProfileStateService {
   readonly potionCount = computed(() => this.state().potionCount);
   readonly settings = computed(() => this.state().settings);
   readonly weaponList = computed(() => this.weapons());
-  readonly ringInventory = computed(() =>
+  readonly sigilInventory = computed(() =>
     this.state()
-      .rings.inventory.map(id => this.getRingById(id))
-      .filter((ring): ring is RingDefinition => !!ring)
+      .sigils.inventory.map(id => this.getSigilById(id))
+      .filter((sigil): sigil is SigilDefinition => !!sigil)
   );
   readonly activeWeapon = computed<WeaponDefinition>(() => {
     const weaponId = this.state().equipment.weaponByKaelis[this.selectedKaelisId()] ?? this.weapons()[0]?.id;
@@ -157,24 +157,24 @@ export class ProfileStateService {
     return this.state().cosmetics.activeSkinByKaelis[kaelisId] ?? DEFAULT_SKIN_BY_KAELIS[kaelisId] ?? 'default';
   }
 
-  equipRing(kaelisId: KaelisId, slot: RingSlot, ringId: RingId | null): void {
-    const slotIndex = RING_SLOTS.indexOf(slot);
+  equipSigil(kaelisId: KaelisId, slot: SigilSlot, sigilId: SigilId | null): void {
+    const slotIndex = SIGIL_SLOTS.indexOf(slot);
     if (slotIndex < 0) return;
-    if (ringId && !this.state().rings.inventory.includes(ringId)) return;
+    if (sigilId && !this.state().sigils.inventory.includes(sigilId)) return;
     this.state.update(current => {
       const currentSlots =
-        current.equipment.ringSlotsByKaelis[kaelisId] ??
-        Array.from({ length: RING_SLOTS.length }, () => null as RingId | null);
+        current.equipment.sigilSlotsByKaelis[kaelisId] ??
+        Array.from({ length: SIGIL_SLOTS.length }, () => null as SigilId | null);
       const currentSlot = currentSlots[slotIndex] ?? null;
-      if (currentSlot === ringId) return current;
+      if (currentSlot === sigilId) return current;
       const nextSlots = [...currentSlots];
-      nextSlots[slotIndex] = ringId ?? null;
+      nextSlots[slotIndex] = sigilId ?? null;
       return {
         ...current,
         equipment: {
           ...current.equipment,
-          ringSlotsByKaelis: {
-            ...current.equipment.ringSlotsByKaelis,
+          sigilSlotsByKaelis: {
+            ...current.equipment.sigilSlotsByKaelis,
             [kaelisId]: nextSlots
           }
         }
@@ -205,33 +205,35 @@ export class ProfileStateService {
     return this.getWeaponById(weaponId) ?? this.weapons()[0];
   }
 
-  getRingById(id?: RingId | null): RingDefinition | undefined {
+  getSigilById(id?: SigilId | null): SigilDefinition | undefined {
     if (!id) return undefined;
-    return this.rings().find(ring => ring.id === id);
+    return this.sigils().find(sigil => sigil.id === id);
   }
 
-  getEquippedRingSlots(kaelisId: KaelisId): { slot: RingSlot; ring: RingDefinition | null }[] {
-    const slots = this.state().equipment.ringSlotsByKaelis[kaelisId] ?? [];
-    return RING_SLOTS.map((slot, index) => ({
+  getEquippedSigilSlots(kaelisId: KaelisId): { slot: SigilSlot; sigil: SigilDefinition | null }[] {
+    const slots = this.state().equipment.sigilSlotsByKaelis[kaelisId] ?? [];
+    return SIGIL_SLOTS.map((slot, index) => ({
       slot,
-      ring: this.getRingById(slots[index] ?? null) ?? null
+      sigil: this.getSigilById(slots[index] ?? null) ?? null
     }));
   }
 
-  getEquippedRings(kaelisId: KaelisId): RingDefinition[] {
-    return this.getEquippedRingSlots(kaelisId)
-      .map(entry => entry.ring)
-      .filter((ring): ring is RingDefinition => !!ring);
+  getEquippedSigils(kaelisId: KaelisId): SigilDefinition[] {
+    return this.getEquippedSigilSlots(kaelisId)
+      .map(entry => entry.sigil)
+      .filter((sigil): sigil is SigilDefinition => !!sigil);
   }
 
-  getRingSetCounts(kaelisId: KaelisId): Record<RingSetKey, number> {
-    return this.getEquippedRings(kaelisId).reduce<Record<RingSetKey, number>>((acc, ring) => {
-      acc[ring.setKey] = (acc[ring.setKey] ?? 0) + 1;
+  getSigilSetCounts(kaelisId: KaelisId): Record<SigilSetKey, number> {
+    return this.getEquippedSigils(kaelisId).reduce<Record<SigilSetKey, number>>((acc, sigil) => {
+      acc[sigil.setKey] = (acc[sigil.setKey] ?? 0) + 1;
       return acc;
-    }, {} as Record<RingSetKey, number>);
+    }, {} as Record<SigilSetKey, number>);
   }
 
   getById(id: KaelisId): KaelisDefinition | undefined {
     return this.catalog().find(item => item.id === id);
   }
 }
+
+

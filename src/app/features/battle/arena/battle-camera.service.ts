@@ -1,7 +1,9 @@
-import { Injectable } from "@angular/core";
+import { Injectable, inject } from "@angular/core";
+import { RngService } from "../../../core/services/rng.service";
 
 @Injectable({ providedIn: "root" })
 export class BattleCameraService {
+  private readonly vfxRng = inject(RngService).fork("vfx-camera");
   private target: HTMLElement | null = null;
   private animation?: Animation;
 
@@ -55,7 +57,7 @@ export class BattleCameraService {
   }
 
   private randomOffset(magnitude: number): number {
-    return Math.round((Math.random() * 2 - 1) * magnitude);
+    return Math.round((this.vfxRng.nextFloat() * 2 - 1) * magnitude);
   }
 
   private prefersReducedMotion(): boolean {

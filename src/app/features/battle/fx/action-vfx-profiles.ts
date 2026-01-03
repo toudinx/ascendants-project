@@ -21,12 +21,12 @@ export type ActionVfxStep =
       fieldKey: "burn" | "poison" | "bleed" | "rune";
     };
 
-export type ActionVfxProfile = {
+export interface ActionVfxProfile {
   kind: ActionKind;
   style: AttackStyle;
   steps: ActionVfxStep[];
   combo?: { hits: number; spacingMs: number; visualOnly: boolean };
-};
+}
 
 export const ENABLE_VISUAL_COMBOS = true;
 

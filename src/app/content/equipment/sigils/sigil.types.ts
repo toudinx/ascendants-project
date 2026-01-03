@@ -1,4 +1,4 @@
-import { RingSetKey, RingSlot, RingStat } from '../../../core/models/ring.model';
+import { SigilSetKey, SigilSlot, SigilStat } from '../../../core/models/sigil.model';
 
 export interface SigilDef {
   id: string;
@@ -6,8 +6,10 @@ export interface SigilDef {
   description: string;
   imageUrl: string;
   level: number;
-  slot: RingSlot;
-  setKey: RingSetKey;
-  mainStat: RingStat;
-  subStats: RingStat[];
+  slot: SigilSlot;
+  setKey: SigilSetKey;
+  mainStat: SigilStat;
+  subStats: SigilStat[];
 }
+
+

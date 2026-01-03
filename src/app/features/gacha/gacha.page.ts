@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AppHeaderComponent, AppButtonComponent, AppCardComponent, PremiumTeaseComponent, WowBurstComponent, RarityTagComponent, SkinCardComponent, AppTagComponent } from '../../shared/components';
 import { SkinStateService, VelvetSkin } from '../../core/services/skin-state.service';
 import { UiStateService } from '../../core/services/ui-state.service';
+import { RngService } from '../../core/services/rng.service';
 
 @Component({
   selector: 'app-gacha-page',
@@ -64,8 +65,8 @@ import { UiStateService } from '../../core/services/ui-state.service';
                 [skin]="skin"
                 class="transition-transform duration-200 ease-out hover:scale-[1.02]"
                 [ngClass]="{
-                  'ring-2 ring-[#FFD344] ring-offset-2 ring-offset-[#0B0B16]': skin.rarity === 'SSR',
-                  'ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[#0B0B16]': skin.rarity === 'SR'
+                  'outline outline-2 outline-[#FFD344] outline-offset-2': skin.rarity === 'SSR',
+                  'outline outline-2 outline-[var(--primary)] outline-offset-2': skin.rarity === 'SR'
                 }"
               ></app-skin-card>
             }
@@ -79,6 +80,7 @@ export class GachaPageComponent implements OnInit {
   protected readonly skinState = inject(SkinStateService);
   protected readonly router = inject(Router);
   protected readonly ui = inject(UiStateService);
+  protected readonly rng = inject(RngService);
 
   protected pulling = signal(false);
   protected results = signal<VelvetSkin[]>([]);
@@ -123,7 +125,7 @@ export class GachaPageComponent implements OnInit {
   }
 
   private rollSkin(): VelvetSkin {
-    const roll = Math.random() * 100;
+    const roll = this.rng.nextFloat() * 100;
     if (roll < 2) {
       return this.pickSkinByRarity('SSR');
     }
@@ -137,7 +139,10 @@ export class GachaPageComponent implements OnInit {
     const pool = this.skinState.skins().filter(skin => skin.rarity === rarity);
     const fallback = this.skinState.skins();
     const list = pool.length ? pool : fallback;
-    const index = Math.floor(Math.random() * Math.max(1, list.length));
+    if (!list.length) {
+      throw new Error('Gacha pool is empty.');
+    }
+    const index = this.rng.nextInt(0, list.length - 1);
     return list[index];
   }
 }

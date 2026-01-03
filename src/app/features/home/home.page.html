@@ -1,4 +1,4 @@
-<div class="home-shell">
+<div class="home-shell" data-testid="home-page">
   <app-home-background
     [background]="homeScene.currentBackground()"
   ></app-home-background>
@@ -58,12 +58,22 @@
   ></app-home-customize-panel>
 
   @if (expeditionModeOpen()) {
-    <div class="expedition-modal" (click)="closeExpeditionMode()">
+    <div
+      class="expedition-modal"
+      role="button"
+      tabindex="0"
+      (click)="closeExpeditionMode()"
+      (keydown.enter)="closeExpeditionMode()"
+      (keydown.space)="$event.preventDefault(); closeExpeditionMode()"
+    >
       <div
         class="expedition-modal__card"
         role="dialog"
         aria-modal="true"
         (click)="$event.stopPropagation()"
+        tabindex="0"
+        (keydown.enter)="$event.stopPropagation()"
+        (keydown.space)="$event.preventDefault(); $event.stopPropagation()"
       >
         <div class="expedition-modal__header">
           <h2>Select Mode</h2>

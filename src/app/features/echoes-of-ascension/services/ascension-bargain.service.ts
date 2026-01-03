@@ -142,7 +142,7 @@ export class AscensionBargainService {
 
   private ensureResonance(snapshot: AscensionRunState): ResonanceDefinition | null {
     if (!snapshot.resonanceActive) return null;
-    const id = snapshot.resonanceId ?? this.pickResonanceId(snapshot);
+    const id = snapshot.resonanceId ?? this.pickResonanceId();
     if (!id) return null;
     if (id !== snapshot.resonanceId) {
       this.state.patchState({
@@ -153,7 +153,7 @@ export class AscensionBargainService {
     return getResonanceById(id) ?? null;
   }
 
-  private pickResonanceId(snapshot: AscensionRunState): string | null {
+  private pickResonanceId(): string | null {
     const resonances = getResonances();
     if (!resonances.length) return null;
     const pick = resonances[this.random.nextInt(resonances.length)];

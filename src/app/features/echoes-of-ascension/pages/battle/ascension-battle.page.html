@@ -98,6 +98,7 @@
       [class.impacto-evolved]="activeEvolution?.cssClass === 'impacto-evolved'"
       [class.critico-evolved]="activeEvolution?.cssClass === 'critico-evolved'"
       [style.--vfx-intensity]="(vfxIntensity$ | async) ?? 0"
+      [style.--ui-scale]="uiScale"
     >
       @if (hasBattleActors) {
       <div class="battle-body">
@@ -244,8 +245,17 @@
                     <span
                       class="status-pill dot"
                       [class.dot-pulse]="hasImpact('player', 'hit-dot')"
-                      >DoT</span
                     >
+                      <span>DoT</span>
+                      <span class="dot-count">x{{ dotCountFor('player') }}</span>
+                      @if (dotElementsFor('player').length) {
+                        <span class="dot-elements">
+                          @for (element of dotElementsFor('player'); track element) {
+                            <span class="dot-element" [class]="element"></span>
+                          }
+                        </span>
+                      }
+                    </span>
                     } @if (isPlayerBroken) {
                     <span class="status-pill break"
                       >Broken {{ playerState.breakTurns || 0 }}T</span
@@ -335,8 +345,17 @@
                     <span
                       class="status-pill dot"
                       [class.dot-pulse]="hasImpact('enemy', 'hit-dot')"
-                      >DoT</span
                     >
+                      <span>DoT</span>
+                      <span class="dot-count">x{{ dotCountFor('enemy') }}</span>
+                      @if (dotElementsFor('enemy').length) {
+                        <span class="dot-elements">
+                          @for (element of dotElementsFor('enemy'); track element) {
+                            <span class="dot-element" [class]="element"></span>
+                          }
+                        </span>
+                      }
+                    </span>
                     }
                   </div>
                 </div>

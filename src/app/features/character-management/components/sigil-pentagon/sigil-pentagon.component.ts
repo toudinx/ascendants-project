@@ -17,7 +17,7 @@ const SIGIL_SLOT_POSITIONS = [
   styleUrls: ['./sigil-pentagon.component.scss']
 })
 export class SigilPentagonComponent {
-  @Input() slots: Array<string | null> = [];
+  @Input() slots: (string | null)[] = [];
   @Input() selectedIndex = 0;
   @Output() slotClick = new EventEmitter<number>();
 

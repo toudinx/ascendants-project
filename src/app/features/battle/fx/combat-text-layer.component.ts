@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   Input,
@@ -13,6 +14,7 @@ import { BattleFxAnchors, BattleFxEvent, Point } from "./battle-fx.types";
 import { BattleFxBusService } from "./battle-fx-bus.service";
 import { VFX_TIMING } from "./vfx-timing.config";
 import { VfxSettingsService } from "./vfx-settings.service";
+import { RngService } from "../../../core/services/rng.service";
 
 type TargetSide = "player" | "enemy";
 
@@ -50,7 +52,8 @@ interface CombatTextEntry {
   standalone: true,
   imports: [CommonModule],
   templateUrl: "./combat-text-layer.component.html",
-  styleUrls: ["./combat-text-layer.component.scss"]
+  styleUrls: ["./combat-text-layer.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CombatTextLayerComponent implements OnDestroy {
   @Input({ required: true }) anchors!: BattleFxAnchors;
@@ -62,6 +65,7 @@ export class CombatTextLayerComponent implements OnDestroy {
 
   private readonly bus = inject(BattleFxBusService);
   private readonly settings = inject(VfxSettingsService, { optional: true });
+  private readonly vfxRng = inject(RngService).fork("vfx-combat-text");
   private readonly subscriptions = new Subscription();
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
   private entryCounter = 0;
@@ -333,7 +337,7 @@ export class CombatTextLayerComponent implements OnDestroy {
     let fallback: { x: number; y: number } | null = null;
 
     for (const lane of lanes) {
-      let x = this.clampInt(Math.round(point.x + lane + jitterX), minX, maxX);
+      const x = this.clampInt(Math.round(point.x + lane + jitterX), minX, maxX);
       let y = this.clampInt(Math.round(point.y + jitterY), minY, maxY);
       let attempts = 0;
       let placed = false;
@@ -440,7 +444,7 @@ export class CombatTextLayerComponent implements OnDestroy {
   }
 
   private randomInt(min: number, max: number): number {
-    return Math.round(min + Math.random() * (max - min));
+    return Math.round(min + this.vfxRng.nextFloat() * (max - min));
   }
 
   private tagWidth(text: string, fontSize: number, paddingX: number): number {

@@ -33,14 +33,14 @@
         ></span>
         <div
           class="actor-orbiters"
-          [class.is-active]="orbiters.length > 0 || showResonanceRing"
+          [class.is-active]="orbiters.length > 0 || showResonanceSigil"
           [class.is-static]="orbitersStatic"
           [style.--orbiter-opacity]="orbiterOpacity"
           [style.--orbiter-speed]="orbiterSpeed + 's'"
         >
-          <span class="actor-orbiters__ring"></span>
-          @if (showResonanceRing) {
-            <span class="actor-orbiters__ring actor-orbiters__ring--resonance"></span>
+          <span class="actor-orbiters__sigil"></span>
+          @if (showResonanceSigil) {
+            <span class="actor-orbiters__sigil actor-orbiters__sigil--resonance"></span>
           }
           @for (orbiter of orbiters; track orbiter.id) {
             <span
@@ -54,7 +54,7 @@
         <span class="actor-sprite__ground-ripple"></span>
         <span class="actor-sprite__ground-crack"></span>
         <span class="actor-sprite__life"></span>
-        <span class="actor-sprite__cast-ring"></span>
+        <span class="actor-sprite__cast-sigil"></span>
         @if (showAlert) {
           <div class="status-sigil alert">ALERT</div>
         }

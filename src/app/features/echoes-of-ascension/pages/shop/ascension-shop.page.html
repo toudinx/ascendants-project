@@ -58,7 +58,7 @@
                 <button
                   type="button"
                   class="echo-card"
-                  (click)="buyEcho(offer)"
+                  (click)="buyEcho(offer, index)"
                   [disabled]="!canBuyEcho(offer, state)"
                 >
                   <div class="echo-card__tag">
@@ -116,7 +116,7 @@
                       <button
                         type="button"
                         class="service-btn"
-                        (click)="buyService(offer)"
+                        (click)="buyService(offer, index)"
                         [disabled]="!canBuyService(offer, state)"
                       >
                         {{ offer.purchased ? 'Purchased' : 'Buy' }}

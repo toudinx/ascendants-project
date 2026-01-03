@@ -1,13 +1,13 @@
 import { Injectable, inject } from "@angular/core";
 import { VfxSettingsService } from "./vfx-settings.service";
 
-export type VfxCaps = {
+export interface VfxCaps {
   maxAmbientParticles: number;
   maxProcBursts: number;
   maxTrails: number;
   maxOrbitersPerActor: number;
   maxPersistentOverlays: number;
-};
+}
 
 @Injectable({ providedIn: "root" })
 export class VfxBudgetService {

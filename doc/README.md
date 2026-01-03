@@ -14,7 +14,7 @@
 4. `11_COMBATE_NUMEROS_MVP.md` (números)
 5. `20_MODO_ECOS_DA_RUINA.md` (modo implementado)
 6. `12_ROTAS_TIPOS.md` (6 rotas oficiais)
-7. `30_EQUIP_ANÉIS.md` (equipamento)
+7. `30_EQUIP_SIGILS.md` (equipamento)
 8. `40_TEST_FIXTURES.md` (apenas apoio p/ testes)
 9. `90_UI_ROADMAP_CENA_BATALHA.md` (roadmap de UI)
 
@@ -46,7 +46,7 @@ Arquivos originais foram consolidados assim:
 - `SISTEMA DE POSTURA (MVP OFICIAL).md` → incorporado em `10_COMBATE_REGRAS.md`
 - `FASES - AJUSTE CENA DE BATALHA.md` + `ROTEIRO DE EVOLUÇÃO DA TELA DE BATALHA.md` → `90_UI_ROADMAP_CENA_BATALHA.md`
 - `VELVET (MVP EXPANDIDA PARA TESTES).md` + `INIMIGO GENÉRICO (MVP).md` → `40_TEST_FIXTURES.md`
-- `Set Agressão.md` → apêndice em `30_EQUIP_ANÉIS.md` (e referência em números)
+- `Set Agressão.md` → apêndice em `30_EQUIP_SIGILS.md` (e referência em números)
 
 > Se o código divergir de qualquer regra aqui, **o código vence** — e o doc deve ser ajustado imediatamente (sem “interpretar”).
 
@@ -55,3 +55,7 @@ Arquivos originais foram consolidados assim:
 Site para remover fundo
 
 https://www.remove.bg/upload
+
+## 7) Docs policy
+- doc/ stores source-of-truth docs, guides, and decisions.
+- Do not commit workspace/editor files (e.g. `.obsidian/`, `workspace.json`, `.DS_Store`).

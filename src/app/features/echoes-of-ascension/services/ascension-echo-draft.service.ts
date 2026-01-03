@@ -95,7 +95,7 @@ export class AscensionEchoDraftService {
     const resonanceUnlocked =
       !snapshot.resonanceActive && originEchoCount >= 3 && runEchoCount >= 2;
     const resonanceId = resonanceUnlocked
-      ? snapshot.resonanceId ?? this.pickResonanceId(snapshot)
+      ? snapshot.resonanceId ?? this.pickResonanceId()
       : snapshot.resonanceId ?? null;
 
     const patch: Partial<AscensionRunState> = {
@@ -178,7 +178,7 @@ export class AscensionEchoDraftService {
       pathId => pathId !== originPathId && pathId !== runPathId
     );
 
-    const weighted: Array<{ ids: string[]; weight: number }> = [];
+    const weighted: { ids: string[]; weight: number }[] = [];
     if (originPathId && availablePaths.includes(originPathId)) {
       weighted.push({ ids: [originPathId], weight: 0.45 });
     }
@@ -333,7 +333,7 @@ export class AscensionEchoDraftService {
     this.state.patchState({ draftHistory: history });
   }
 
-  private pickResonanceId(snapshot: AscensionRunState): string | null {
+  private pickResonanceId(): string | null {
     const resonances = getResonances();
     if (!resonances.length) return null;
     const pick = resonances[this.random.nextInt(resonances.length)];
@@ -386,3 +386,4 @@ export class AscensionEchoDraftService {
     });
   }
 }
+

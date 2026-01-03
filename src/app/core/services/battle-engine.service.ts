@@ -1,8 +1,7 @@
 import { Injectable, OnDestroy, inject, signal } from "@angular/core";
 import { EnemyStateService } from "./enemy-state.service";
 import { PlayerStateService } from "./player-state.service";
-import { UiStateService, LogKind } from "./ui-state.service";
-import { SeededRng } from "../utils/seeded-rng";
+import { UiStateService, LogActor, LogKind } from "./ui-state.service";
 import { DEV_COMBAT } from "../config/dev-combat.config";
 import {
   BattleEvent,
@@ -11,22 +10,32 @@ import {
   SerializedPlayerState,
   buildLogFromSnapshots,
   SerializedDotStack,
+  ElementType,
 } from "../models/battle-snapshot.model";
 import { RunPhase } from "../models/run.model";
 import { TrackKey } from "../models/tracks.model";
 import { SIGIL_SETS } from "../../content/equipment/sigils";
-import { RingSetKey } from "../models/ring.model";
+import { SigilSetKey } from "../models/sigil.model";
 import {
   BALANCE_CONFIG,
-  MULTI_HIT_HP_SCALARS,
-  MULTI_HIT_HP_SCALAR_MIN,
-  MULTI_HIT_POSTURE_SCALARS,
+  getPlayerPowerMultiplier,
   POSTURE_OVERKILL_CAP_FRACTION_PER_ACTION
 } from "../../content/balance/balance.config";
-import { getPlayerPowerMultiplier } from "../config/balance.config";
 import { EnemyBehaviorProfile } from "./enemy-factory.service";
 import { HitActionKind } from "../models/hit-count.model";
 import { HitCountContext, resolveActorHitCount } from "../utils/hit-count";
+import {
+  applyMultiHitHpScalar,
+  applyMultiHitPostureScalar,
+  computeDamageTaken
+} from "../domain/battle/damage";
+import { createPostureOverkillTracker } from "../domain/battle/posture";
+import {
+  applyDotTickToEnemy,
+  applyDotTickToPlayer,
+  resolveDotStacks,
+} from "../domain/battle/dots";
+import { RngService, RngStream } from "./rng.service";
 
 type Turn = "player" | "enemy";
 
@@ -36,7 +45,7 @@ interface TurnState {
 }
 
 type DotStack = SerializedDotStack;
-type DotSource = DotStack["source"];
+type DotTarget = "player" | "enemy";
 
 const PLAYER_COMBAT = BALANCE_CONFIG.playerCombat;
 const ENEMY_COMBAT = BALANCE_CONFIG.enemyCombat;
@@ -50,7 +59,7 @@ interface TurnSummary {
   dotOnPlayer: boolean;
 }
 
-type DamageInstanceEvent = {
+interface DamageInstanceEvent {
   sourceId: string;
   targetId: string;
   actionKind: "auto" | "skill" | "enemyAttack" | "enemySkill" | "dot";
@@ -60,7 +69,7 @@ type DamageInstanceEvent = {
   amountPosture: number;
   isCrit: boolean;
   timestamp: number;
-};
+}
 
 interface RunContext {
   getPhase: () => RunPhase;
@@ -85,9 +94,10 @@ export class BattleEngineService implements OnDestroy {
   readonly snapshots = signal<BattleSnapshot[]>([]);
   private activeTurnNumber = 1;
 
-  private rng: SeededRng;
+  private battleRng: RngStream;
   private currentSeed: number;
   private eventCounter = 0;
+  private dotCounter = 0;
   private turnEvents: BattleEvent[] = [];
   private runContext?: RunContext;
   private turnSummary: TurnSummary = {
@@ -107,10 +117,11 @@ export class BattleEngineService implements OnDestroy {
   private readonly enemy = inject(EnemyStateService);
   private readonly player = inject(PlayerStateService);
   private readonly ui = inject(UiStateService);
+  private readonly rng = inject(RngService);
 
   constructor() {
     this.currentSeed = this.randomSeed();
-    this.rng = new SeededRng(this.currentSeed);
+    this.battleRng = this.rng.fork("battle", this.currentSeed);
   }
 
   setEnemyBehavior(behavior: EnemyBehaviorProfile | undefined): void {
@@ -132,8 +143,9 @@ export class BattleEngineService implements OnDestroy {
     this.stopLoop();
     this.currentSeed =
       typeof options?.seed === "number" ? options.seed : this.randomSeed();
-    this.rng = new SeededRng(this.currentSeed);
+    this.battleRng = this.rng.fork("battle", this.currentSeed);
     this.eventCounter = 0;
+    this.dotCounter = 0;
     this.turnEvents = [];
     this.snapshots.set([]);
     this.currentTurn.set({ number: 1, actor: "player" });
@@ -153,7 +165,7 @@ export class BattleEngineService implements OnDestroy {
     this.stopLoop();
     if (!snapshots?.length) return;
     this.currentSeed = snapshots[0].seed;
-    this.rng = new SeededRng(this.currentSeed);
+    this.battleRng = this.rng.fork("battle", this.currentSeed);
     this.snapshots.set([...snapshots]);
     this.ui.setBattleSeed(this.currentSeed);
     this.ui.setLogs(buildLogFromSnapshots(snapshots));
@@ -207,11 +219,11 @@ export class BattleEngineService implements OnDestroy {
       kaelisSprite: player.kaelisSprite,
       kit: { ...player.kit },
       weaponId: player.weaponId,
-      ringSetCounts: player.ringSetCounts ? { ...player.ringSetCounts } : undefined,
-      ringSkillBuffs: player.ringSkillBuffs ? [...player.ringSkillBuffs] : undefined,
-      ringDamageBuffPercent: player.ringDamageBuffPercent,
-      ringDamageBuffTurns: player.ringDamageBuffTurns,
-      ringDamageBuffSource: player.ringDamageBuffSource,
+      sigilSetCounts: player.sigilSetCounts ? { ...player.sigilSetCounts } : undefined,
+      sigilSkillBuffs: player.sigilSkillBuffs ? [...player.sigilSkillBuffs] : undefined,
+      sigilDamageBuffPercent: player.sigilDamageBuffPercent,
+      sigilDamageBuffTurns: player.sigilDamageBuffTurns,
+      sigilDamageBuffSource: player.sigilDamageBuffSource,
     };
   }
 
@@ -353,10 +365,10 @@ export class BattleEngineService implements OnDestroy {
     const autoMultiplier = kit.autoMultiplier ?? 0.8;
     const baseDamage = Math.max(1, Math.floor(attack * autoMultiplier));
     const damageBonus =
-      1 + ((attrs.damageBonusPercent ?? 0) + this.player.getRingDamageBuffPercent()) / 100;
+      1 + ((attrs.damageBonusPercent ?? 0) + this.player.getSigilDamageBuffPercent()) / 100;
     const hitCountContext = this.currentHitCountContext();
     const totalHits = resolveActorHitCount(this.player.state(), hitCountContext);
-    const hitTrace: Array<{ hitIndex: number; amount: number }> | null =
+    const hitTrace: { hitIndex: number; amount: number }[] | null =
       DEV_COMBAT.traceHitCount ? [] : null;
     const mainPosture = this.applyPostureBonus(
       this.scaledPostureDamage(enemyAttrs.maxPosture, PLAYER_COMBAT.autoPostureRatio)
@@ -371,21 +383,22 @@ export class BattleEngineService implements OnDestroy {
       1,
       Math.floor(baseDamage * damageBonus * critMultiplier)
     );
-    const postureTracker = this.createPostureOverkillTracker(
+    const postureTracker = createPostureOverkillTracker(
       enemyAttrs.maxPosture,
-      enemyAttrs.posture
+      enemyAttrs.posture,
+      POSTURE_OVERKILL_CAP_FRACTION_PER_ACTION
     );
 
     for (let hitIndex = 0; hitIndex < totalHits; hitIndex += 1) {
       const isCrit = actionCrit;
-      const damage = this.applyMultiHitHpScalar(baseHitDamage, hitIndex);
+      const damage = applyMultiHitHpScalar(baseHitDamage, hitIndex);
       const postureBase = hitIndex === 0 ? mainPosture : multiPosture;
       const postureAfterCrit = this.applyCritToPosture(
         postureBase,
         isCrit,
         critMultiplier
       );
-      const postureScaled = this.applyMultiHitPostureScalar(
+      const postureScaled = applyMultiHitPostureScalar(
         postureAfterCrit,
         hitIndex
       );
@@ -438,10 +451,12 @@ export class BattleEngineService implements OnDestroy {
         this.scaledPostureDamage(enemyAttrs.maxPosture, PLAYER_COMBAT.dot.postureRatio)
       );
       this.addDotStack("enemy", {
-        source: "player",
-        ticksRemaining: PLAYER_COMBAT.dot.duration,
-        tickHp: PLAYER_COMBAT.dot.damage,
-        tickPosture: postureDot,
+        element: this.dotElementForSource("player"),
+        sourceId,
+        damagePerTick: PLAYER_COMBAT.dot.damage,
+        postureDamagePerTick: postureDot,
+        remainingTurns: PLAYER_COMBAT.dot.duration,
+        appliedTurn: this.activeTurnNumber,
       });
       this.log("DoT aplicado", "player", {
         kind: "dot",
@@ -468,7 +483,7 @@ export class BattleEngineService implements OnDestroy {
       Math.floor(attack * (kit.skillMultiplier || 1.6))
     );
     const damageBonus =
-      1 + ((attrs.damageBonusPercent ?? 0) + this.player.getRingDamageBuffPercent()) / 100;
+      1 + ((attrs.damageBonusPercent ?? 0) + this.player.getSigilDamageBuffPercent()) / 100;
     const skillPostureRatio = PLAYER_COMBAT.skillPostureRatio ?? PLAYER_COMBAT.autoPostureRatio;
     const mainPosture = this.applyPostureBonus(
       this.scaledPostureDamage(enemyAttrs.maxPosture, skillPostureRatio)
@@ -483,7 +498,7 @@ export class BattleEngineService implements OnDestroy {
     );
     const hitCountContext = this.currentHitCountContext();
     const totalHits = resolveActorHitCount(this.player.state(), hitCountContext);
-    const hitTrace: Array<{ hitIndex: number; amount: number }> | null =
+    const hitTrace: { hitIndex: number; amount: number }[] | null =
       DEV_COMBAT.traceHitCount ? [] : null;
     const actionCrit = this.random() < attrs.critChance;
     const critMultiplier = actionCrit ? attrs.critDamage * mod.critDamageMult : 1;
@@ -491,20 +506,21 @@ export class BattleEngineService implements OnDestroy {
       1,
       Math.floor(baseDamage * damageBonus * critMultiplier)
     );
-    const postureTracker = this.createPostureOverkillTracker(
+    const postureTracker = createPostureOverkillTracker(
       enemyAttrs.maxPosture,
-      enemyAttrs.posture
+      enemyAttrs.posture,
+      POSTURE_OVERKILL_CAP_FRACTION_PER_ACTION
     );
     for (let hitIndex = 0; hitIndex < totalHits; hitIndex += 1) {
       const isCrit = actionCrit;
-      const damage = this.applyMultiHitHpScalar(baseHitDamage, hitIndex);
+      const damage = applyMultiHitHpScalar(baseHitDamage, hitIndex);
       const postureBase = hitIndex === 0 ? mainPosture : multiPosture;
       const postureAfterCrit = this.applyCritToPosture(
         postureBase,
         isCrit,
         critMultiplier
       );
-      const postureScaled = this.applyMultiHitPostureScalar(
+      const postureScaled = applyMultiHitPostureScalar(
         postureAfterCrit,
         hitIndex
       );
@@ -558,10 +574,12 @@ export class BattleEngineService implements OnDestroy {
       );
       for (let i = 0; i < kit.dotStacksPerSkill; i++) {
         this.addDotStack("enemy", {
-          source: "player",
-          ticksRemaining: PLAYER_COMBAT.dot.duration,
-          tickHp: PLAYER_COMBAT.dot.damage,
-          tickPosture: postureDot,
+          element: this.dotElementForSource("player"),
+          sourceId,
+          damagePerTick: PLAYER_COMBAT.dot.damage,
+          postureDamagePerTick: postureDot,
+          remainingTurns: PLAYER_COMBAT.dot.duration,
+          appliedTurn: this.activeTurnNumber,
         });
       }
       this.log("DoT aplicado", "player", {
@@ -570,7 +588,7 @@ export class BattleEngineService implements OnDestroy {
         actionKind: "dot"
       });
     }
-    this.tryTriggerRingSkillBuff("skill");
+    this.tryTriggerSigilSkillBuff("skill");
   }
 
   private enemyAutoAttack(): void {
@@ -593,7 +611,7 @@ export class BattleEngineService implements OnDestroy {
     );
     const hitCountContext = this.currentHitCountContext();
     const totalHits = resolveActorHitCount(this.enemy.enemy(), hitCountContext);
-    const hitTrace: Array<{ hitIndex: number; amount: number }> | null =
+    const hitTrace: { hitIndex: number; amount: number }[] | null =
       DEV_COMBAT.traceHitCount ? [] : null;
     const actionCrit = this.random() < attrs.critChance;
     const critMultiplier = actionCrit ? attrs.critDamage : 1;
@@ -601,21 +619,22 @@ export class BattleEngineService implements OnDestroy {
       1,
       Math.floor(baseDamage * critMultiplier * mod.damageMitigation)
     );
-    const postureTracker = this.createPostureOverkillTracker(
+    const postureTracker = createPostureOverkillTracker(
       this.player.state().attributes.maxPosture,
-      this.player.state().attributes.posture
+      this.player.state().attributes.posture,
+      POSTURE_OVERKILL_CAP_FRACTION_PER_ACTION
     );
 
     for (let hitIndex = 0; hitIndex < totalHits; hitIndex += 1) {
       const isCrit = actionCrit;
-      const damage = this.applyMultiHitHpScalar(baseHitDamage, hitIndex);
+      const damage = applyMultiHitHpScalar(baseHitDamage, hitIndex);
       const postureBase = hitIndex === 0 ? mainPosture : multiPosture;
       const postureAfterCrit = this.applyCritToPosture(
         postureBase,
         isCrit,
         critMultiplier
       );
-      const postureScaled = this.applyMultiHitPostureScalar(
+      const postureScaled = applyMultiHitPostureScalar(
         postureAfterCrit,
         hitIndex
       );
@@ -632,7 +651,7 @@ export class BattleEngineService implements OnDestroy {
         timestamp: Date.now()
       };
 
-      this.applyHitToPlayer(
+      const damageTaken = this.applyHitToPlayer(
         instance.amountHp,
         instance.amountPosture,
         instance.isCrit ? "crit" : "dmg",
@@ -642,16 +661,16 @@ export class BattleEngineService implements OnDestroy {
           actionKind: instance.actionKind
         }
       );
-      this.log(`-${damage} HP`, "enemy", {
+      this.log(`-${damageTaken} HP`, "enemy", {
         kind: "damage",
         target: "player",
-        value: instance.amountHp,
+        value: damageTaken,
         hitCount: instance.hitCount,
         hitIndex: instance.hitIndex,
         actionKind: instance.actionKind
       });
       if (hitTrace) {
-        hitTrace.push({ hitIndex: instance.hitIndex, amount: instance.amountHp });
+        hitTrace.push({ hitIndex: instance.hitIndex, amount: damageTaken });
       }
     }
     if (hitTrace) {
@@ -672,10 +691,12 @@ export class BattleEngineService implements OnDestroy {
         dot?.postureRatio ?? ENEMY_COMBAT.dot.postureRatio
       );
       this.addDotStack("player", {
-        source: "enemy",
-        ticksRemaining: dot?.duration ?? ENEMY_COMBAT.dot.duration,
-        tickHp: dot?.damage ?? ENEMY_COMBAT.dot.damage,
-        tickPosture: postureDot,
+        element: this.dotElementForSource("enemy"),
+        sourceId,
+        damagePerTick: dot?.damage ?? ENEMY_COMBAT.dot.damage,
+        postureDamagePerTick: postureDot,
+        remainingTurns: dot?.duration ?? ENEMY_COMBAT.dot.duration,
+        appliedTurn: this.activeTurnNumber,
       });
       this.log("DoT sofrido", "enemy", {
         kind: "dot",
@@ -713,14 +734,15 @@ export class BattleEngineService implements OnDestroy {
     );
     const hitCountContext = this.currentHitCountContext();
     const totalHits = resolveActorHitCount(this.enemy.enemy(), hitCountContext);
-    const hitTrace: Array<{ hitIndex: number; amount: number }> | null =
+    const hitTrace: { hitIndex: number; amount: number }[] | null =
       DEV_COMBAT.traceHitCount ? [] : null;
     const label = heavy?.name ?? "Heavy";
     const actionCrit = this.random() < attrs.critChance;
     const critMultiplier = actionCrit ? attrs.critDamage : 1;
-    const postureTracker = this.createPostureOverkillTracker(
+    const postureTracker = createPostureOverkillTracker(
       this.player.state().attributes.maxPosture,
-      this.player.state().attributes.posture
+      this.player.state().attributes.posture,
+      POSTURE_OVERKILL_CAP_FRACTION_PER_ACTION
     );
 
     for (let hitIndex = 0; hitIndex < totalHits; hitIndex += 1) {
@@ -730,14 +752,14 @@ export class BattleEngineService implements OnDestroy {
         1,
         Math.floor(hitBase * critMultiplier * mod.damageMitigation)
       );
-      const damage = this.applyMultiHitHpScalar(baseHitDamage, hitIndex);
+      const damage = applyMultiHitHpScalar(baseHitDamage, hitIndex);
       const postureBase = hitIndex === 0 ? mainPosture : multiPosture;
       const postureAfterCrit = this.applyCritToPosture(
         postureBase,
         isCrit,
         critMultiplier
       );
-      const postureScaled = this.applyMultiHitPostureScalar(
+      const postureScaled = applyMultiHitPostureScalar(
         postureAfterCrit,
         hitIndex
       );
@@ -753,7 +775,7 @@ export class BattleEngineService implements OnDestroy {
         isCrit,
         timestamp: Date.now()
       };
-      this.applyHitToPlayer(
+      const damageTaken = this.applyHitToPlayer(
         instance.amountHp,
         instance.amountPosture,
         instance.isCrit ? "crit" : "dmg",
@@ -763,16 +785,16 @@ export class BattleEngineService implements OnDestroy {
           actionKind: instance.actionKind
         }
       );
-      this.log(`${label} -${damage} HP`, "enemy", {
+      this.log(`${label} -${damageTaken} HP`, "enemy", {
         kind: "damage",
         target: "player",
-        value: instance.amountHp,
+        value: damageTaken,
         hitCount: instance.hitCount,
         hitIndex: instance.hitIndex,
         actionKind: instance.actionKind
       });
       if (hitTrace) {
-        hitTrace.push({ hitIndex: instance.hitIndex, amount: instance.amountHp });
+        hitTrace.push({ hitIndex: instance.hitIndex, amount: damageTaken });
       }
     }
     if (hitTrace) {
@@ -856,17 +878,21 @@ export class BattleEngineService implements OnDestroy {
     postureDamage: number,
     type: "dmg" | "crit" | "dot" | "posture",
     hitMeta?: { hitCount?: number; hitIndex?: number; actionKind?: HitActionKind }
-  ): void {
+  ): number {
     const player = this.player.state();
     const startPosture = player.attributes.posture;
     const breakReduction = this.trackModifiers().breakReduction;
     const turns = type === "dmg" || type === "crit" ? 2 : 1;
+    const damageTaken = computeDamageTaken(
+      damage,
+      player.attributes.damageReductionPercent
+    );
 
-    this.player.applyDamage(damage, postureDamage);
-    this.pushFloat(damage, type, "player", hitMeta);
+    this.player.applyDamage(damageTaken, postureDamage);
+    this.pushFloat(damageTaken, type, "player", hitMeta);
     this.ui.triggerPlayerFlash();
     const updated = this.player.state();
-    this.turnSummary.damageToPlayer += damage;
+    this.turnSummary.damageToPlayer += damageTaken;
     const postureLost = Math.max(0, startPosture - updated.attributes.posture);
     this.turnSummary.postureToPlayer += postureLost;
 
@@ -891,15 +917,16 @@ export class BattleEngineService implements OnDestroy {
       }
       this.playerPostureFullAtActionStart = false;
     }
+    return damageTaken;
   }
 
   private endOfTurn(actor: "player" | "enemy"): void {
     if (actor === "player") {
-      this.resolveDotStacks("player");
+      this.resolveDotStacksForTarget("enemy");
       this.regenPostureForActor("player");
       this.finishPlayerTurn();
     } else {
-      this.resolveDotStacks("enemy");
+      this.resolveDotStacksForTarget("player");
       this.regenPostureForActor("enemy");
       this.finishEnemyTurn();
     }
@@ -914,71 +941,68 @@ export class BattleEngineService implements OnDestroy {
     this.recordSnapshot(this.activeTurnNumber);
   }
 
-  private addDotStack(target: "player" | "enemy", stack: DotStack): void {
+  private addDotStack(
+    target: DotTarget,
+    stack: Omit<DotStack, "id">
+  ): void {
+    const entry: DotStack = {
+      ...stack,
+      id: this.nextDotId()
+    };
     if (target === "enemy") {
-      this.enemyDots = [...this.enemyDots, stack];
+      this.enemyDots = [...this.enemyDots, entry];
     } else {
-      this.playerDots = [...this.playerDots, stack];
+      this.playerDots = [...this.playerDots, entry];
     }
   }
 
-  private resolveDotStacks(source: DotSource): void {
-    const target = source === "player" ? "enemy" : "player";
+  private resolveDotStacksForTarget(target: DotTarget): void {
     const stacks = target === "enemy" ? this.enemyDots : this.playerDots;
     if (!stacks.length) return;
-    const relevant = stacks.filter((stack) => stack.source === source);
-    if (!relevant.length) return;
-
-    const stackCount = relevant.length;
+    const resolution = resolveDotStacks(stacks);
+    const stackCount = resolution.stackCount;
+    const totalHp = resolution.totalHpDamage;
+    const totalPosture = resolution.totalPostureDamage;
+    const source: LogActor = target === "enemy" ? "player" : "enemy";
     const targetLabel = target === "enemy" ? "Enemy" : this.playerName;
-    let appliedAny = false;
 
-    relevant.forEach((stack, index) => {
+    if (totalHp > 0 || totalPosture > 0) {
       const { hpApplied, postureLoss } = this.applyDotTick(
         target,
-        stack.tickHp,
-        stack.tickPosture
+        totalHp,
+        totalPosture
       );
       if (hpApplied > 0 || postureLoss > 0) {
         const postureInfo =
           postureLoss > 0 ? ` / -${postureLoss} posture` : "";
+        const stackInfo = stackCount > 1 ? ` (x${stackCount})` : "";
         this.log(
-          `${targetLabel} suffers DoT: -${hpApplied} HP${postureInfo}`,
+          `${targetLabel} suffers DoT${stackInfo}: -${hpApplied} HP${postureInfo}`,
           source,
           {
             kind: "dot",
             target,
             value: hpApplied > 0 ? hpApplied : undefined,
-            hitCount: stackCount,
-            hitIndex: index,
             actionKind: "dot"
           }
         );
         if (hpApplied > 0) {
           this.pushFloat(hpApplied, "dot", target, {
-            hitCount: stackCount,
-            hitIndex: index,
             actionKind: "dot"
           });
         }
-        appliedAny = true;
-      }
-      stack.ticksRemaining -= 1;
-    });
-
-    if (appliedAny) {
-      if (target === "enemy") {
-        this.turnSummary.dotOnEnemy = true;
-      } else {
-        this.turnSummary.dotOnPlayer = true;
+        if (target === "enemy") {
+          this.turnSummary.dotOnEnemy = true;
+        } else {
+          this.turnSummary.dotOnPlayer = true;
+        }
       }
     }
 
-    const remaining = stacks.filter((stack) => stack.ticksRemaining > 0);
     if (target === "enemy") {
-      this.enemyDots = remaining;
+      this.enemyDots = resolution.nextStacks;
     } else {
-      this.playerDots = remaining;
+      this.playerDots = resolution.nextStacks;
     }
   }
 
@@ -987,66 +1011,55 @@ export class BattleEngineService implements OnDestroy {
     hpDamage: number,
     postureDamage: number
   ): { hpApplied: number; postureLoss: number } {
-    const hp = Math.max(0, Math.floor(hpDamage));
-    const posture = Math.max(0, Math.floor(postureDamage));
-    if (hp <= 0 && posture <= 0) {
-      return { hpApplied: 0, postureLoss: 0 };
-    }
-
     if (target === "enemy") {
       const before = this.enemy.enemy();
-      if (before.state === "dead") {
+      const outcome = applyDotTickToEnemy({
+        hpDamage,
+        postureDamage,
+        hp: before.attributes.hp,
+        posture: before.attributes.posture,
+        state: before.state
+      });
+      if (outcome.hpApplied <= 0 && outcome.postureLoss <= 0) {
         return { hpApplied: 0, postureLoss: 0 };
       }
-      const startHp = before.attributes.hp;
-      const startPosture = before.attributes.posture;
-      const nextHp = Math.max(0, startHp - hp);
-      let nextPosture = startPosture;
-      if (before.state === "broken" || before.state === "superbroken") {
-        nextPosture = 0;
-      } else if (posture > 0) {
-        nextPosture = Math.max(1, startPosture - posture);
-      }
-
-      const hpApplied = startHp - nextHp;
-      const postureLoss = Math.max(0, startPosture - nextPosture);
       this.enemy.enemy.set({
         ...before,
         attributes: {
           ...before.attributes,
-          hp: nextHp,
-          posture: nextPosture,
+          hp: outcome.nextHp,
+          posture: outcome.nextPosture,
         },
-        state: nextHp <= 0 ? "dead" : before.state,
+        state: outcome.nextState
       });
-      this.turnSummary.damageToEnemy += hpApplied;
-      this.turnSummary.postureToEnemy += postureLoss;
-      return { hpApplied, postureLoss };
+      this.turnSummary.damageToEnemy += outcome.hpApplied;
+      this.turnSummary.postureToEnemy += outcome.postureLoss;
+      return { hpApplied: outcome.hpApplied, postureLoss: outcome.postureLoss };
     }
 
     const before = this.player.state();
-    const startHp = before.attributes.hp;
-    const startPosture = before.attributes.posture;
-    const nextHp = Math.max(0, startHp - hp);
-    let nextPosture = startPosture;
-    if (before.status === "broken" || before.status === "superbroken") {
-      nextPosture = 0;
-    } else if (posture > 0) {
-      nextPosture = Math.max(1, startPosture - posture);
+    const outcome = applyDotTickToPlayer({
+      hpDamage,
+      postureDamage,
+      hp: before.attributes.hp,
+      posture: before.attributes.posture,
+      status: before.status,
+      damageReductionPercent: before.attributes.damageReductionPercent
+    });
+    if (outcome.hpApplied <= 0 && outcome.postureLoss <= 0) {
+      return { hpApplied: 0, postureLoss: 0 };
     }
-    const hpApplied = startHp - nextHp;
-    const postureLoss = Math.max(0, startPosture - nextPosture);
     this.player.state.set({
       ...before,
       attributes: {
         ...before.attributes,
-        hp: nextHp,
-        posture: nextPosture,
+        hp: outcome.nextHp,
+        posture: outcome.nextPosture,
       },
     });
-    this.turnSummary.damageToPlayer += hpApplied;
-    this.turnSummary.postureToPlayer += postureLoss;
-    return { hpApplied, postureLoss };
+    this.turnSummary.damageToPlayer += outcome.hpApplied;
+    this.turnSummary.postureToPlayer += outcome.postureLoss;
+    return { hpApplied: outcome.hpApplied, postureLoss: outcome.postureLoss };
   }
 
   private regenPostureForActor(actor: "player" | "enemy"): void {
@@ -1070,10 +1083,10 @@ export class BattleEngineService implements OnDestroy {
 
   private finishPlayerTurn(): void {
     this.player.tickSkillCooldown();
-    const buffSource = this.player.getRingDamageBuffSource();
-    const buffStatus = this.player.tickRingDamageBuff();
+    const buffSource = this.player.getSigilDamageBuffSource();
+    const buffStatus = this.player.tickSigilDamageBuff();
     if (buffStatus === 'expired' && buffSource) {
-      this.logRingBuffExpiry(buffSource);
+      this.logSigilBuffExpiry(buffSource);
     }
     const attrs = this.player.state().attributes;
     const regenPercent =
@@ -1193,11 +1206,11 @@ export class BattleEngineService implements OnDestroy {
       kaelisSprite: state.kaelisSprite ?? current.kaelisSprite,
       kit: state.kit ?? current.kit,
       weaponId: state.weaponId ?? current.weaponId,
-      ringSetCounts: state.ringSetCounts ?? current.ringSetCounts,
-      ringSkillBuffs: state.ringSkillBuffs ?? current.ringSkillBuffs,
-      ringDamageBuffPercent: state.ringDamageBuffPercent ?? 0,
-      ringDamageBuffTurns: state.ringDamageBuffTurns ?? 0,
-      ringDamageBuffSource: state.ringDamageBuffSource ?? undefined,
+      sigilSetCounts: state.sigilSetCounts ?? current.sigilSetCounts,
+      sigilSkillBuffs: state.sigilSkillBuffs ?? current.sigilSkillBuffs,
+      sigilDamageBuffPercent: state.sigilDamageBuffPercent ?? 0,
+      sigilDamageBuffTurns: state.sigilDamageBuffTurns ?? 0,
+      sigilDamageBuffSource: state.sigilDamageBuffSource ?? undefined,
     });
   }
 
@@ -1260,11 +1273,19 @@ export class BattleEngineService implements OnDestroy {
   }
 
   private random(): number {
-    return DEV_COMBAT.deterministic ? this.rng.next() : Math.random();
+    return this.battleRng.nextFloat();
   }
 
   private randomSeed(): number {
-    return Math.floor(Math.random() * 1_000_000_000);
+    return this.rng.nextInt(0, 1_000_000_000);
+  }
+
+  private nextDotId(): string {
+    return `dot-${++this.dotCounter}`;
+  }
+
+  private dotElementForSource(source: DotTarget): ElementType {
+    return source === "enemy" ? "poison" : "burn";
   }
 
   private getRunPhase(): RunPhase {
@@ -1317,41 +1338,41 @@ export class BattleEngineService implements OnDestroy {
     )}`;
   }
 
-  private tryTriggerRingSkillBuff(trigger: "skill"): void {
+  private tryTriggerSigilSkillBuff(trigger: "skill"): void {
     const buffs = this.player
-      .getRingSkillBuffs()
+      .getSigilSkillBuffs()
       .filter(buff => buff.trigger === trigger);
     if (!buffs.length) return;
     buffs.forEach(buff => {
-      const outcome = this.player.activateRingDamageBuff(
+      const outcome = this.player.activateSigilDamageBuff(
         buff.setKey,
         buff.damagePercent,
         buff.durationTurns
       );
       if (outcome === "none") return;
-      this.logRingBuffActivation(buff.setKey, buff.damagePercent, buff.durationTurns, outcome);
+      this.logSigilBuffActivation(buff.setKey, buff.damagePercent, buff.durationTurns, outcome);
     });
   }
 
-  private logRingBuffActivation(
-    setKey: RingSetKey,
+  private logSigilBuffActivation(
+    setKey: SigilSetKey,
     percent: number,
     turns: number,
     outcome: "activated" | "refreshed"
   ): void {
-    const label = this.ringSetLabel(setKey);
+    const label = this.sigilSetLabel(setKey);
     const action = outcome === "activated" ? "activates" : "refreshes";
     this.log(`${label} surge ${action}: +${percent}% damage for ${turns} turns.`, "player");
   }
 
-  private logRingBuffExpiry(setKey: RingSetKey): void {
-    const label = this.ringSetLabel(setKey);
+  private logSigilBuffExpiry(setKey: SigilSetKey): void {
+    const label = this.sigilSetLabel(setKey);
     this.log(`${label} surge fades.`, "player");
   }
 
-  private ringSetLabel(key: RingSetKey | undefined): string {
-    if (!key) return "Ring";
-    return SIGIL_SETS[key]?.name ?? "Ring";
+  private sigilSetLabel(key: SigilSetKey | undefined): string {
+    if (!key) return "Sigil";
+    return SIGIL_SETS[key]?.name ?? "Sigil";
   }
 
   private applyPostureBonus(base: number): number {
@@ -1374,86 +1395,12 @@ export class BattleEngineService implements OnDestroy {
     return Math.max(1, Math.floor(base * critMultiplier));
   }
 
-  private resolveMultiHitScalar(
-    hitIndex: number,
-    scalars: number[],
-    minScalar?: number
-  ): number {
-    if (!scalars.length) return 1;
-    const index = Math.min(hitIndex, scalars.length - 1);
-    const scalar = scalars[index];
-    if (!Number.isFinite(scalar)) {
-      return typeof minScalar === "number" ? minScalar : 1;
-    }
-    if (typeof minScalar === "number") {
-      return Math.max(minScalar, scalar);
-    }
-    return scalar;
-  }
-
-  private applyMultiHitHpScalar(baseDamage: number, hitIndex: number): number {
-    if (baseDamage <= 0) return 0;
-    const scalar = this.resolveMultiHitScalar(
-      hitIndex,
-      MULTI_HIT_HP_SCALARS,
-      MULTI_HIT_HP_SCALAR_MIN
-    );
-    return Math.max(1, Math.round(baseDamage * scalar));
-  }
-
-  private applyMultiHitPostureScalar(
-    basePosture: number,
-    hitIndex: number
-  ): number {
-    if (basePosture <= 0) return 0;
-    const scalar = this.resolveMultiHitScalar(
-      hitIndex,
-      MULTI_HIT_POSTURE_SCALARS
-    );
-    return Math.max(1, Math.round(basePosture * scalar));
-  }
-
-  private createPostureOverkillTracker(maxPosture: number, startPosture: number): {
-    apply: (postureDamage: number) => number;
-    getOverkill: () => number;
-  } {
-    const cap = Math.max(
-      0,
-      Math.round(maxPosture * POSTURE_OVERKILL_CAP_FRACTION_PER_ACTION)
-    );
-    let remaining = Math.max(0, Math.floor(startPosture));
-    let overkill = 0;
-
-    return {
-      apply: (rawDamage: number) => {
-        const damage = Math.max(0, Math.round(rawDamage));
-        if (damage <= 0) return 0;
-        if (remaining > 0) {
-          const applied = Math.min(remaining, damage);
-          remaining -= applied;
-          const overflow = damage - applied;
-          if (overflow > 0 && overkill < cap) {
-            const extra = Math.min(overflow, cap - overkill);
-            overkill += extra;
-            return applied + extra;
-          }
-          return applied;
-        }
-        if (overkill >= cap) return 0;
-        const extra = Math.min(damage, cap - overkill);
-        overkill += extra;
-        return extra;
-      },
-      getOverkill: () => overkill
-    };
-  }
-
   private traceHitCount(
     attackerId: string,
     attackerName: string,
     actionKind: HitActionKind,
     hitCount: number,
-    hits: Array<{ hitIndex: number; amount: number }>
+    hits: { hitIndex: number; amount: number }[]
   ): void {
     if (!DEV_COMBAT.traceHitCount) return;
     console.debug("[hitCount]", {
@@ -1483,3 +1430,5 @@ export class BattleEngineService implements OnDestroy {
     return this.random() < probability;
   }
 }
+
+

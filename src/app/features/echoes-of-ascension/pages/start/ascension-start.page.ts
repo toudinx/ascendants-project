@@ -4,6 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProfileStateService } from '../../../../core/services/profile-state.service';
 import { LoadoutService } from '../../../../core/services/loadout.service';
 import { AscensionRunStateService } from '../../state/ascension-run-state.service';
+import { RngService } from '../../../../core/services/rng.service';
+import { ReplayLogService } from '../../../../core/services/replay-log.service';
+import { roomToStage } from '../../../../content/balance/balance.config';
 import { ASCENSION_PATHS } from '../../content/configs/ascension-paths';
 import {
   ASCENSION_POTIONS,
@@ -34,6 +37,8 @@ export class AscensionStartPageComponent implements OnInit {
   private readonly loadout = inject(LoadoutService);
   private readonly runState = inject(AscensionRunStateService);
   private readonly roster = inject(AscensionStartRosterService);
+  private readonly rng = inject(RngService);
+  private readonly replayLog = inject(ReplayLogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -189,7 +194,34 @@ export class AscensionStartPageComponent implements OnInit {
     const seed =
       typeof seedOverride === 'number' ? seedOverride : this.randomSeed();
     const runModifiers = this.buildRunModifiers(potionId);
+    const runModifiersPayload = this.serializeRunModifiers(runModifiers);
     const hpMax = this.applyMaxHpModifier(runModifiers);
+    this.replayLog.clear();
+    this.replayLog.append({
+      v: 1,
+      t: 'runStart',
+      payload: {
+        seed,
+        mode: 'ascension',
+        originPathId: this.originPathId,
+        runPathId,
+        selectedPotionId: potionId,
+        hpMax,
+        hpCurrent: hpMax,
+        runModifiers: runModifiersPayload,
+        floorIndex: 1,
+        roomType: 'battle'
+      }
+    });
+    this.replayLog.append({
+      v: 1,
+      t: 'enterRoom',
+      payload: {
+        roomIndex: 1,
+        roomType: 'battle',
+        stage: roomToStage(1)
+      }
+    });
     this.validateEchoContent(this.originPathId, runPathId);
     this.runState.createNewRun({
       seed,
@@ -211,7 +243,7 @@ export class AscensionStartPageComponent implements OnInit {
   }
 
   private randomSeed(): number {
-    return Math.floor(Math.random() * 1_000_000_000);
+    return this.rng.nextInt(0, 1_000_000_000);
   }
 
   private parseSeed(value: string): number | null {
@@ -226,6 +258,22 @@ export class AscensionStartPageComponent implements OnInit {
   private buildRunModifiers(potionId: string): AscensionRunModifiers {
     const potion = getAscensionPotionById(potionId);
     return { ...(potion?.runEffects ?? {}) };
+  }
+
+  private serializeRunModifiers(
+    modifiers: AscensionRunModifiers
+  ): Record<string, number> {
+    const payload: Record<string, number> = {};
+    if (typeof modifiers.maxHpPercent === 'number') {
+      payload.maxHpPercent = modifiers.maxHpPercent;
+    }
+    if (typeof modifiers.damagePercent === 'number') {
+      payload.damagePercent = modifiers.damagePercent;
+    }
+    if (typeof modifiers.fragmentsPerVictory === 'number') {
+      payload.fragmentsPerVictory = modifiers.fragmentsPerVictory;
+    }
+    return payload;
   }
 
   private applyMaxHpModifier(modifiers: AscensionRunModifiers): number {

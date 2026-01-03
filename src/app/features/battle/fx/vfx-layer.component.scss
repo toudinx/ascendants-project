@@ -128,14 +128,14 @@
   --vfx-glow: rgba(140, 180, 255, 0.4);
 }
 
-.battle-vfx--ring {
+.battle-vfx--sigil {
   width: var(--size, 40px);
   height: var(--size, 40px);
   border-radius: 50%;
   border: 1px solid var(--vfx-color);
   box-shadow: 0 0 14px var(--vfx-glow);
   transform: translate3d(-50%, -50%, 0);
-  animation: vfx-ring var(--duration, 180ms) var(--vfx-ease) forwards;
+  animation: vfx-sigil var(--duration, 180ms) var(--vfx-ease) forwards;
 }
 
 .battle-vfx--burst {
@@ -323,7 +323,7 @@
   }
 }
 
-@keyframes vfx-ring {
+@keyframes vfx-sigil {
   0% {
     opacity: 0;
     transform: translate3d(-50%, -50%, 0) scale(0.7);
@@ -419,7 +419,7 @@
 }
 
 :host-context(.battle-root.reduce-flash) .battle-vfx--spark,
-:host-context(.battle-root.reduce-flash) .battle-vfx--ring,
+:host-context(.battle-root.reduce-flash) .battle-vfx--sigil,
 :host-context(.battle-root.reduce-flash) .battle-vfx--burst {
   opacity: calc(var(--opacity, 1) * 0.65);
 }

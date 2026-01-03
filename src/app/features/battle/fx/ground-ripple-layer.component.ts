@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   Input,
@@ -29,7 +30,8 @@ interface GroundRippleInstance {
   standalone: true,
   imports: [CommonModule],
   templateUrl: "./ground-ripple-layer.component.html",
-  styleUrls: ["./ground-ripple-layer.component.scss"]
+  styleUrls: ["./ground-ripple-layer.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GroundRippleLayerComponent implements OnDestroy {
   @Input({ required: true }) anchors!: BattleFxAnchors;

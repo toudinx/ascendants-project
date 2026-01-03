@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   Input,
@@ -27,7 +28,8 @@ type SignatureTarget = "player" | "enemy";
   standalone: true,
   imports: [CommonModule],
   templateUrl: "./echo-signature-layer.component.html",
-  styleUrls: ["./echo-signature-layer.component.scss"]
+  styleUrls: ["./echo-signature-layer.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EchoSignatureLayerComponent implements OnDestroy {
   @Input({ required: true }) anchors!: BattleFxAnchors;

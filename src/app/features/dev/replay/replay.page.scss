@@ -1,0 +1,116 @@
+.replay-page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.replay-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 12px;
+  color: var(--text-secondary, #a4a4b5);
+}
+
+.replay-header strong {
+  color: var(--text-primary, #f5f5fa);
+  letter-spacing: 0.12em;
+}
+
+.replay-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+  gap: 16px;
+}
+
+.panel {
+  background: rgba(10, 10, 24, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text-primary, #f5f5fa);
+}
+
+.panel-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-secondary, #a4a4b5);
+}
+
+.replay-input {
+  width: 100%;
+  min-height: 240px;
+  resize: vertical;
+  background: rgba(5, 5, 17, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 12px;
+  color: inherit;
+  font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.btn.ghost {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary, #a4a4b5);
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-secondary, #a4a4b5);
+}
+
+.status-note {
+  font-size: 12px;
+  color: #7dd3fc;
+}
+
+.status-error {
+  font-size: 12px;
+  color: #ff9aaa;
+}
+
+.event-json {
+  background: rgba(5, 5, 17, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-secondary, #a4a4b5);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 960px) {
+  .replay-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -4,9 +4,10 @@ import { SIGIL_LIST } from '../../content/equipment/sigils';
 import { DEFAULT_SKIN_BY_KAELIS, SKIN_LIST } from '../../content/equipment/skins';
 import { KaelisId } from './kaelis.model';
 import { WeaponId } from './weapon.model';
-import { RingId, RING_SLOTS } from './ring.model';
+import { SigilId, SIGIL_SLOTS } from './sigil.model';
 
 export type CurrencyType = 'gold' | 'sigils';
+export type UiScale = 0.85 | 1 | 1.15 | 1.3;
 
 export interface ProfileCurrencies {
   gold: number;
@@ -26,6 +27,7 @@ export interface ProfileSettings {
   vfxDensity: 'low' | 'med' | 'high';
   screenShake: boolean;
   reducedFlash: boolean;
+  uiScale: UiScale;
 }
 
 export interface ProfilePersistedState {
@@ -33,24 +35,24 @@ export interface ProfilePersistedState {
   currencies: ProfileCurrencies;
   cosmetics: ProfileCosmeticsState;
   equipment: ProfileEquipmentState;
-  rings: ProfileRingsState;
+  sigils: ProfileSigilsState;
   potionCount: number;
   settings: ProfileSettings;
 }
 
 export interface ProfileEquipmentState {
   weaponByKaelis: Record<KaelisId, WeaponId>;
-  ringSlotsByKaelis: Record<KaelisId, Array<RingId | null>>;
+  sigilSlotsByKaelis: Record<KaelisId, (SigilId | null)[]>;
 }
 
-export interface ProfileRingsState {
-  inventory: RingId[];
+export interface ProfileSigilsState {
+  inventory: SigilId[];
 }
 
 export function createDefaultProfileState(): ProfilePersistedState {
   const primaryKaelis = KAELIS_LIST[0]?.id ?? 'velvet';
   const defaultWeapon = WEAPON_LIST[0]?.id ?? 'ascendant-blade';
-  const ringInventory = SIGIL_LIST.map(ring => ring.id);
+  const sigilInventory = SIGIL_LIST.map(sigil => sigil.id);
   const activeSkinByKaelis = KAELIS_LIST.reduce<Record<KaelisId, string>>((map, kaelis) => {
     map[kaelis.id] = DEFAULT_SKIN_BY_KAELIS[kaelis.id] ?? 'default';
     return map;
@@ -67,21 +69,21 @@ export function createDefaultProfileState(): ProfilePersistedState {
     return map;
   }, {} as Record<KaelisId, WeaponId>);
 
-  const ringSlotsByKaelis = KAELIS_LIST.reduce<Record<KaelisId, Array<RingId | null>>>(
+  const sigilSlotsByKaelis = KAELIS_LIST.reduce<Record<KaelisId, (SigilId | null)[]>>(
     (map, kaelis) => {
-      const slots = Array.from({ length: RING_SLOTS.length }, () => null as RingId | null);
+      const slots = Array.from({ length: SIGIL_SLOTS.length }, () => null as SigilId | null);
       if (kaelis.id === primaryKaelis) {
-        SIGIL_LIST.forEach(ring => {
-          const slotIndex = RING_SLOTS.indexOf(ring.slot);
+        SIGIL_LIST.forEach(sigil => {
+          const slotIndex = SIGIL_SLOTS.indexOf(sigil.slot);
           if (slotIndex >= 0 && slots[slotIndex] === null) {
-            slots[slotIndex] = ring.id;
+            slots[slotIndex] = sigil.id;
           }
         });
       }
       map[kaelis.id] = slots;
       return map;
     },
-    {} as Record<KaelisId, Array<RingId | null>>
+    {} as Record<KaelisId, (SigilId | null)[]>
   );
 
   return {
@@ -96,10 +98,10 @@ export function createDefaultProfileState(): ProfilePersistedState {
     },
     equipment: {
       weaponByKaelis,
-      ringSlotsByKaelis
+      sigilSlotsByKaelis
     },
-    rings: {
-      inventory: ringInventory
+    sigils: {
+      inventory: sigilInventory
     },
     potionCount: 2,
     settings: {
@@ -109,7 +111,10 @@ export function createDefaultProfileState(): ProfilePersistedState {
       showDamageFloaters: true,
       vfxDensity: 'med',
       screenShake: true,
-      reducedFlash: false
+      reducedFlash: false,
+      uiScale: 1
     }
   };
 }
+
+
